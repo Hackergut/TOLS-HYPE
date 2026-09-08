@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/games/grid-mines",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 529,
+      "bodyTextHash": "cd35ce7dfa783dab04da931379862f485cd891bfd14b31f325dda93d9b3ced96",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Fairness Pro",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-mines.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 460,
+      "bodyTextHash": "31a209fdf13b75c36f3a55996cbdf151abb4896d0b405b53b343ff0f517452d7",
+      "bodyTextPrefix": "Toggle Sidebar TOLS Log Sign Sign in to take a seat Play-money b",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-mines-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/tols-mines.json"
+}

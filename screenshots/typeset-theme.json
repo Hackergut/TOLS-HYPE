@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "CryptoVegas",
+      "hasCanvas": false,
+      "bodyTextLen": 1598,
+      "bodyTextHash": "8e4b7e971a26f9a179ed7d09f9210c9a8d7180846a5a11f51eee16bdd42f2f2f",
+      "bodyTextPrefix": "CryptoVegas Lobby Casino Live Sports Promotions Categories Origi",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/typeset-theme.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "CryptoVegas",
+      "hasCanvas": false,
+      "bodyTextLen": 1439,
+      "bodyTextHash": "643cdf98163ba50429a3d2192f66d9433ac8200736e6305c5dbbbd91d9cffad8",
+      "bodyTextPrefix": "Toggle Sidebar CryptoVegas Sign in ORIGINALS HOUSE Dark tables. ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/typeset-theme-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/typeset-theme.json"
+}

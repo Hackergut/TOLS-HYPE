@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/privacy",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Privacy Policy — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 2288,
+      "bodyTextHash": "e6c7d5023e8dac76b50a101e848ce33362d246628098a9b0653957139f087eb3",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Terms Respon",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/privacy.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Privacy Policy — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 2258,
+      "bodyTextHash": "d82a4812c10458940730f7554f1624d0bc26eda77009b79f56a33706a46579f3",
+      "bodyTextPrefix": "Toggle Sidebar Login Register Back to TOLS Privacy Policy Versio",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/privacy-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/privacy.json"
+}

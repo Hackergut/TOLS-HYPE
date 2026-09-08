@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/games/keno-40",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 530,
+      "bodyTextHash": "f580b19bd74d723b1010b54c750916dab77e0076190519d5fda5fab408045b7c",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Fairness Pro",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-keno.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 461,
+      "bodyTextHash": "8bb825071254597cacfeb1f72ddb6db50e256342f666d2b78ac4c47c9b0b5d38",
+      "bodyTextPrefix": "Toggle Sidebar TOLS Log Sign Sign in to take a seat Play-money b",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-keno-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/tols-keno.json"
+}

@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/games/signal-dice",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 449,
+      "bodyTextHash": "18b3f12460d48d02a2e67a6b93d452d62c294a8bc8eda6e5ec9e7a98121ffe04",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Fairness Pro",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-dice.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 461,
+      "bodyTextHash": "b6e8dda1bf5fd542e0c6c62c9c0880e5318610b1ef52c411e6d63d55dc952437",
+      "bodyTextPrefix": "Toggle Sidebar TOLS Log Sign Sign in to take a seat Play-money b",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-dice-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/tols-dice.json"
+}

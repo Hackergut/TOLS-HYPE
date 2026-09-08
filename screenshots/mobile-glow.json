@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1652,
+      "bodyTextHash": "91fc0b2328949c6b6ad1ecdf0173849912ac04c5ccb31a5d8f1b20460bbdeea3",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Fairness Pro",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/mobile-glow.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1526,
+      "bodyTextHash": "e936885e187e2ac30ed5b1b56359e26ac0b6c0ed0caf7d4bcb2454eb87e0ecd1",
+      "bodyTextPrefix": "Toggle Sidebar NEON SEVENS Three reels, one payline · 92% RTP SP",
+      "horizontalOverflow": false,
+      "consoleErrors": [
+        "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <MatchInnerImpl match={{id:\"/_shell/\", ...}}>\n      <Lazy>\n        <ShellLayout>\n          <WalletProvider>\n            <AppShell>\n              <SidebarProvider defaultOpen={false}>\n                <div data-slot=\"sidebar-wr...\" style={{...}} className=\"group/side...\">\n                  <SidebarLeft>\n                  <SidebarInset className=\"bg-transpa...\">\n                    <main data-slot=\"sidebar-inset\" className=\"relative f...\">\n                      <SiteHeader>\n                        <header className=\"sticky top...\">\n                          <SidebarTrigger>\n                          <TolsMark>\n                          <div className=\"relative m...\">\n                            <pv>\n                            <Input placeholder=\"Search gam...\" className=\"h-10 round...\">\n                              <input\n                                type={undefined}\n                                data-slot=\"input\"\n                                className=\"w-full min-w-0 border px-2 py-0.5 text-sm transition-colors outline-none fi...\"\n                                placeholder=\"Search games...\"\n-                               style={{caret-color:\"transparent\"}}\n                              >\n                          ...\n                      ...\n"
+      ],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/mobile-glow-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/mobile-glow.json"
+}

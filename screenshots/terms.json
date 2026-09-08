@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/terms",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Terms of Service — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 25410,
+      "bodyTextHash": "ccb8cbc1330784766dfefec0e5a10e63a15e4ffb357c8c382d1bdcefbd72bfef",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Terms Fairne",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/terms.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Terms of Service — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 25377,
+      "bodyTextHash": "5d115567067ec510374d89d0cb3c69c7d6f3ae98e77f603a8d91c2c58b654243",
+      "bodyTextPrefix": "Toggle Sidebar Login Register Back to TOLS Terms of Service Vers",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/terms-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/terms.json"
+}

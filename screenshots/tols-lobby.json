@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1659,
+      "bodyTextHash": "444453ffdc0adb9335103ab1936dc4d6d68d0bff3c6382ccd2f937aca5a6aff1",
+      "bodyTextPrefix": "T Lobby Casino Live Sports Promotions History Cashier Fairness P",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-lobby.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1588,
+      "bodyTextHash": "e6afcae5ea995dfcfd0cf60b1a010abb6334d020f98d420216cc56596670c30f",
+      "bodyTextPrefix": "Toggle Sidebar TOLS NEON SEVENS Three reels, one payline · 92% R",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/tols-lobby-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/tols-lobby.json"
+}

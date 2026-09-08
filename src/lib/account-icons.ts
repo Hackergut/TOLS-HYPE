@@ -1,0 +1,38 @@
+import {
+  RiWallet3Line,
+  RiStarLine,
+  RiLock2Line,
+  RiCopperCoinLine,
+  RiShareForwardLine,
+  RiNotification3Line,
+  RiExchangeDollarLine,
+  RiCoupon3Line,
+  RiSettings3Line,
+  RiHeartPulseLine,
+  RiCustomerService2Line,
+  RiHome5Line,
+  RiDiceLine,
+  RiTvLine,
+  RiBasketballLine,
+  RiShieldCheckLine,
+} from "@remixicon/react";
+import type { NavLink } from "@/lib/nav";
+
+export const ACCOUNT_ICONS: Record<NavLink["icon"], typeof RiWallet3Line> = {
+  home: RiHome5Line,
+  dice: RiDiceLine,
+  live: RiTvLine,
+  sports: RiBasketballLine,
+  fairness: RiShieldCheckLine,
+  wallet: RiWallet3Line,
+  vip: RiStarLine,
+  vault: RiLock2Line,
+  token: RiCopperCoinLine,
+  affiliate: RiShareForwardLine,
+  alerts: RiNotification3Line,
+  tx: RiExchangeDollarLine,
+  redeem: RiCoupon3Line,
+  settings: RiSettings3Line,
+  responsible: RiHeartPulseLine,
+  help: RiCustomerService2Line,
+};

@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/games/pool-rush",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1536,
+      "bodyTextHash": "b935e65d14cfa397769d164d4b9a6158b4ccb1b1606e08a5bbb596eb021a37d1",
+      "bodyTextPrefix": "Lobby Casino Pool Rush Pool Rush TOLS Games TOLS Originals Fast ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/legend-pool.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1406,
+      "bodyTextHash": "0ded54bd878714767a2957692ec7dd05df078b81b645f7e50a32475d93678f7e",
+      "bodyTextPrefix": "Toggle Sidebar Lobby Casino Pool Rush Pool Rush TOLS Games TOLS ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/legend-pool-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/legend-pool.json"
+}

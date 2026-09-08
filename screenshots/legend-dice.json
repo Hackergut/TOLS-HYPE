@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/games/signal-dice",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1254,
+      "bodyTextHash": "e86c302b2287a14fcfcd82602810cb075807eca1b551455bce6e54d7b340d196",
+      "bodyTextPrefix": "Lobby Casino Dice Dice TOLS Games TOLS Originals Instant over/un",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/legend-dice.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1124,
+      "bodyTextHash": "603f9ab07d1b61c9425db10925f5542dc38f7687ec0bf2b54a55fb6d7e002dfc",
+      "bodyTextPrefix": "Toggle Sidebar Lobby Casino Dice Dice TOLS Games TOLS Originals ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/legend-dice-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/legend-dice.json"
+}

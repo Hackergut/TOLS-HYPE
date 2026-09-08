@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/games/signal-dice",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 702,
+      "bodyTextHash": "8f525d993e25ca2449f1a565a9e04b1a49c297c68e7da63d4ad9291991e7829a",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Terms Respon",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/crumb-dice.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 657,
+      "bodyTextHash": "62d46f4addc65e4da3899016eadfbbfefaa143474c587a93fdcb10a8e1cd12ef",
+      "bodyTextPrefix": "Toggle Sidebar Lobby Casino Dice Dice TOLS Originals 99.0% RTP M",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/crumb-dice-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/crumb-dice.json"
+}

@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/responsible",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Responsible Gambling — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1480,
+      "bodyTextHash": "4e18780f0e6f44cf10016cc2e4f3b76431c7afdc0ee4de8dd7759ae94a3bbfa0",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Terms Respon",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/responsible.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Responsible Gambling — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1450,
+      "bodyTextHash": "458f49afdb5851575d319087743ef66a673fd8b376dda92dbd7a0b09517eba51",
+      "bodyTextPrefix": "Toggle Sidebar Login Register Back to TOLS Responsible Gambling ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/responsible-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/responsible.json"
+}

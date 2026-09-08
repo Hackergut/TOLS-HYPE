@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/promotions",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Promotions — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 3383,
+      "bodyTextHash": "f1ee17baad10b1a2f330d9694566843bec16fb9eb178e6b3f30d944fa0b374a4",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Terms Respon",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/promos.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Promotions — TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 3338,
+      "bodyTextHash": "f6b540eee4128f3c6181eab54e2de6a70c93385a2c58cade9a83aab06972f5c2",
+      "bodyTextPrefix": "Toggle Sidebar 10 GAMES Promotions Every official TOLS promotion",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/promos-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/promos.json"
+}

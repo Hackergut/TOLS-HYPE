@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/login",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 173,
+      "bodyTextHash": "59ea66affcce1fdde832cae7867f29cdb544b0035fd1e721a6b1e64aeda463ed",
+      "bodyTextPrefix": "TOLS Sign in Google, X, or email. Play-money balances mint on fi",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/theme-login.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 173,
+      "bodyTextHash": "59ea66affcce1fdde832cae7867f29cdb544b0035fd1e721a6b1e64aeda463ed",
+      "bodyTextPrefix": "TOLS Sign in Google, X, or email. Play-money balances mint on fi",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/theme-login-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/theme-login.json"
+}

@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/login",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 168,
+      "bodyTextHash": "efbfd7e68a5063d218ed5393a8832f216bb117ef75976d513e52dc906f8246db",
+      "bodyTextPrefix": "Sign in Google, X, or email. Play-money balances mint on first v",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/mobile-login.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 168,
+      "bodyTextHash": "efbfd7e68a5063d218ed5393a8832f216bb117ef75976d513e52dc906f8246db",
+      "bodyTextPrefix": "Sign in Google, X, or email. Play-money balances mint on first v",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/mobile-login-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/mobile-login.json"
+}

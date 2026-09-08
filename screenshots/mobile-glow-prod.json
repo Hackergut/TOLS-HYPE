@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1637,
+      "bodyTextHash": "c9660e37cfd47400ab8cf4eae82f4681848dea675244781c5af67ed96c2776f2",
+      "bodyTextPrefix": "Lobby Casino Live Sports Promotions History Cashier Fairness Pro",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/mobile-glow-prod.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "TOLS",
+      "hasCanvas": false,
+      "bodyTextLen": 1526,
+      "bodyTextHash": "e936885e187e2ac30ed5b1b56359e26ac0b6c0ed0caf7d4bcb2454eb87e0ecd1",
+      "bodyTextPrefix": "Toggle Sidebar NEON SEVENS Three reels, one payline · 92% RTP SP",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/mobile-glow-prod-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/mobile-glow-prod.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}

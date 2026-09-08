@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Wallet {
+  userId   String  @map("user_id")
+  currency String
+  balance  Decimal @default(0) @db.Decimal(20, 8)
+
+  @@id([userId, currency])
+  @@map("wallets")
+}
+
+model Ledger {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  type      String
+  amount    Decimal  @db.Decimal(20, 8)
+  currency  String
+  status    String   @default("completed")
+  gameId    String?  @map("game_id")
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)], map: "transactions_user_id_idx")
+  @@map("transactions")
+}
