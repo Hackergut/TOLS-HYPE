@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
 import { operator } from "@/lib/operator/config";
-import { operatorStatus } from "@/lib/operator/operator.server";
+import { operatorStatus } from "@/lib/operator/rpc";
 import { PLATFORM_SKILLS } from "@/lib/operator/skills";
 import { AGGREGATOR_KINDS } from "@/lib/operator/adapter";
 
