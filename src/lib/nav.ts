@@ -1,4 +1,5 @@
 import type { LinkProps } from "@tanstack/react-router";
+import type { GameCategory } from "@/lib/games-catalog";
 
 export type NavLink = {
   title: string;
@@ -19,7 +20,13 @@ export type NavLink = {
     | "redeem"
     | "settings"
     | "responsible"
-    | "help";
+    | "help"
+    | "originals"
+    | "slots"
+    | "crash"
+    | "table"
+    | "promo";
+  search?: { cat?: GameCategory | "all" };
 };
 
 /** Left rail / mobile drawer — browse the house. */
@@ -28,6 +35,16 @@ export const BROWSE_NAV: NavLink[] = [
   { title: "Casino", to: "/casino", icon: "dice" },
   { title: "Live", to: "/live", icon: "live" },
   { title: "Sports", to: "/sports", icon: "sports" },
+];
+
+/** Game sections shown under the browse rail. */
+export const GAME_SECTIONS: NavLink[] = [
+  { title: "Originals", to: "/casino", icon: "originals", search: { cat: "originals" } },
+  { title: "Slots", to: "/casino", icon: "slots", search: { cat: "slots" } },
+  { title: "Live tables", to: "/live", icon: "live" },
+  { title: "Crash", to: "/casino", icon: "crash", search: { cat: "crash" } },
+  { title: "Table", to: "/casino", icon: "table", search: { cat: "table" } },
+  { title: "Promotions", to: "/promotions", icon: "promo" },
 ];
 
 export const BROWSE_FOOT: NavLink[] = [

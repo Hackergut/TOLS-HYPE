@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { GameGrid } from "@/components/games/game-grid";
@@ -6,10 +6,20 @@ import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
 import { CATEGORIES, ORIGINALS, type GameCategory } from "@/lib/games-catalog";
 import { workingByCategory } from "@/lib/operator/working-games";
 
-export const Route = createFileRoute("/_shell/casino")({ component: CasinoPage });
+const CATS = new Set(["all", "originals", "slots", "table", "live", "crash"]);
+
+export const Route = createFileRoute("/_shell/casino")({
+  validateSearch: (search: Record<string, unknown>): { cat: GameCategory | "all" } => ({
+    cat: CATS.has(String(search.cat)) ? (search.cat as GameCategory | "all") : "all",
+  }),
+  component: CasinoPage,
+});
 
 function CasinoPage() {
-  const [cat, setCat] = useState<GameCategory | "all">("all");
+  const { cat, navigate } = Route.useSearch();
+  const setCat = (next: GameCategory | "all") => {
+    void navigate({ search: { cat: next } });
+  };
   const games = useMemo(() => {
     if (cat === "originals") return ORIGINALS.filter((g) => g.original);
     if (cat === "table") return ORIGINALS.filter((g) => g.category === "table");
@@ -23,9 +33,9 @@ function CasinoPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <TolsBreadcrumb items={[{ label: "Lobby", to: "/" }, { label: "Casino" }]} />
       <header>
-        <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">Casino</h1>
+        <h1 className="font-bluescreens text-2xl font-bold tracking-wide uppercase md:text-3xl">Casino</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          TOLS originals plus Wave 1–2 slots and live tables that actually launch on Flexrix.
+          TOLS originals plus verified slots and live tables that launch on Flexrix.
         </p>
       </header>
       <div className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
