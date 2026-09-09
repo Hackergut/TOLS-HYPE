@@ -1,7 +1,7 @@
 import type { CatalogGame, GameCategory } from "@/lib/games-catalog";
 
 /** Incremental Flexrix migration. Only slugs verified against live launch-demo. */
-export type WorkingWave = 1 | 2;
+export type WorkingWave = 1 | 2 | 3;
 
 export type WorkingTitle = {
   slug: string;
@@ -17,6 +17,7 @@ export type WorkingTitle = {
 
 const PP = (slug: string) => `https://common-static.ppgames.net/game_pic/square/200/${slug}.png`;
 const SLOT = "/brand/games/slots.jpg";
+const CRASH = "/brand/games/crash.jpg";
 
 export const WORKING_TITLES: WorkingTitle[] = [
   { slug: "vs20fruitsw", title: "Sweet Bonanza", provider: "Pragmatic Play", category: "slots", wave: 1, demo: true, cover: PP("vs20fruitsw"), hot: true },
@@ -84,13 +85,30 @@ export const WORKING_TITLES: WorkingTitle[] = [
   { slug: "rise-sun-god", title: "Rise Sun God", provider: "PG Soft", category: "slots", wave: 2, demo: true, cover: SLOT },
   { slug: "gemstones-gold", title: "Gemstones Gold", provider: "PG Soft", category: "slots", wave: 2, demo: true, cover: SLOT },
 
+  { slug: "the-vampires", title: "The Vampires", provider: "Endorphina", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "gift-of-midas", title: "Gift of Midas", provider: "Endorphina", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "dia-de-los-muertos", title: "Dia De Los Muertos", provider: "Endorphina", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "5174", title: "10 Alebrijes Eternal", provider: "Amusnet", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "sgtreasuretomb", title: "Treasure Tomb", provider: "Habanero", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "relax-moneytrain3", title: "Money Train 3", provider: "Relax Gaming", category: "slots", wave: 3, demo: true, cover: SLOT, hot: true },
+  { slug: "spribe-aviator", title: "Aviator", provider: "Spribe", category: "slots", wave: 3, demo: true, cover: CRASH, hot: true },
+  { slug: "ss-jetx", title: "JetX", provider: "SmartSoft", category: "slots", wave: 3, demo: true, cover: CRASH, hot: true },
+  { slug: "ss-jetx3", title: "JetX3", provider: "SmartSoft", category: "slots", wave: 3, demo: true, cover: CRASH },
+  { slug: "ss-helicopterx", title: "HelicopterX", provider: "SmartSoft", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "ss-balloonx", title: "BalloonX", provider: "SmartSoft", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "cq9_89", title: "Thor", provider: "CQ9", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "cq9_163", title: "Ne Zha Advent", provider: "CQ9", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "fachai-22053", title: "Legend of Inca", provider: "FaChai", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "fachai-22036", title: "Richman", provider: "FaChai", category: "slots", wave: 3, demo: true, cover: SLOT },
+  { slug: "rp_88", title: "Immortal Ways Diamonds", provider: "RubyPlay", category: "slots", wave: 3, demo: true, cover: SLOT },
+
   { slug: "evo-crazy-time", title: "Crazy Time", provider: "Evolution", category: "live", wave: 1, demo: false, cover: "/brand/games/roulette.jpg", hot: true },
   { slug: "evo-lightning-roulette", title: "Lightning Roulette", provider: "Evolution", category: "live", wave: 1, demo: false, cover: "/brand/games/roulette.jpg", hot: true },
   { slug: "evo-funky-time", title: "Funky Time", provider: "Evolution", category: "live", wave: 1, demo: false, cover: "/brand/games/roulette.jpg" },
   { slug: "evo-monopoly-big-baller", title: "Monopoly Big Baller", provider: "Evolution", category: "live", wave: 1, demo: false, cover: "/brand/games/roulette.jpg" },
   { slug: "evo-dragon-tiger", title: "Dragon Tiger", provider: "Evolution", category: "live", wave: 1, demo: false, cover: "/brand/games/blackjack.jpg" },
   { slug: "evo-auto-roulette", title: "Auto-Roulette", provider: "Evolution", category: "live", wave: 1, demo: false, cover: "/brand/games/roulette.jpg" },
-  { slug: "spaceman", title: "Spaceman", provider: "Pragmatic Play Live", category: "live", wave: 1, demo: false, cover: "/brand/games/crash.jpg", hot: true },
+  { slug: "spaceman", title: "Spaceman", provider: "Pragmatic Play Live", category: "live", wave: 1, demo: false, cover: CRASH, hot: true },
 ];
 
 export const WORKING_SLUGS = new Set(WORKING_TITLES.map((t) => t.slug));
