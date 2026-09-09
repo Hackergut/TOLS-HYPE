@@ -1,19 +1,30 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiFireFill, RiRecordCircleFill, RiSparkling2Fill } from "@remixicon/react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
 import type { CatalogGame } from "@/lib/games-catalog";
 
+const FALLBACK = "/brand/games/slots.jpg";
+
 export function GameCard({ game }: { game: CatalogGame }) {
+  const providerArt = game.kind === "iframe" || (!game.original && game.category === "slots");
+  const [src, setSrc] = useState(game.cover || FALLBACK);
+
   return (
     <Link to="/games/$id" params={{ id: game.id }} className="group block focus-visible:outline-none">
       <article className="overflow-hidden rounded-2xl bg-card transition-transform duration-(--motion-fast) ease-(--ease-smooth-out) group-hover:-translate-y-0.5">
         <div className="relative">
-          <AspectRatio ratio={9 / 16} className="overflow-hidden bg-muted">
+          <AspectRatio ratio={providerArt ? 3 / 4 : 9 / 16} className="overflow-hidden bg-muted">
             <img
-              src={game.cover}
+              src={src}
               alt=""
-              className="size-full rounded-md object-cover transition-transform duration-(--motion-fast) group-hover:scale-105"
+              width={providerArt ? 480 : 360}
+              height={providerArt ? 640 : 640}
+              loading="lazy"
+              decoding="async"
+              onError={() => setSrc(FALLBACK)}
+              className="size-full rounded-md object-cover object-center transition-transform duration-(--motion-fast) group-hover:scale-105"
             />
           </AspectRatio>
           <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary/90 via-black/10 to-transparent" />
@@ -45,11 +56,7 @@ export function GameCard({ game }: { game: CatalogGame }) {
                 </h3>
                 <p className="text-[0.7rem] text-white/65">{game.provider}</p>
               </div>
-              <img
-                src="/brand/tols-t.png"
-                alt=""
-                className="size-7 shrink-0 object-contain"
-              />
+              <img src="/brand/tols-t.png" alt="" className="size-7 shrink-0 object-contain" />
             </div>
           </div>
           <span className="absolute inset-x-0 bottom-0 h-1 bg-lime" />
