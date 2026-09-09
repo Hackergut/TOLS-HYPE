@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/home/hero";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { GameGrid } from "@/components/games/game-grid";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES, GAMES, gamesByCategory, type GameCategory } from "@/lib/games-catalog";
+import { CATEGORIES, GAMES, ORIGINALS, type GameCategory } from "@/lib/games-catalog";
+import { WORKING_GAMES, workingByCategory } from "@/lib/operator/working-games";
 
 const TITLE = "TOLS — Originals casino | Crash, Dice, Roulette, Blackjack";
 const DESC =
@@ -34,7 +35,15 @@ export const Route = createFileRoute("/_shell/")({
 
 function Home() {
   const [cat, setCat] = useState<GameCategory | "all">("all");
-  const originals = GAMES.filter((g) => g.original);
+  const originals = ORIGINALS.filter((g) => g.original);
+  const grid = useMemo(() => {
+    if (cat === "originals" || cat === "table" || cat === "crash") {
+      return ORIGINALS.filter((g) => (cat === "originals" ? g.original : g.category === cat));
+    }
+    if (cat === "slots") return workingByCategory("slots");
+    if (cat === "live") return workingByCategory("live");
+    return originals;
+  }, [cat, originals]);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 md:gap-8">
@@ -71,13 +80,15 @@ function Home() {
       </div>
       <PromoBanner />
       <section>
-        <h2 className="font-heading mb-4 text-lg font-bold tracking-tight md:text-xl">Originals</h2>
-        <GameGrid games={cat === "all" ? originals : gamesByCategory(cat)} />
+        <h2 className="font-heading mb-4 text-lg font-bold tracking-tight md:text-xl">
+          {cat === "slots" ? "Slots" : cat === "live" ? "Live" : "Originals"}
+        </h2>
+        <GameGrid games={grid} />
       </section>
       {cat === "all" ? (
         <section>
-          <h2 className="font-heading mb-4 text-lg font-bold tracking-tight md:text-xl">Full lobby</h2>
-          <GameGrid games={GAMES} />
+          <h2 className="font-heading mb-4 text-lg font-bold tracking-tight md:text-xl">Verified slots</h2>
+          <GameGrid games={WORKING_GAMES.filter((g) => g.category === "slots").slice(0, 18)} />
         </section>
       ) : null}
     </main>
