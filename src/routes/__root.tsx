@@ -9,6 +9,9 @@ import { skin, skinStyle } from "@/lib/operator/skin";
 import appCss from "../styles.css?url";
 
 const APP_NAME = skin.name;
+const APP_DESC =
+  "TOLS — originals casino for crash, roulette, blackjack, slots, dice, mines, keno, and hi-lo. Play-money balances.";
+const OG_IMAGE = "/og.jpg";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -19,11 +22,19 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#1c1c22" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      {
-        name: "description",
-        content:
-          "TOLS — originals casino for crash, roulette, blackjack, slots, dice, mines, keno, and hi-lo. Play-money balances.",
-      },
+      { name: "description", content: APP_DESC },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: APP_NAME },
+      { property: "og:title", content: `${APP_NAME} ORIGINALS` },
+      { property: "og:description", content: APP_DESC },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "TOLS ORIGINALS — crypto casino" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: `${APP_NAME} ORIGINALS` },
+      { name: "twitter:description", content: APP_DESC },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
