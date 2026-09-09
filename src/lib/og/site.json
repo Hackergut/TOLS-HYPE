@@ -1,5 +1,9 @@
 {
   "title": "TOLS",
+  "description": "Originals casino — crash, dice, roulette, blackjack, slots. Lime on anthracite.",
   "type": "x:game",
-  "card": "custom"
+  "card": "custom",
+  "image": "/og.jpg",
+  "banner": "/x-banner.jpg",
+  "color": "cdf32b"
 }
