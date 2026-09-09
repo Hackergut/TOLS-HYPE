@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PlayGate } from "@/components/games/play-gate";
 import { GameShell } from "@/components/games/game-shell";
-import { launchRemoteGame } from "@/lib/operator/operator.server";
+import { launchRemoteGame } from "@/lib/operator/rpc";
 import { useWallet } from "@/lib/wallet-context";
 
 export function AggregatorFrame({ gameId }: { gameId: string }) {
