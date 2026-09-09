@@ -1,7 +1,4 @@
 import { createHash, createHmac, randomBytes } from "node:crypto";
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { floatsFromDigest, type FairProof } from "@/lib/fair";
 
@@ -56,44 +53,37 @@ export async function takeFair(userId: string, count = 8): Promise<FairTake> {
   };
 }
 
-export const getFairState = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
-  .handler(async ({ context }) => {
-    const row = await loadOrCreate(context.userId);
-    return {
-      serverHash: row.server_hash,
-      clientSeed: row.client_seed,
-      nonce: row.nonce,
-    } satisfies FairProof;
-  });
+export async function fairSnapshot(userId: string): Promise<FairProof> {
+  const row = await loadOrCreate(userId);
+  return {
+    serverHash: row.server_hash,
+    clientSeed: row.client_seed,
+    nonce: row.nonce,
+  };
+}
 
-export const setClientSeed = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator(z.object({ clientSeed: z.string().min(1).max(64) }))
-  .handler(async ({ context, data }) => {
-    await loadOrCreate(context.userId);
-    const sql = await getSql();
-    const seed = data.clientSeed.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
-    await sql`update fair_seeds set client_seed = ${seed} where user_id = ${context.userId}`;
-    return { clientSeed: seed };
-  });
+export async function applyClientSeed(userId: string, clientSeed: string) {
+  await loadOrCreate(userId);
+  const sql = await getSql();
+  const seed = clientSeed.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
+  await sql`update fair_seeds set client_seed = ${seed} where user_id = ${userId}`;
+  return { clientSeed: seed };
+}
 
-export const rotateServerSeed = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .handler(async ({ context }) => {
-    const prev = await loadOrCreate(context.userId);
-    const next = randomBytes(32).toString("hex");
-    const nextHash = hashSeed(next);
-    const sql = await getSql();
-    await sql`
-      update fair_seeds
-      set server_seed = ${next}, server_hash = ${nextHash}, nonce = 0
-      where user_id = ${context.userId}
-    `;
-    return {
-      revealedSeed: prev.server_seed,
-      revealedHash: prev.server_hash,
-      nextHash,
-      clientSeed: prev.client_seed,
-    };
-  });
+export async function rotateFairSeed(userId: string) {
+  const prev = await loadOrCreate(userId);
+  const next = randomBytes(32).toString("hex");
+  const nextHash = hashSeed(next);
+  const sql = await getSql();
+  await sql`
+    update fair_seeds
+    set server_seed = ${next}, server_hash = ${nextHash}, nonce = 0
+    where user_id = ${userId}
+  `;
+  return {
+    revealedSeed: prev.server_seed,
+    revealedHash: prev.server_hash,
+    nextHash,
+    clientSeed: prev.client_seed,
+  };
+}
