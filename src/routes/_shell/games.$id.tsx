@@ -15,6 +15,7 @@ import { LiveFeed } from "@/components/games/live-feed";
 import { GameTableProvider } from "@/components/games/game-table";
 import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
 import { GAMES, getGame } from "@/lib/games-catalog";
+import { getWorkingGame, WORKING_GAMES } from "@/lib/operator/working-games";
 
 export const Route = createFileRoute("/_shell/games/$id")({
   component: GamePage,
@@ -22,12 +23,14 @@ export const Route = createFileRoute("/_shell/games/$id")({
 
 function GamePage() {
   const { id } = Route.useParams();
-  const game = getGame(id);
+  const game = getGame(id) ?? getWorkingGame(id);
   if (!game) {
     return (
       <main className="mx-auto max-w-lg py-16 text-center">
         <h1 className="font-heading text-2xl font-semibold">Table closed</h1>
-        <p className="mt-2 text-sm text-muted-foreground">That id is not in the catalog.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          That title is not in the verified Flexrix waves yet.
+        </p>
         <Link to="/casino" className="mt-4 inline-block text-sm text-primary">
           Return to casino
         </Link>
@@ -35,7 +38,7 @@ function GamePage() {
     );
   }
 
-  const more = GAMES.filter((g) => g.id !== game.id).slice(0, 6);
+  const more = [...GAMES.filter((g) => g.id !== game.id), ...WORKING_GAMES.filter((g) => g.id !== game.id)].slice(0, 6);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">
