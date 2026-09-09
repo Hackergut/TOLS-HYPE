@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="TOLS ORIGINALS">
+  <defs>
+    <linearGradient id="tols-og-bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5b00b8"/>
+      <stop offset="0.55" stop-color="#2a0060"/>
+      <stop offset="1" stop-color="#0a0014"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#tols-og-bg)"/>
+  <g fill="none" stroke="#cdf32b" stroke-width="22" stroke-linecap="square" stroke-linejoin="miter">
+    <!-- T -->
+    <path d="M248 188h176M336 188v252"/>
+    <!-- O elongated official oval -->
+    <ellipse cx="516" cy="314" rx="68" ry="128"/>
+    <!-- L -->
+    <path d="M628 188v252h168"/>
+    <!-- S -->
+    <path d="M932 214c0-28-24-48-62-48h-48c-42 0-68 24-68 56 0 30 18 46 62 52l48 8c36 6 50 20 50 44 0 32-26 54-70 54h-52c-44 0-72-24-72-58"/>
+  </g>
+  <text x="600" y="510" text-anchor="middle" fill="#cdf32b" font-family="Tektur, Arial Black, sans-serif" font-size="28" font-weight="600" letter-spacing="14">ORIGINALS</text>
+</svg>

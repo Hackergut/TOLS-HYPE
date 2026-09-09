@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500" role="img" aria-label="TOLS CRYPTO CASINO">
+  <defs>
+    <linearGradient id="tols-xb-bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5b00b8"/>
+      <stop offset="0.55" stop-color="#2a0060"/>
+      <stop offset="1" stop-color="#0a0014"/>
+    </linearGradient>
+  </defs>
+  <rect width="1500" height="500" fill="url(#tols-xb-bg)"/>
+  <!-- avatar safe zone: nothing in bottom-left 280x160 -->
+  <g fill="none" stroke="#cdf32b" stroke-width="20" stroke-linecap="square" stroke-linejoin="miter" transform="translate(280,46)">
+    <path d="M20 70h150M95 70v210"/>
+    <ellipse cx="268" cy="175" rx="58" ry="108"/>
+    <path d="M360 70v210h145"/>
+    <path d="M630 92c0-24-20-40-54-40h-42c-36 0-58 20-58 48 0 26 16 40 54 46l42 7c30 5 44 16 44 38 0 28-22 46-60 46h-46c-38 0-62-20-62-50"/>
+  </g>
+  <!-- official hollow T emblem, right side -->
+  <g fill="none" stroke="#cdf32b" stroke-width="18" transform="translate(1188,150)">
+    <path d="M8 8h196v56H132v168H80V64H8V8Z"/>
+  </g>
+  <text x="618" y="400" text-anchor="middle" fill="#cdf32b" font-family="Tektur, Arial Black, sans-serif" font-size="18" font-weight="600" letter-spacing="10">ORIGINALS · CRYPTO CASINO</text>
+</svg>
