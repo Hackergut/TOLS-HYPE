@@ -12,8 +12,8 @@ export function PlayerShot({
 }) {
   const p = playerFor(handle);
   return (
-    <span className={cn("player-shot", className)} data-tone={tone ?? p.tone}>
-      <img src={p.src} alt="" loading="lazy" decoding="async" width={96} height={96} />
+    <span className={cn("player-shot", className)} data-tone={tone ?? p.tone} aria-hidden>
+      {p.initial}
     </span>
   );
 }
@@ -34,7 +34,7 @@ export function BetPlayerCard({
   const win = payout > 0;
   return (
     <article className="bet-player">
-      <PlayerShot handle={user} className="h-full min-h-24 w-24" />
+      <PlayerShot handle={user} />
       <div className="flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2">
         <p className="truncate font-medium">{user}</p>
         <p className="truncate text-xs text-muted-foreground">{game}</p>

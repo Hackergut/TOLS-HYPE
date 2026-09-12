@@ -2,27 +2,21 @@ export type PlayerTone = "mint" | "blue" | "violet";
 
 export type PlayerSkin = {
   handle: string;
-  src: string;
+  initial: string;
   tone: PlayerTone;
 };
 
-const ROSTER: PlayerSkin[] = [
-  { handle: "nova", src: "/brand/players/annabel.jpg", tone: "mint" },
-  { handle: "hex", src: "/brand/players/anthony.jpg", tone: "mint" },
-  { handle: "lido", src: "/brand/players/amir.jpg", tone: "blue" },
-  { handle: "ash", src: "/brand/players/balaji.jpg", tone: "blue" },
-  { handle: "kite", src: "/brand/players/reed.jpg", tone: "violet" },
-  { handle: "orio", src: "/brand/players/anthony.jpg", tone: "mint" },
-  { handle: "ven", src: "/brand/players/annabel.jpg", tone: "mint" },
-  { handle: "sol", src: "/brand/players/amir.jpg", tone: "blue" },
-];
+const TONES: PlayerTone[] = ["mint", "blue", "violet"];
 
-const FALLBACK: PlayerSkin[] = [
-  { handle: "annabel", src: "/brand/players/annabel.jpg", tone: "mint" },
-  { handle: "anthony", src: "/brand/players/anthony.jpg", tone: "mint" },
-  { handle: "amir", src: "/brand/players/amir.jpg", tone: "blue" },
-  { handle: "balaji", src: "/brand/players/balaji.jpg", tone: "blue" },
-  { handle: "reed", src: "/brand/players/reed.jpg", tone: "violet" },
+const ROSTER: PlayerSkin[] = [
+  { handle: "nova", initial: "N", tone: "mint" },
+  { handle: "hex", initial: "H", tone: "mint" },
+  { handle: "lido", initial: "L", tone: "blue" },
+  { handle: "ash", initial: "A", tone: "blue" },
+  { handle: "kite", initial: "K", tone: "violet" },
+  { handle: "orio", initial: "O", tone: "mint" },
+  { handle: "ven", initial: "V", tone: "mint" },
+  { handle: "sol", initial: "S", tone: "blue" },
 ];
 
 export function playerFor(handle: string): PlayerSkin {
@@ -31,5 +25,6 @@ export function playerFor(handle: string): PlayerSkin {
   if (hit) return hit;
   let h = 0;
   for (const c of key) h = (h + c.charCodeAt(0) * 17) % 997;
-  return { ...FALLBACK[h % FALLBACK.length]!, handle };
+  const initial = (key[0] || "?").toUpperCase();
+  return { handle, initial, tone: TONES[h % TONES.length]! };
 }

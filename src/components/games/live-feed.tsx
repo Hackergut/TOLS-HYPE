@@ -137,7 +137,7 @@ function WeeklyRace() {
       <ul className="grid gap-2">
         {RACE.map((r) => (
           <li key={r.rank} className="bet-player">
-            <PlayerShot handle={r.user} className="h-full min-h-16 w-16" />
+            <PlayerShot handle={r.user} />
             <div className="flex min-w-0 items-center justify-between gap-3 px-3 py-2">
               <div className="min-w-0">
                 <p className="font-sub text-[0.65rem] tracking-[0.14em] text-lime uppercase">#{r.rank}</p>
