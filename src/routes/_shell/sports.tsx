@@ -15,6 +15,7 @@ import { FieldBoard } from "@/components/sports/field-board";
 import { type SlipMode } from "@/components/sports/bet-slip";
 import { SlipDock } from "@/components/sports/slip-dock";
 import { EventCard } from "@/components/sports/event-card";
+import { FlexrixSportsFrame } from "@/components/sports/flexrix-frame";
 import { placeSportBet } from "@/lib/casino-api";
 import { cn } from "cn";
 import { formatMoney } from "@/lib/format";
@@ -121,7 +122,7 @@ function SportsBook() {
           <BluescreenTitle as="h1" className="text-3xl font-bold md:text-4xl">
             Markets
           </BluescreenTitle>
-          <p className="font-sub mt-1 text-sm text-muted-foreground">1X2 · spread · totals · BTTS. Not the casino.</p>
+          <p className="font-sub mt-1 text-sm text-muted-foreground">Live book in English. Wallet callbacks on TOLS.</p>
         </div>
         <div className="flex rounded-lg bg-muted p-0.5">
           {ODDS_FORMATS.map((f) => (
@@ -139,6 +140,8 @@ function SportsBook() {
           ))}
         </div>
       </header>
+
+      <FlexrixSportsFrame />
 
       <div className="flex gap-1 overflow-x-auto pb-0.5">
         {FILTERS.map((f) => {
