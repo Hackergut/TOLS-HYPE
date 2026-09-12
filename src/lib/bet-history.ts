@@ -13,7 +13,10 @@ export type RoundView =
   | { kind: "keno"; hits: number; picks?: number; selected?: number[]; drawn?: number[] }
   | { kind: "hilo"; label: string; pick?: "higher" | "lower"; prev?: number; next?: number; prevSuit?: string; nextSuit?: string }
   | { kind: "blackjack"; outcome: string; playerTotal?: number; dealerTotal?: number; player?: SnapCard[]; dealer?: SnapCard[] }
-  | { kind: "pool"; balls: number; scratch?: boolean; pocketed?: number[] };
+  | { kind: "pool"; balls: number; scratch?: boolean; pocketed?: number[] }
+  | { kind: "limbo"; roll: number; target: number }
+  | { kind: "plinko"; bucket: number; multiplier: number }
+  | { kind: "tower"; row: number; boom?: boolean };
 
 export type BetRound = {
   id: string;

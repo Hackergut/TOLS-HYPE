@@ -9,6 +9,9 @@ import { MinesGame } from "@/components/games/mines-game";
 import { RouletteGame } from "@/components/games/roulette-game";
 import { SlotsGame } from "@/components/games/slots-game";
 import { PoolGame } from "@/components/games/pool-game";
+import { LimboGame } from "@/components/games/limbo-game";
+import { PlinkoGame } from "@/components/games/plinko-game";
+import { TowerGame } from "@/components/games/tower-game";
 import { AggregatorFrame } from "@/components/games/aggregator-frame";
 import { GameLegend } from "@/components/games/game-legend";
 import { LiveFeed } from "@/components/games/live-feed";
@@ -132,6 +135,12 @@ function GameSwitch({ kind, id }: { kind: string; id: string }) {
       return <HiloGame gameId={id} />;
     case "pool":
       return <PoolGame gameId={id} />;
+    case "limbo":
+      return <LimboGame gameId={id} />;
+    case "plinko":
+      return <PlinkoGame gameId={id} />;
+    case "tower":
+      return <TowerGame gameId={id} />;
     case "iframe":
       return <AggregatorFrame gameId={id} />;
     default:

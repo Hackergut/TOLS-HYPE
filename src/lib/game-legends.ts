@@ -154,6 +154,53 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
       "K–A rail — Ace low",
     ],
   },
+  limbo: {
+    summary:
+      "You set a target multiplier. A number is drawn from the 1/x curve at 99% RTP. Hit if the draw is at or above your target — you are paid the target, not the raw draw.",
+    what: "Limbo is a TOLS Original of one number. Higher targets pay more and hit less.",
+    how: [
+      "Set stake and a target at or above 1.01×.",
+      "Bet. The server draws a crash-style number.",
+      "If the number ≥ target, you win stake × target.",
+      "If it lands under, the round is 0×.",
+    ],
+    features: ["99% RTP", "Target you choose", "Instant settle"],
+    payouts: [
+      { label: "Hit", value: "Stake × target" },
+      { label: "Under", value: "0×" },
+    ],
+    symbols: ["Lime number — the draw", "Target — your line"],
+  },
+  plinko: {
+    summary:
+      "A chip falls through 8, 12, or 16 rows. Each peg is a fair coin flip. Edge buckets pay more. Risk Low / Medium / High reshapes the table.",
+    what: "Plinko is a TOLS Original drop. The path is HMAC floats; the bucket index is how many times it bounced right.",
+    how: [
+      "Pick rows and risk, set stake, Drop.",
+      "The chip walks left/right each row.",
+      "It lands in a bucket. That multiplier settles the bet.",
+    ],
+    features: ["8 / 12 / 16 rows", "Three risk tables", "99% RTP envelope"],
+    payouts: [{ label: "Bucket", value: "Table × stake" }],
+    symbols: ["Peg — 50/50 bounce", "Lime bucket — last drop"],
+  },
+  tower: {
+    summary:
+      "Eight floors, three tiles, one death per floor. Each safe pick multiplies by 0.99 ÷ (2/3). Cash out any time — or hit death and the climb is 0×.",
+    what: "Tower is a TOLS Original of nerve, row by row. Same math family as Mines, stacked.",
+    how: [
+      "Start a climb.",
+      "Pick one of three tiles on the live floor.",
+      "Safe continues. Death ends at 0×.",
+      "Cash out after any safe floor.",
+    ],
+    features: ["8 floors", "Cash out any time", "1% edge"],
+    payouts: [
+      { label: "Each floor", value: "×1.48" },
+      { label: "Death", value: "0×" },
+    ],
+    symbols: ["Lime tile — safe pick", "Red × — death"],
+  },
   crash: {
     summary:
       "A multiplier climbs from 1.00× until it busts. Cash out before the crash or ride it to zero. Instant-bust chance equals the 1% edge.",

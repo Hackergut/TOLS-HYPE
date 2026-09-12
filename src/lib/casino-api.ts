@@ -11,6 +11,7 @@ import {
 import { asNumber } from "./format";
 import { takeFair } from "@/lib/fair.server";
 import { crashPointFromFloat, diceRoll, pickIndex, uniquePicks } from "@/lib/fair";
+import { limboFromFloat, plinkoBucket, plinkoMultipliers, towerMultiplier, TOWER_COLS, TOWER_ROWS } from "@/lib/originals";
 import { poolMultiplier, simulateBreak, type PoolDiff } from "@/lib/pool-physics";
 import {
   credit,
@@ -85,6 +86,7 @@ export const cashier = createServerFn({ method: "POST" })
   });
 
 function assertBet(currency: Currency, amount: number) {
+  if (amount === 0) return;
   const meta = CURRENCY_META[currency];
   if (amount < meta.minBet) throw new Error(`Minimum bet is ${meta.minBet} ${currency}`);
   if (amount > meta.maxBet) throw new Error(`Maximum bet is ${meta.maxBet} ${currency}`);
@@ -114,9 +116,11 @@ export const playInstant = createServerFn({ method: "POST" })
     z.object({
       gameId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
       choice: z.string().optional(),
-      target: z.number().min(0.01).max(98).optional(),
+      target: z.number().min(0.01).max(1_000_000).optional(),
+      rows: z.union([z.literal(8), z.literal(12), z.literal(16)]).optional(),
+      risk: z.enum(["low", "medium", "high"]).optional(),
     }),
   )
   .handler(async ({ context, data }): Promise<PlayResult> => {
@@ -124,8 +128,10 @@ export const playInstant = createServerFn({ method: "POST" })
     if (!game) throw new Error("Unknown game");
     assertBet(data.currency, data.amount);
     await ensureWallets(context.userId);
-    await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
-    const fair = await takeFair(context.userId, 8);
+    if (data.amount > 0) {
+      await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
+    }
+    const fair = await takeFair(context.userId, 16);
     const u = fair.floats;
 
     let payout = 0;
@@ -173,15 +179,32 @@ export const playInstant = createServerFn({ method: "POST" })
       payout = slotsPayout(reels, data.amount);
       multiplier = payout > 0 ? payout / data.amount : 0;
       detail.reels = reels;
+    } else if (game.kind === "limbo") {
+      const crash = limboFromFloat(u[0]!);
+      const target = Math.max(1.01, data.target ?? 2);
+      const win = crash >= target;
+      multiplier = win ? target : 0;
+      payout = win ? data.amount * target : 0;
+      detail.roll = crash;
+    } else if (game.kind === "plinko") {
+      const rows = (data.rows ?? 8) as 8 | 12 | 16;
+      const risk = data.risk ?? "medium";
+      const table = plinkoMultipliers(rows, risk);
+      const bucket = plinkoBucket(u, rows);
+      const m = table[Math.min(bucket, table.length - 1)] ?? 0;
+      multiplier = m;
+      payout = data.amount * m;
+      detail.number = bucket;
+      detail.roll = m;
     } else if (game.kind === "crash") {
       throw new Error("Use startCrash for this game");
     } else if (game.kind === "blackjack") {
       throw new Error("Use dealBlackjack for this game");
-    } else if (game.kind === "mines" || game.kind === "keno" || game.kind === "hilo" || game.kind === "pool") {
+    } else if (game.kind === "mines" || game.kind === "keno" || game.kind === "hilo" || game.kind === "pool" || game.kind === "tower") {
       throw new Error("Use the dedicated play function for this game");
     }
 
-    if (payout > 0) {
+    if (payout > 0 && data.amount > 0) {
       await credit(context.userId, data.currency, payout, "win", game.id, game.title);
     }
     return { payout, multiplier, detail, balances: await snapshot(context.userId), fair };
@@ -952,6 +975,118 @@ export const listGameWins = createServerFn({ method: "GET" })
       currency: parseCurrency(r.currency),
       multiplier: null,
     }));
+  });
+
+type TowerPayload = { deaths: number[]; row: number; cols: number; rows: number };
+
+export const startTower = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      gameId: z.string(),
+      currency: currencySchema,
+      amount: z.number().min(0),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const game = getGame(data.gameId);
+    if (!game || game.kind !== "tower") throw new Error("Not a tower game");
+    assertBet(data.currency, data.amount);
+    await ensureWallets(context.userId);
+    if (data.amount > 0) {
+      await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
+    }
+    const fair = await takeFair(context.userId, TOWER_ROWS);
+    const deaths = Array.from({ length: TOWER_ROWS }, (_, i) => pickIndex(fair.floats[i] ?? 0.5, TOWER_COLS));
+    const payload: TowerPayload = { deaths, row: 0, cols: TOWER_COLS, rows: TOWER_ROWS };
+    const id = newRoundId();
+    const sql = await getSql();
+    await sql`
+      insert into game_rounds (id, user_id, game_id, status, bet_amount, currency, payload)
+      values (${id}, ${context.userId}, ${game.id}, 'open', ${data.amount}, ${data.currency}, ${JSON.stringify(payload)})
+    `;
+    return { roundId: id, rows: TOWER_ROWS, cols: TOWER_COLS, multiplier: 1 };
+  });
+
+export const pickTower = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ roundId: z.string(), col: z.number().int().min(0).max(3) }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const rows = await sql<{
+      payload: string;
+      status: string;
+      bet_amount: string;
+      currency: string;
+      game_id: string;
+    }>`
+      select payload, status, bet_amount, currency, game_id
+      from game_rounds
+      where id = ${data.roundId} and user_id = ${context.userId}
+    `;
+    const round = rows[0];
+    if (!round || round.status !== "open") throw new Error("Round not open");
+    const payload = JSON.parse(round.payload) as TowerPayload;
+    const death = payload.deaths[payload.row] ?? 0;
+    const hit = data.col === death;
+    const nextRow = payload.row + 1;
+    if (hit) {
+      await sql`
+        update game_rounds set status = 'settled', payload = ${JSON.stringify({ ...payload, row: nextRow })}
+        where id = ${data.roundId} and user_id = ${context.userId}
+      `;
+      return { boom: true, row: payload.row, deaths: payload.deaths, multiplier: 0, payout: 0 };
+    }
+    const multiplier = towerMultiplier(nextRow);
+    const done = nextRow >= payload.rows;
+    if (done) {
+      const amount = asNumber(round.bet_amount);
+      const payout = amount * multiplier;
+      if (payout > 0 && amount > 0) {
+        await credit(context.userId, parseCurrency(round.currency), payout, "win", round.game_id, "Tower");
+      }
+      await sql`
+        update game_rounds set status = 'settled', payload = ${JSON.stringify({ ...payload, row: nextRow })}
+        where id = ${data.roundId} and user_id = ${context.userId}
+      `;
+      return { boom: false, row: nextRow, multiplier, payout, done: true, balances: await snapshot(context.userId) };
+    }
+    await sql`
+      update game_rounds set payload = ${JSON.stringify({ ...payload, row: nextRow })}
+      where id = ${data.roundId} and user_id = ${context.userId}
+    `;
+    return { boom: false, row: nextRow, multiplier, done: false };
+  });
+
+export const cashTower = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ roundId: z.string() }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const rows = await sql<{
+      payload: string;
+      status: string;
+      bet_amount: string;
+      currency: string;
+      game_id: string;
+    }>`
+      select payload, status, bet_amount, currency, game_id
+      from game_rounds
+      where id = ${data.roundId} and user_id = ${context.userId}
+    `;
+    const round = rows[0];
+    if (!round || round.status !== "open") throw new Error("Round not open");
+    const payload = JSON.parse(round.payload) as TowerPayload;
+    const multiplier = towerMultiplier(payload.row);
+    const amount = asNumber(round.bet_amount);
+    const payout = amount * multiplier;
+    if (payout > 0 && amount > 0) {
+      await credit(context.userId, parseCurrency(round.currency), payout, "win", round.game_id, "Tower");
+    }
+    await sql`
+      update game_rounds set status = 'settled' where id = ${data.roundId} and user_id = ${context.userId}
+    `;
+    return { payout, multiplier, balances: await snapshot(context.userId) };
   });
 
 

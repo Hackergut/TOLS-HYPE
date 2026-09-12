@@ -161,6 +161,9 @@ const ART: Record<CatalogGame["kind"], (p: { hue: number }) => ReactNode> = {
   keno: ({ hue }) => <MinesArt hue={hue} />,
   hilo: ({ hue }) => <BlackjackArt hue={hue} />,
   pool: ({ hue }) => <MinesArt hue={hue} />,
+  limbo: ({ hue }) => <CrashArt hue={hue} />,
+  plinko: ({ hue }) => <MinesArt hue={hue} />,
+  tower: ({ hue }) => <MinesArt hue={hue} />,
   iframe: ({ hue }) => <SlotsArt hue={hue} />,
 };
 

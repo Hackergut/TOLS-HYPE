@@ -34,6 +34,9 @@ export type GameKind =
   | "keno"
   | "hilo"
   | "pool"
+  | "limbo"
+  | "plinko"
+  | "tower"
   | "iframe";
 
 export type CatalogGame = {
@@ -174,6 +177,52 @@ export const ORIGINALS: CatalogGame[] = [
     cta: "Bet",
   },
   {
+    id: "pulse-limbo",
+    title: "Limbo",
+    provider: "TOLS Originals",
+    category: "crash",
+    kind: "limbo",
+    original: true,
+    hot: true,
+    isNew: true,
+    players: 1102,
+    edge: 0.01,
+    rtp: 99,
+    blurb: "Set a target. If the number lands at or above, you hit.",
+    cover: "/brand/games/crash.jpg",
+    cta: "Bet",
+  },
+  {
+    id: "grid-plinko",
+    title: "Plinko",
+    provider: "TOLS Originals",
+    category: "originals",
+    kind: "plinko",
+    original: true,
+    isNew: true,
+    players: 988,
+    edge: 0.01,
+    rtp: 99,
+    blurb: "Drop the chip. Buckets pay the edges.",
+    cover: "/brand/games/keno.jpg",
+    cta: "Drop",
+  },
+  {
+    id: "sky-tower",
+    title: "Tower",
+    provider: "TOLS Originals",
+    category: "originals",
+    kind: "tower",
+    original: true,
+    isNew: true,
+    players: 734,
+    edge: 0.01,
+    rtp: 99,
+    blurb: "Eight floors. One death per row. Climb or cash out.",
+    cover: "/brand/games/mines.jpg",
+    cta: "Climb",
+  },
+  {
     id: "voltage-live",
     title: "Live Roulette",
     provider: "Studio Live",
@@ -294,11 +343,12 @@ const ORIGINAL_ALIASES: Record<string, string> = {
   sevens: "pulse-slots",
   "neon-sevens": "pulse-slots",
   pool: "pool-rush",
-  limbo: "neon-crash",
+  limbo: "pulse-limbo",
+  plinko: "grid-plinko",
+  tower: "sky-tower",
   wheel: "midnight-roulette",
   coinflip: "signal-dice",
   coin: "signal-dice",
-  plinko: "keno-40",
   shoot: "grid-mines",
 };
 
