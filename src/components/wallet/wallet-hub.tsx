@@ -90,7 +90,11 @@ function WalletHub() {
         showCloseButton={false}
         className={cn(
           "flex flex-col gap-0 p-0",
-          tab === "wallet" || tab === "vip" ? "w-full max-w-none sm:max-w-md" : "w-[min(100%,44rem)] sm:max-w-xl md:max-w-3xl",
+          tab === "vip"
+            ? "w-[min(100%,22rem)] md:w-80 md:max-w-80"
+            : tab === "wallet"
+              ? "w-full max-w-none sm:max-w-md"
+              : "w-[min(100%,44rem)] sm:max-w-xl md:max-w-3xl",
         )}
       >
         <SheetHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-2">
