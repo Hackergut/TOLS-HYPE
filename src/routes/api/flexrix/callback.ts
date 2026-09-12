@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { handleFlexrixWallet } from "@/lib/operator/flexrix-wallet";
+import { corsHeaders, handleFlexrixWallet } from "@/lib/operator/flexrix-wallet";
 
-async function formBody(request: Request): Promise<Record<string, string>> {
+async function parseBody(request: Request): Promise<Record<string, unknown>> {
   const ct = request.headers.get("content-type") ?? "";
   if (ct.includes("application/json")) {
-    const json = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    return Object.fromEntries(Object.entries(json).map(([k, v]) => [k, v == null ? "" : String(v)]));
+    return ((await request.json().catch(() => ({}))) as Record<string, unknown>) ?? {};
   }
   const text = await request.text();
   return Object.fromEntries(new URLSearchParams(text));
@@ -19,18 +18,19 @@ function headersOf(request: Request): Record<string, string> {
   return headers;
 }
 
+function json(body: unknown, status = 200) {
+  return Response.json(body, { status, headers: corsHeaders() });
+}
+
 export const Route = createFileRoute("/api/flexrix/callback")({
   server: {
     handlers: {
-      GET: async () =>
-        Response.json({
-          ok: true,
-          path: "/api/flexrix/callback",
-          hint: "Register this URL as flexrixCasinoCallbackUrl. POST action=balance|bet|win|refund|rollback",
-        }),
+      OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders() }),
+      HEAD: async () => new Response(null, { status: 200, headers: corsHeaders() }),
+      GET: async () => json({ ok: true, service: "flexrix-callback" }),
       POST: async ({ request }) => {
-        const { status, json } = await handleFlexrixWallet(await formBody(request), headersOf(request));
-        return Response.json(json, { status });
+        const { status, json: body } = await handleFlexrixWallet(await parseBody(request), headersOf(request));
+        return json(body, status);
       },
     },
   },

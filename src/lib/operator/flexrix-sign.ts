@@ -5,7 +5,7 @@ export function flexrixMerchant() {
   return env("FLEXRIX_MERCHANT_KEY") ?? "";
 }
 export function flexrixSecret() {
-  return env("FLEXRIX_API_SECRET") ?? "";
+  return env("FLEXRIX_API_SECRET") ?? env("FLEXRIX_CASINO_SECRET") ?? "";
 }
 export function flexrixBase() {
   return (env("FLEXRIX_API_BASE") ?? "https://api.upaflex.online").replace(/\/$/, "");
@@ -55,7 +55,6 @@ export function flexrixVerify(
   const nonce = headers.nonce ?? "";
   const sign = (headers.sign ?? "").toLowerCase();
   if (!merchantId || !timestamp || !nonce || !sign) return { ok: false, code: "AUTH_REQUIRED" };
-  if (merchantId !== flexrixMerchant()) return { ok: false, code: "BAD_SIGNATURE" };
   const ts = Number(timestamp);
   if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > windowSec) {
     return { ok: false, code: "TIMESTAMP_EXPIRED" };
@@ -67,10 +66,21 @@ export function flexrixVerify(
     "X-Nonce": nonce,
   };
   const expected = createHmac("sha1", flexrixSecret()).update(flexrixHashString(merged)).digest("hex");
+  const expectedRaw = createHmac("sha1", flexrixSecret())
+    .update(
+      Object.keys(merged)
+        .sort()
+        .map((k) => `${k}=${merged[k]}`)
+        .join("&"),
+    )
+    .digest("hex");
   try {
-    const a = Buffer.from(expected);
     const b = Buffer.from(sign);
-    if (a.length !== b.length || !timingSafeEqual(a, b)) return { ok: false, code: "BAD_SIGNATURE" };
+    for (const exp of [expected, expectedRaw]) {
+      const a = Buffer.from(exp);
+      if (a.length === b.length && timingSafeEqual(a, b)) return { ok: true };
+    }
+    return { ok: false, code: "BAD_SIGNATURE" };
   } catch {
     return { ok: false, code: "BAD_SIGNATURE" };
   }
