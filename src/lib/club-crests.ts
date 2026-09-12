@@ -1,5 +1,6 @@
 const CREST = "/brand/sports/crests";
 const NBA = "/brand/sports/nba";
+const TENNIS = "/brand/sports/tennis";
 
 const FILES: Record<string, string> = {
   "ac milan": `${CREST}/ac-milan.webp`,
@@ -134,6 +135,26 @@ const FILES: Record<string, string> = {
   jazz: `${NBA}/utah-jazz.svg`,
   "washington wizards": `${NBA}/washington-wizards.svg`,
   wizards: `${NBA}/washington-wizards.svg`,
+  "jannik sinner": `${TENNIS}/sinner.png`,
+  sinner: `${TENNIS}/sinner.png`,
+  "carlos alcaraz": `${TENNIS}/alcaraz.png`,
+  alcaraz: `${TENNIS}/alcaraz.png`,
+  "novak djokovic": `${TENNIS}/djokovic.png`,
+  djokovic: `${TENNIS}/djokovic.png`,
+  "alexander zverev": `${TENNIS}/zverev.png`,
+  zverev: `${TENNIS}/zverev.png`,
+  "daniil medvedev": `${TENNIS}/medvedev.png`,
+  medvedev: `${TENNIS}/medvedev.png`,
+  "taylor fritz": `${TENNIS}/fritz.png`,
+  fritz: `${TENNIS}/fritz.png`,
+  "ben shelton": `${TENNIS}/shelton.png`,
+  shelton: `${TENNIS}/shelton.png`,
+  "alex de minaur": `${TENNIS}/de-minaur.png`,
+  "de minaur": `${TENNIS}/de-minaur.png`,
+  "flavio cobolli": `${TENNIS}/cobolli.png`,
+  cobolli: `${TENNIS}/cobolli.png`,
+  "felix auger-aliassime": `${TENNIS}/auger-aliassime.png`,
+  "auger-aliassime": `${TENNIS}/auger-aliassime.png`,
 };
 
 const LEAGUES: Record<string, string> = {
@@ -143,6 +164,9 @@ const LEAGUES: Record<string, string> = {
   bundesliga: `${CREST}/bundesliga-germany.webp`,
   "champions league": `${CREST}/uefa-champions-league.svg`,
   "uefa champions league": `${CREST}/uefa-champions-league.svg`,
+  atp: `${TENNIS}/atp.svg`,
+  "atp 500": `${TENNIS}/atp.svg`,
+  "atp tour": `${TENNIS}/atp.svg`,
 };
 
 function key(name: string) {
