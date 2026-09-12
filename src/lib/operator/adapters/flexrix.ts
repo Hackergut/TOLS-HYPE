@@ -31,7 +31,7 @@ export const flexrixAdapter: AggregatorAdapter = {
   async listGames(): Promise<RemoteGame[]> {
     if (!flexrixConfigured()) return [];
     const out: RemoteGame[] = [];
-    for (let page = 1; page <= 3; page++) {
+    for (let page = 1; page <= 40; page++) {
       const params = { page, per_page: 50 };
       const qs = new URLSearchParams({ page: String(page), per_page: "50" }).toString();
       const data = await hubJson<{ items?: HubGame[] }>(`/v1/native/games?${qs}`, { signParams: params });
