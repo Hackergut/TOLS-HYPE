@@ -15,7 +15,6 @@ import { FieldBoard } from "@/components/sports/field-board";
 import { type SlipMode } from "@/components/sports/bet-slip";
 import { SlipDock } from "@/components/sports/slip-dock";
 import { EventCard } from "@/components/sports/event-card";
-import { FlexrixSportsFrame } from "@/components/sports/flexrix-frame";
 import { placeSportBet } from "@/lib/casino-api";
 import { cn } from "cn";
 import { formatMoney } from "@/lib/format";
@@ -140,8 +139,6 @@ function SportsBook() {
           ))}
         </div>
       </header>
-
-      <FlexrixSportsFrame />
 
       <div className="flex gap-1 overflow-x-auto pb-0.5">
         {FILTERS.map((f) => {

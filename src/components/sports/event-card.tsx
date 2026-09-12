@@ -5,7 +5,9 @@ import { formatOdds, type OddsFormat } from "@/lib/odds";
 import { TeamCrest } from "@/components/sports/team-crest";
 import { leagueCrest } from "@/lib/club-crests";
 import {
+  entitySlug,
   hasDraw,
+  isPlayerSport,
   outcomesFor,
   toSlipPick,
   type Outcome,
@@ -54,10 +56,11 @@ export function EventCard({
           {event.league}
         </span>
       </p>
-      <Link to="/sports/$id" params={{ id: event.id }} className="hover:opacity-90">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <Side name={event.home} abbr={event.homeAbbr} score={event.score?.[0]} align="left" />
-          <div className="px-1 text-center">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <EntityLink event={event} side="home">
+            <Side name={event.home} abbr={event.homeAbbr} score={event.score?.[0]} align="left" />
+          </EntityLink>
+          <Link to="/sports/$id" params={{ id: event.id }} className="px-1 text-center hover:opacity-90">
             {event.score ? (
               <p className="font-heading text-lg tabular-nums sm:text-xl">
                 {event.score[0]}
@@ -67,10 +70,11 @@ export function EventCard({
             ) : (
               <p className="font-heading text-xs tracking-[0.18em] text-lime">VS</p>
             )}
-          </div>
-          <Side name={event.away} abbr={event.awayAbbr} score={event.score?.[1]} align="right" />
+          </Link>
+          <EntityLink event={event} side="away">
+            <Side name={event.away} abbr={event.awayAbbr} score={event.score?.[1]} align="right" />
+          </EntityLink>
         </div>
-      </Link>
       <div className="mt-2 grid min-w-0 grid-cols-2 gap-1.5 md:grid-cols-3">
           <MarketCol title={draw ? "1X2" : "ML"} cols={draw ? 3 : 2} className="col-span-2 md:col-span-1">
             {ml.map((o) => (
@@ -115,6 +119,23 @@ export function EventCard({
         </div>
       ) : null}
     </article>
+  );
+}
+
+function EntityLink({ event, side, children }: { event: SportEvent; side: "home" | "away"; children: ReactNode }) {
+  const name = side === "home" ? event.home : event.away;
+  const slug = entitySlug(name);
+  if (isPlayerSport(event.sport)) {
+    return (
+      <Link to="/sports/player/$slug" params={{ slug }} className="min-w-0 hover:opacity-90">
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <Link to="/sports/club/$slug" params={{ slug }} className="min-w-0 hover:opacity-90">
+      {children}
+    </Link>
   );
 }
 

@@ -15,7 +15,7 @@ import { formatMoney } from "@/lib/format";
 import { formatOdds, type OddsFormat } from "@/lib/odds";
 import { marketsGrouped, matchDossier } from "@/lib/match-dossier";
 import { leagueCrest } from "@/lib/club-crests";
-import { eventById, toSlipPick, type SlipPick } from "@/lib/sports-book";
+import { entitySlug, eventById, isPlayerSport, toSlipPick, type SlipPick } from "@/lib/sports-book";
 import { useWallet } from "@/lib/wallet-context";
 
 export const Route = createFileRoute("/_shell/sports/$id")({
@@ -103,7 +103,7 @@ function MatchCenter() {
           </span>
         </p>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <Crest abbr={event.homeAbbr} name={event.home} />
+          <Crest event={event} side="home" />
           <div className="px-2 text-center">
             {event.score ? (
               <p className="font-heading text-4xl tabular-nums md:text-5xl">
@@ -121,7 +121,7 @@ function MatchCenter() {
             ) : null}
             <p className="font-sub mt-1 text-[0.65rem] tracking-[0.12em] text-muted-foreground uppercase">{live.stage}</p>
           </div>
-          <Crest abbr={event.awayAbbr} name={event.away} />
+          <Crest event={event} side="away" />
         </div>
         <div className="mt-4 flex h-2 overflow-hidden rounded-full">
           <div className="bg-lime" style={{ width: `${(winProb.home / wp) * 100}%` }} />
@@ -254,12 +254,16 @@ function MatchCenter() {
   );
 }
 
-function Crest({ abbr, name }: { abbr: string; name: string }) {
+function Crest({ event, side }: { event: import("@/lib/sports-book").SportEvent; side: "home" | "away" }) {
+  const name = side === "home" ? event.home : event.away;
+  const abbr = side === "home" ? event.homeAbbr : event.awayAbbr;
+  const slug = entitySlug(name);
+  const to = isPlayerSport(event.sport) ? "/sports/player/$slug" : "/sports/club/$slug";
   return (
-    <div className="min-w-0 text-center">
+    <Link to={to} params={{ slug }} className="min-w-0 text-center hover:opacity-90">
       <TeamCrest name={name} abbr={abbr} className="mx-auto size-16 sm:size-20" />
       <p className="mt-2 truncate text-sm font-medium">{name}</p>
-    </div>
+    </Link>
   );
 }
 

@@ -439,3 +439,31 @@ export function toSlipPick(ev: SportEvent, o: Outcome): SlipPick {
 export function hasDraw(ev: SportEvent) {
   return ev.markets.ml.length === 3;
 }
+
+export function entitySlug(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function isPlayerSport(sport: SportKind) {
+  return sport === "tennis" || sport === "mma";
+}
+
+export function entityKind(sport: SportKind): "player" | "club" {
+  return isPlayerSport(sport) ? "player" : "club";
+}
+
+export function eventsForName(name: string): SportEvent[] {
+  const s = entitySlug(name);
+  return SPORT_EVENTS.filter((e) => entitySlug(e.home) === s || entitySlug(e.away) === s);
+}
+
+export function entityBySlug(slug: string): { name: string; sport: SportKind; events: SportEvent[] } | null {
+  const hit = SPORT_EVENTS.find((e) => entitySlug(e.home) === slug || entitySlug(e.away) === slug);
+  if (!hit) return null;
+  const name = entitySlug(hit.home) === slug ? hit.home : hit.away;
+  return { name, sport: hit.sport, events: eventsForName(name) };
+}
