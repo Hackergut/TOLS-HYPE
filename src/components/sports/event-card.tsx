@@ -37,31 +37,41 @@ export function EventCard({
   }
 
   return (
-    <article className="sb-card px-2.5 py-2">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          <Link to="/sports/$id" params={{ id: event.id }} className="min-w-0 flex-1 hover:opacity-90">
-          <p className="font-sub flex items-center gap-1.5 text-[0.6rem] tracking-[0.12em] text-muted-foreground uppercase">
-            {event.live ? (
-              <>
-                <span className="sb-pip" />
-                <span className="sb-live">Live {event.minute}</span>
-              </>
+    <article className="sb-card overflow-hidden px-2.5 py-2">
+      <p className="font-sub mb-2 flex items-center justify-center gap-1.5 text-[0.6rem] tracking-[0.12em] text-muted-foreground uppercase">
+        {event.live ? (
+          <>
+            <span className="sb-pip" />
+            <span className="sb-live">Live {event.minute}</span>
+          </>
+        ) : (
+          <span>{event.start}</span>
+        )}
+        <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+          · {leagueCrest(event.league) ? (
+            <img src={leagueCrest(event.league)} alt="" className="inline size-3.5 object-contain" />
+          ) : null}
+          {event.league}
+        </span>
+      </p>
+      <Link to="/sports/$id" params={{ id: event.id }} className="hover:opacity-90">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <Side name={event.home} abbr={event.homeAbbr} score={event.score?.[0]} align="left" />
+          <div className="px-1 text-center">
+            {event.score ? (
+              <p className="font-heading text-lg tabular-nums sm:text-xl">
+                {event.score[0]}
+                <span className="mx-0.5 text-lime">–</span>
+                {event.score[1]}
+              </p>
             ) : (
-              <span>{event.start}</span>
+              <p className="font-heading text-xs tracking-[0.18em] text-lime">VS</p>
             )}
-            <span className="inline-flex items-center gap-1 text-muted-foreground/70">
-              · {leagueCrest(event.league) ? (
-                <img src={leagueCrest(event.league)} alt="" className="inline size-3.5 object-contain" />
-              ) : null}
-              {event.league}
-            </span>
-          </p>
-          <div className="mt-1 grid gap-0.5">
-            <TeamRow abbr={event.homeAbbr} name={event.home} score={event.score?.[0]} />
-            <TeamRow abbr={event.awayAbbr} name={event.away} score={event.score?.[1]} />
           </div>
-          </Link>
-          <div className="grid min-w-0 flex-[1.6] grid-cols-2 gap-1.5 md:grid-cols-3">
+          <Side name={event.away} abbr={event.awayAbbr} score={event.score?.[1]} align="right" />
+        </div>
+      </Link>
+      <div className="mt-2 grid min-w-0 grid-cols-2 gap-1.5 md:grid-cols-3">
           <MarketCol title={draw ? "1X2" : "ML"} cols={draw ? 3 : 2} className="col-span-2 md:col-span-1">
             {ml.map((o) => (
               <OddBtn key={o.id} o={o} format={format} on={selected.has(o.id)} onClick={() => click(o)} />
@@ -86,7 +96,6 @@ export function EventCard({
             )}
           </MarketCol>
         </div>
-      </div>
       {extra.length ? (
         <div className="mt-1.5">
           <button
@@ -147,14 +156,21 @@ function OddBtn({
   );
 }
 
-function TeamRow({ abbr, name, score }: { abbr: string; name: string; score?: number }) {
+function Side({
+  name,
+  abbr,
+  score,
+  align,
+}: {
+  name: string;
+  abbr: string;
+  score?: number;
+  align: "left" | "right";
+}) {
   return (
-    <div className="flex items-center gap-1.5">
-      <TeamCrest name={name} abbr={abbr} className="size-6 sm:size-7" />
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
-      {typeof score === "number" ? (
-        <span className="w-5 text-right font-heading text-sm tabular-nums">{score}</span>
-      ) : null}
+    <div className={cn("flex min-w-0 items-center gap-1.5", align === "right" && "flex-row-reverse text-right")}>
+      <TeamCrest name={name} abbr={abbr} className="size-8 sm:size-9" />
+      <span className="min-w-0 truncate text-sm font-medium">{name}</span>
     </div>
   );
 }
