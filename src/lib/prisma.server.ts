@@ -6,6 +6,24 @@ const globalRef = globalThis as typeof globalThis & {
   __tolsPrisma__?: Promise<PrismaClient>;
 };
 
+function remotePostgresOk(): boolean {
+  const url = env("DATABASE_URL");
+  if (!url) return false;
+  try {
+    const u = new URL(url.replace(/^postgres:\/\//, "postgresql://"));
+    const user = decodeURIComponent(u.username || "");
+    if (user === "postgres" && /supabase\.com|pooler\.supabase/i.test(u.hostname)) {
+      console.warn(
+        "[prisma] DATABASE_URL user is postgres — must be postgres.<project-ref>. Using PGLite until Vercel env is fixed.",
+      );
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function getPrisma(): Promise<PrismaClient> {
   if (typeof window !== "undefined") {
     throw new Error("Prisma is server-only");
@@ -19,7 +37,8 @@ export async function getPrisma(): Promise<PrismaClient> {
 
 async function createPrisma(): Promise<PrismaClient> {
   const { PrismaClient } = await import("@/generated/prisma/client");
-  if (dbSource === "neon") {
+  const useRemote = dbSource === "neon" && remotePostgresOk();
+  if (useRemote) {
     const { PrismaPg } = await import("@prisma/adapter-pg");
     const url = env("DATABASE_URL");
     if (!url) throw new Error("DATABASE_URL required for Prisma");
