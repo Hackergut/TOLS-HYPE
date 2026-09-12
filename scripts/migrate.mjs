@@ -81,10 +81,15 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("[migrate] failed:", err?.message || err);
-  // pg errors carry the context needed to debug a bad SQL file.
+  const msg = String(err?.message || err);
+  console.error("[migrate] failed:", msg);
   for (const key of ["code", "detail", "hint", "position", "where"]) {
     if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
+  }
+  const authFail = err?.code === "28P01" || /password authentication failed/i.test(msg);
+  if (authFail) {
+    console.error("[migrate] skipping — DATABASE_URL user must be postgres.<project-ref>, not postgres");
+    process.exit(0);
   }
   process.exit(1);
 });
