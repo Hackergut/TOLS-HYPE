@@ -91,7 +91,7 @@ function WalletHub() {
         className={cn(
           "flex flex-col gap-0 p-0",
           tab === "vip"
-            ? "w-[min(100%,22rem)] md:w-80 md:max-w-80"
+            ? "h-dvh w-full max-w-none md:h-full md:w-80 md:max-w-80"
             : tab === "wallet"
               ? "w-full max-w-none sm:max-w-md"
               : "w-[min(100%,44rem)] sm:max-w-xl md:max-w-3xl",

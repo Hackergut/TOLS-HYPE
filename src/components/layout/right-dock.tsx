@@ -113,10 +113,13 @@ export function RightDock() {
       </aside>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="flex w-[min(100%,22rem)] flex-col p-0">
-          <SheetHeader className="border-b border-border px-4 py-3">
-            <SheetTitle>{active?.label ?? "Account"}</SheetTitle>
+        <SheetContent side="right" showCloseButton={false} className="flex h-dvh w-full max-w-none flex-col p-0 md:hidden">
+          <SheetHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border px-4 py-3">
+            <SheetTitle>{active?.label ?? "Chat"}</SheetTitle>
             <SheetDescription className="sr-only">Live chat</SheetDescription>
+            <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => setMobileOpen(false)}>
+              <RiCloseLine className="size-4" />
+            </Button>
           </SheetHeader>
           <div className="flex gap-1 overflow-x-auto border-b border-border px-2 py-2">
             {TABS.map((item) => {
