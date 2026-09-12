@@ -11,10 +11,10 @@ function remotePostgresOk(): boolean {
   if (!url) return false;
   try {
     const u = new URL(url.replace(/^postgres:\/\//, "postgresql://"));
-    const user = decodeURIComponent(u.username || "");
-    if (user === "postgres" && /supabase\.com|pooler\.supabase/i.test(u.hostname)) {
+    const user = decodeURIComponent(u.username || "").trim();
+    if (!user.includes(".")) {
       console.warn(
-        "[prisma] DATABASE_URL user is postgres — must be postgres.<project-ref>. Using PGLite until Vercel env is fixed.",
+        "[prisma] DATABASE_URL user must be postgres.<project-ref>. Using PGLite.",
       );
       return false;
     }
@@ -42,7 +42,19 @@ async function createPrisma(): Promise<PrismaClient> {
     const { PrismaPg } = await import("@prisma/adapter-pg");
     const url = env("DATABASE_URL");
     if (!url) throw new Error("DATABASE_URL required for Prisma");
-    return new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+    const client = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+    try {
+      await client.$queryRaw`select 1`;
+      return client;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/28P01|password authentication failed|credentials for `postgres`/i.test(msg)) {
+        console.warn("[prisma] remote auth failed — PGLite");
+        await client.$disconnect().catch(() => undefined);
+      } else {
+        throw err;
+      }
+    }
   }
   const { PrismaPGlite } = await import("pglite-prisma-adapter");
   const pg = await getPglite();
