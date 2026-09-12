@@ -28,6 +28,7 @@ const HUB: Partial<Record<string, WalletHubTab>> = {
   settings: "settings",
   tx: "tx",
   vault: "vault",
+  vip: "vip",
 };
 
 const TOP = new Set(["wallet", "settings", "alerts"]);
