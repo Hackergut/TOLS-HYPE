@@ -88,7 +88,7 @@ function WalletHub() {
         showCloseButton={false}
         className={cn(
           "flex flex-col gap-0 p-0",
-          tab === "wallet" ? "w-[min(100%,26rem)] sm:max-w-md" : "w-[min(100%,44rem)] sm:max-w-xl md:max-w-3xl",
+          tab === "wallet" ? "w-full max-w-none sm:max-w-md" : "w-[min(100%,44rem)] sm:max-w-xl md:max-w-3xl",
         )}
       >
         <SheetHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-2">
@@ -104,7 +104,7 @@ function WalletHub() {
         <div className="flex min-h-0 flex-1">
           {tab !== "wallet" ? <AccountRail active={tab} onTab={openTab} onNavigate={() => setOpen(false)} /> : null}
           <ScrollArea className="min-h-0 flex-1">
-            <div className="p-4 md:p-5">
+            <div className="p-3 md:p-5">
               {tab === "wallet" ? <WalletCashier onHistory={() => openTab("tx")} /> : null}
               {tab === "settings" ? <SettingsPane /> : null}
               {tab === "tx" ? <TxPane /> : null}

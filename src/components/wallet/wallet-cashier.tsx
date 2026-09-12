@@ -86,10 +86,10 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
   }
 
   const field =
-    "flex h-12 w-full items-center rounded-xl border border-white/10 bg-[#12141a] px-3 text-sm text-white";
+    "flex h-10 w-full items-center rounded-lg border border-white/10 bg-[#12141a] px-2.5 text-xs text-white md:h-12 md:rounded-xl md:px-3 md:text-sm";
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-3 md:gap-5">
       <div className="relative flex items-end gap-0 border-b border-white/10">
         {TABS.map((t) => (
           <button
@@ -97,22 +97,23 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              "relative h-10 flex-1 text-[0.82rem] font-semibold",
+              "relative h-8 flex-1 px-0.5 text-[0.65rem] font-semibold md:h-10 md:text-[0.82rem]",
               tab === t.id ? "text-[#c4b5fd]" : "text-white/45",
             )}
           >
-            {t.label}
+            <span className="md:hidden">{t.id === "buy" ? "Buy" : t.label}</span>
+            <span className="hidden md:inline">{t.label}</span>
             {tab === t.id ? <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#904bf9]" /> : null}
           </button>
         ))}
       </div>
 
       <label className="grid gap-1.5">
-        <span className="text-[0.78rem] font-medium text-white/55">Currency</span>
+        <span className="text-[0.7rem] font-medium text-white/55 md:text-[0.78rem]">Currency</span>
         <div className="relative">
           <button type="button" className={cn(field, "justify-between gap-3")} onClick={() => setCurOpen((v) => !v)}>
             <span className="flex min-w-0 items-center gap-2.5">
-              <CryptoMark currency={currency} className="size-6" />
+              <CryptoMark currency={currency} className="size-5 md:size-6" />
               <span className="truncate font-medium">{currencyTitle(currency)}</span>
             </span>
             <span className="flex shrink-0 items-center gap-2 tabular-nums text-white/50">
@@ -145,7 +146,7 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
 
       {tab === "deposit" || tab === "withdraw" ? (
         <label className="grid gap-1.5">
-          <span className="text-[0.78rem] font-medium text-white/55">Network*</span>
+          <span className="text-[0.7rem] font-medium text-white/55 md:text-[0.78rem]">Network*</span>
           <div className="relative">
             <button type="button" className={cn(field, "justify-between")} onClick={() => setNetOpen((v) => !v)}>
               {net}
@@ -176,27 +177,27 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
       {tab === "deposit" ? (
         <>
           <label className="grid gap-1.5">
-            <span className="text-[0.78rem] font-medium text-white/55">
+            <span className="text-[0.7rem] font-medium text-white/55 md:text-[0.78rem]">
               {CURRENCY_META[currency].label} ({net}) Address
             </span>
-            <div className={cn(field, "justify-between gap-2 font-mono text-[0.72rem]")}>
+            <div className={cn(field, "justify-between gap-2 font-mono text-[0.65rem] md:text-[0.72rem]")}>
               <span className="min-w-0 truncate">{address}</span>
               <button type="button" aria-label="Copy address" onClick={() => void copyAddr()} className="shrink-0 text-white/50 hover:text-white">
                 <RiFileCopyLine className="size-4" />
               </button>
             </div>
           </label>
-          <p className="flex items-start gap-1.5 text-[0.75rem] leading-snug text-[#ff6b3d]">
-            <RiInformationLine className="mt-0.5 size-4 shrink-0" />
+          <p className="flex items-start gap-1.5 text-[0.65rem] leading-snug text-[#ff6b3d] md:text-[0.75rem]">
+            <RiInformationLine className="mt-0.5 size-3.5 shrink-0 md:size-4" />
             Your deposit must be sent on the {currency === "BTC" ? "Bitcoin" : `${net}`} network to be processed.
           </p>
-          <div className="grid place-items-center py-2">
-            <img src={qr} alt="Deposit QR" width={200} height={200} className="rounded-lg bg-white p-2" />
+          <div className="grid place-items-center py-0 md:py-2">
+            <img src={qr} alt="Deposit QR" width={128} height={128} className="size-32 rounded-md bg-white p-1.5 md:size-[200px] md:rounded-lg md:p-2" />
           </div>
-          <button type="button" onClick={onHistory} className="text-center text-sm font-medium text-white underline">
+          <button type="button" onClick={onHistory} className="text-center text-xs font-medium text-white underline md:text-sm">
             Deposit history
           </button>
-          <p className="text-center text-[0.7rem] text-white/35">Play-money preview. Live chain credit needs the HYPE pooler.</p>
+          <p className="hidden text-center text-[0.7rem] text-white/35 md:block">Play-money preview. Live chain credit needs the HYPE pooler.</p>
         </>
       ) : null}
 
@@ -210,7 +211,7 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
             <span className="text-[0.78rem] font-medium text-white/55">Amount</span>
             <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className={cn(field, "tabular-nums")} />
           </label>
-          <Button className="h-12 w-full rounded-xl bg-[#904bf9] font-bold text-white hover:bg-[#7c3aed]" onClick={() => void runWithdraw()}>
+          <Button className="h-10 w-full rounded-lg bg-[#904bf9] text-sm font-bold text-white hover:bg-[#7c3aed] md:h-12 md:rounded-xl" onClick={() => void runWithdraw()}>
             Withdraw
           </Button>
         </>
@@ -223,7 +224,7 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
             <span className="text-[0.78rem] font-medium text-white/55">Amount (USD)</span>
             <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className={cn(field, "tabular-nums")} />
           </label>
-          <Button className="h-12 w-full rounded-xl bg-[#904bf9] font-bold text-white" disabled>
+          <Button className="h-10 w-full rounded-lg bg-[#904bf9] text-sm font-bold text-white md:h-12 md:rounded-xl" disabled>
             Buy {currency}
           </Button>
         </div>
@@ -240,7 +241,7 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
             <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className={cn(field, "tabular-nums")} />
           </label>
           <Button
-            className="h-12 w-full rounded-xl bg-[#904bf9] font-bold text-white"
+            className="h-10 w-full rounded-lg bg-[#904bf9] text-sm font-bold text-white md:h-12 md:rounded-xl"
             onClick={() => {
               const n = Number(amount);
               if (!tipTo.trim() || !Number.isFinite(n) || n <= 0) {
