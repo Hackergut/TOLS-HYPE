@@ -214,7 +214,7 @@ export const placeSportBet = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
     z.object({
-      amount: z.number().positive(),
+      amount: z.number().min(0),
       currency: currencySchema,
       mode: z.enum(["single", "combo"]),
       legs: z
@@ -289,7 +289,7 @@ export const startCrash = createServerFn({ method: "POST" })
     z.object({
       gameId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
     }),
   )
   .handler(async ({ context, data }) => {
@@ -412,7 +412,7 @@ export const startMines = createServerFn({ method: "POST" })
     z.object({
       gameId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
       mineCount: z.number().int().min(1).max(24).optional(),
     }),
   )
@@ -552,7 +552,7 @@ export const dealBlackjack = createServerFn({ method: "POST" })
     z.object({
       gameId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
     }),
   )
   .handler(async ({ context, data }) => {
@@ -734,7 +734,7 @@ export const playKeno = createServerFn({ method: "POST" })
     z.object({
       gameId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
       picks: z.array(z.number().int().min(1).max(40)).min(1).max(10),
       risk: z.enum(["classic", "low", "normie", "degen"]),
     }),
@@ -798,7 +798,7 @@ export const playHilo = createServerFn({ method: "POST" })
     z.object({
       roundId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
       pick: z.enum(["higher", "lower"]),
     }),
   )
@@ -896,7 +896,7 @@ export const playPool = createServerFn({ method: "POST" })
     z.object({
       gameId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
       difficulty: z.enum(["beginner", "intermediate", "expert", "pro"]),
       power: z.number().min(0).max(1),
       aim: z.number(),

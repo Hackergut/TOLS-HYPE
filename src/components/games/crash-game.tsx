@@ -29,7 +29,7 @@ function CrashTable({ gameId }: { gameId: string }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [display, setDisplay] = useState(1);
   const [crashAt, setCrashAt] = useState<number | null>(null);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
   const startedAt = useRef(0);
   const raf = useRef(0);

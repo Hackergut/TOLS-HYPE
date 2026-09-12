@@ -66,7 +66,7 @@ function SportsBook() {
   const navigate = Route.useNavigate();
   const sport = sportParam ?? "all";
   const { currency, applyBalances } = useWallet();
-  const [amount, setAmount] = useState(10);
+  const [amount, setAmount] = useState(0);
   const [picks, setPicks] = useState<SlipPick[]>([]);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<SlipMode>("single");
@@ -163,9 +163,9 @@ function SportsBook() {
       {sport === "all" ? (
         <section className="grid gap-2 md:grid-cols-2">
           {featured.map((ev) => (
-            <Link key={ev.id} to="/sports/$id" params={{ id: ev.id }} className="sb-card text-left">
+            <div key={ev.id} className="sb-card text-left">
               <FieldBoard event={ev} />
-            </Link>
+            </div>
           ))}
         </section>
       ) : (

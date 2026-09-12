@@ -25,7 +25,7 @@ export function BetPanel({
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         const amount = Number(fd.get("amount"));
-        if (!Number.isFinite(amount) || amount <= 0) return;
+        if (!Number.isFinite(amount) || amount < 0) return;
         onPlay(amount);
       }}
     >
@@ -37,9 +37,9 @@ export function BetPanel({
             name="amount"
             type="number"
             step="any"
-            min={meta.minBet}
-            max={Math.min(meta.maxBet, balance || meta.maxBet)}
-            defaultValue={meta.minBet}
+            min={0}
+            max={meta.maxBet}
+            defaultValue={0}
             className="h-11 tabular-nums"
           />
         </div>
@@ -58,7 +58,7 @@ export function BetPanel({
               const form = e.currentTarget.form;
               if (!form) return;
               const input = form.elements.namedItem("amount") as HTMLInputElement;
-              const next = Math.min(meta.maxBet, Math.max(meta.minBet, Number(input.value) * mult));
+              const next = Math.min(meta.maxBet, Math.max(0, Number(input.value) * mult));
               input.value = String(Number(next.toPrecision(6)));
             }}
           >

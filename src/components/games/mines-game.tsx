@@ -27,7 +27,7 @@ function MinesTable({ gameId }: { gameId: string }) {
   const [mines, setMines] = useState<number[] | null>(null);
   const [multiplier, setMultiplier] = useState(1);
   const [busy, setBusy] = useState(false);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [mineCount, setMineCount] = useState(3);
 
   async function start() {

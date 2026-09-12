@@ -46,7 +46,7 @@ function DiceTable({ gameId }: { gameId: string }) {
   const meta = CURRENCY_META[currency];
   const [over, setOver] = useState(false);
   const [target, setTarget] = useState(49.5);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<number | null>(null);
   const [lastWin, setLastWin] = useState<boolean | null>(null);

@@ -50,7 +50,7 @@ function MatchCenter() {
   const { currency, applyBalances } = useWallet();
   const [section, setSection] = useState<"odds" | "live" | "stats" | "lineups" | "h2h">("odds");
   const [picks, setPicks] = useState<SlipPick[]>([]);
-  const [amount, setAmount] = useState(10);
+  const [amount, setAmount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<SlipMode>("single");
   const [format] = useState<OddsFormat>("decimal");

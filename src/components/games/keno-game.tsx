@@ -58,7 +58,7 @@ function KenoTable({ gameId }: { gameId: string }) {
   const [picks, setPicks] = useState<number[]>([]);
   const [drawn, setDrawn] = useState<number[]>([]);
   const [hits, setHits] = useState<number | null>(null);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [risk, setRisk] = useState<KenoRisk>("classic");
   const [busy, setBusy] = useState(false);
 

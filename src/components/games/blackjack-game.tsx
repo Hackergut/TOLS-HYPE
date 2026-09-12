@@ -40,7 +40,7 @@ function BlackjackTable({ gameId }: { gameId: string }) {
   const meta = CURRENCY_META[currency];
   const [table, setTable] = useState<Table | null>(null);
   const [busy, setBusy] = useState(false);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [mode, setMode] = useState("standard");
 
   async function deal() {

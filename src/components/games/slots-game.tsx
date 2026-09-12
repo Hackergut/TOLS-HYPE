@@ -26,7 +26,7 @@ function SlotsTable({ gameId }: { gameId: string }) {
   const meta = CURRENCY_META[currency];
   const [reels, setReels] = useState<[SlotSymbol, SlotSymbol, SlotSymbol]>(["A", "K", "Q"]);
   const [busy, setBusy] = useState(false);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
 
   async function play() {
     setBusy(true);

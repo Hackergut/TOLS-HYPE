@@ -43,7 +43,7 @@ function RouletteTable({ gameId }: { gameId: string }) {
   const meta = CURRENCY_META[currency];
   const [choice, setChoice] = useState("red");
   const [spinning, setSpinning] = useState(false);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [result, setResult] = useState<{ number: number; color: string; payout: number } | null>(null);
 
   function pick(next: string) {

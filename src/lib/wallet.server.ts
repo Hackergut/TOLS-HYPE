@@ -32,6 +32,13 @@ export async function debit(
   gameId?: string,
   note?: string,
 ) {
+  if (amount <= 0) {
+    const prisma = await getPrisma();
+    const row = await prisma.wallet.findUnique({
+      where: { userId_currency: { userId, currency } },
+    });
+    return money(row?.balance);
+  }
   const prisma = await getPrisma();
   return prisma.$transaction(async (tx) => {
     const row = await tx.wallet.findUnique({

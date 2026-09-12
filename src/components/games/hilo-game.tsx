@@ -32,7 +32,7 @@ function HiloTable({ gameId }: { gameId: string }) {
   const [roundId, setRoundId] = useState<string | null>(null);
   const [card, setCard] = useState<Card | null>(null);
   const [prev, setPrev] = useState<Card | null>(null);
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [dir, setDir] = useState<"higher" | "lower">("higher");
   const [live, setLive] = useState(false);

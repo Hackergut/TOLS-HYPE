@@ -63,7 +63,7 @@ function PoolTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
   const { reportRound } = useGameTable();
   const meta = CURRENCY_META[currency];
-  const [amount, setAmount] = useState(meta.minBet);
+  const [amount, setAmount] = useState(0);
   const [diff, setDiff] = useState<PoolDiff>("expert");
   const [tab, setTab] = useState("manual");
   const [power, setPower] = useState(0.82);
