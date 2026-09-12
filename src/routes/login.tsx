@@ -1,11 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TolsMark } from "@/components/brand/tols-mark";
-import { operator } from "@/lib/operator/config";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -14,11 +13,28 @@ function Login() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const google = sp.get("google");
+    if (google === "error") setError("Google sign-in failed. Try again.");
+    else if (google === "not_configured") setError("Google is not configured on this deployment.");
+    if (google) {
+      sp.delete("google");
+      sp.delete("reason");
+      const qs = sp.toString();
+      window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+    }
+  }, []);
+
+  function onGoogle() {
+    setError(null);
+    window.location.assign("/api/auth/google?next=/");
+  }
+
   async function onSocial(providerId: string, idp: string) {
     setError(null);
     if (idp === "google") {
-      const next = "/profile";
-      window.location.assign(`${operator.casinoOrigin}/api/auth/google?next=${encodeURIComponent(next)}`);
+      onGoogle();
       return;
     }
     try {
@@ -59,56 +75,59 @@ function Login() {
         <h1 className="font-heading mt-3 text-2xl font-semibold tracking-tight">
           {mode === "in" ? "Sign in" : "Create account"}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Official TOLS. Google, X, or email.
-        </p>
-        {authEnabled ? (
-          <div className="mt-6 space-y-3">
-            {GROK_PROVIDERS.map((p) => (
-              <Button
-                key={p.providerId}
-                type="button"
-                variant="outline"
-                className="h-11 w-full"
-                onClick={() => void onSocial(p.providerId, p.idp)}
-              >
-                Continue with {p.label}
-              </Button>
-            ))}
-            <div className="relative py-2 text-center text-xs text-muted-foreground">
-              <span className="bg-card px-2">or email</span>
-            </div>
-            <form className="grid gap-3" onSubmit={(e) => void onEmail(e)}>
-              {mode === "up" ? (
+        <p className="mt-1 text-sm text-muted-foreground">Official TOLS. Google or email.</p>
+        <div className="mt-6 space-y-3">
+          <Button type="button" variant="outline" className="h-11 w-full" onClick={onGoogle}>
+            Continue with Google
+          </Button>
+          {authEnabled ? (
+            <>
+              {GROK_PROVIDERS.filter((p) => p.idp !== "google").map((p) => (
+                <Button
+                  key={p.providerId}
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full"
+                  onClick={() => void onSocial(p.providerId, p.idp)}
+                >
+                  Continue with {p.label}
+                </Button>
+              ))}
+              <div className="relative py-2 text-center text-xs text-muted-foreground">
+                <span className="bg-card px-2">or email</span>
+              </div>
+              <form className="grid gap-3" onSubmit={(e) => void onEmail(e)}>
+                {mode === "up" ? (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" name="name" className="h-11" required />
+                  </div>
+                ) : null}
                 <div className="grid gap-1.5">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" name="name" className="h-11" required />
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" type="email" className="h-11" required />
                 </div>
-              ) : null}
-              <div className="grid gap-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" className="h-11" required />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" className="h-11" required minLength={8} />
-              </div>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-              <Button type="submit" className="h-11" disabled={pending}>
-                {mode === "in" ? "Sign in" : "Create account"}
-              </Button>
-            </form>
-            <button
-              type="button"
-              className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
-              onClick={() => setMode(mode === "in" ? "up" : "in")}
-            >
-              {mode === "in" ? "Need an account?" : "Already registered?"}
-            </button>
-          </div>
-        ) : (
-          <p className="mt-6 text-sm text-muted-foreground">Sign-in is disabled.</p>
-        )}
+                <div className="grid gap-1.5">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" name="password" type="password" className="h-11" required minLength={8} />
+                </div>
+                {error ? <p className="text-sm text-destructive">{error}</p> : null}
+                <Button type="submit" className="h-11" disabled={pending}>
+                  {mode === "in" ? "Sign in" : "Create account"}
+                </Button>
+              </form>
+              <button
+                type="button"
+                className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
+                onClick={() => setMode(mode === "in" ? "up" : "in")}
+              >
+                {mode === "in" ? "Need an account?" : "Already registered?"}
+              </button>
+            </>
+          ) : (
+            error ? <p className="text-sm text-destructive">{error}</p> : null
+          )}
+        </div>
         <p className="mt-4 text-center text-xs text-muted-foreground">
           By continuing you agree to the{" "}
           <Link to="/terms" className="text-foreground underline-offset-2 hover:underline">

@@ -2,6 +2,7 @@ import { getRequest, getCookie, setCookie } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
 import { gateIdentityEnabled } from "./gate-identity.server";
 import { auth, authConfigured } from "./server";
+import { readSessionToken, SESSION_COOKIE } from "./google-session.server";
 
 /**
  * Server-side session resolution (server-only).
@@ -66,9 +67,17 @@ export type VerifiedUser = { id: string; email: string | null };
  * as a bearer token, which we present as `Authorization: Bearer …` (the `bearer`
  * plugin resolves it). When deployed no token is passed and the cookie is used.
  */
+function googleSessionUser(): VerifiedUser | null {
+  const native = readSessionToken(getCookie(SESSION_COOKIE));
+  if (!native) return null;
+  return { id: native.id, email: native.email };
+}
+
 export async function getSessionUser(
   bearerToken?: string,
 ): Promise<VerifiedUser | null> {
+  const google = googleSessionUser();
+  if (google) return google;
   if (!authConfigured && !gateIdentityEnabled()) return null;
   const request = getRequest();
   if (!request) return null;
@@ -92,6 +101,8 @@ export async function getSessionUser(
  * - Auth disabled + no database -> the shared dev user id.
  */
 export async function requireUserId(bearerToken?: string): Promise<string> {
+  const google = googleSessionUser();
+  if (google) return google.id;
   if (!authConfigured && !gateIdentityEnabled()) {
     if (databaseConfigured) return guestUserId();
     return DEV_USER_ID;

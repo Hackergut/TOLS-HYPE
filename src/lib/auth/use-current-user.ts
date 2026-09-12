@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { authClient, authEnabled } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
@@ -54,10 +55,29 @@ export type CurrentUserState = {
  * `authEnabled` is a module-level constant fixed at load, so the guarded hook
  * call keeps a stable hook order across every render of a given component.
  */
+function useNativeGoogleUser(): AppUser | null {
+  const [user, setUser] = useState<AppUser | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((body: { user?: AppUser | null }) => {
+        if (!cancelled && body?.user?.id) setUser({ ...body.user, isDevFallback: false });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return user;
+}
+
 export function useCurrentUserState(): CurrentUserState {
-  if (!authEnabled) return { user: DEV_USER, isPending: false };
+  const googleUser = useNativeGoogleUser();
+  if (!authEnabled) return { user: googleUser ?? DEV_USER, isPending: false };
   // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending } = authClient.useSession();
+  if (googleUser) return { user: googleUser, isPending: false };
   const user = data?.user;
   return {
     user: user

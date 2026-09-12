@@ -20,6 +20,7 @@ import {
   readWallet,
   snapshotBalances,
 } from "@/lib/wallet.server";
+import { pushSettledBet } from "@/lib/governance/bridge";
 import { comboOdds, vigPrice } from "@/lib/odds";
 import { resolveOutcome, type MarketKind } from "@/lib/sports-book";
 import {
@@ -206,6 +207,16 @@ export const playInstant = createServerFn({ method: "POST" })
 
     if (payout > 0 && data.amount > 0) {
       await credit(context.userId, data.currency, payout, "win", game.id, game.title);
+    }
+    if (data.amount > 0) {
+      void pushSettledBet({
+        userId: context.userId,
+        game: game.id,
+        amount: data.amount,
+        payout,
+        multiplier,
+        won: payout > 0,
+      });
     }
     return { payout, multiplier, detail, balances: await snapshot(context.userId), fair };
   });

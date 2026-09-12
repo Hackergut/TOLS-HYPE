@@ -32,17 +32,36 @@ import { Route as ShellTermsRouteImport } from './routes/_shell/terms'
 import { Route as ShellTokenRouteImport } from './routes/_shell/token'
 import { Route as ShellVaultRouteImport } from './routes/_shell/vault'
 import { Route as ShellVipRouteImport } from './routes/_shell/vip'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiPlatformRouteImport } from './routes/api/platform'
+import { Route as ApiTreasuryRouteImport } from './routes/api/treasury'
 import { Route as ShellGamesIdRouteImport } from './routes/_shell/games.$id'
 import { Route as ShellOriginalsIdRouteImport } from './routes/_shell/originals.$id'
 import { Route as ShellPlaySlugRouteImport } from './routes/_shell/play.$slug'
 import { Route as ShellSportsIdRouteImport } from './routes/_shell/sports.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAuthGoogleRouteImport } from './routes/api/auth/google'
+import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
+import { Route as ApiBridgeHealthRouteImport } from './routes/api/bridge/health'
+import { Route as ApiBridgeWebhookRouteImport } from './routes/api/bridge/webhook'
+import { Route as ApiFlexrixCallbackRouteImport } from './routes/api/flexrix/callback'
+import { Route as ApiFlexrixLaunchDemoRouteImport } from './routes/api/flexrix/launch-demo'
 import { Route as ApiOperatorCallbackRouteImport } from './routes/api/operator/callback'
 import { Route as ApiOperatorGamesRouteImport } from './routes/api/operator/games'
 import { Route as ApiOperatorLaunchRouteImport } from './routes/api/operator/launch'
 import { Route as ApiOperatorPaymentsRouteImport } from './routes/api/operator/payments'
 import { Route as ApiOperatorSkillsRouteImport } from './routes/api/operator/skills'
 import { Route as ApiOperatorWalletRouteImport } from './routes/api/operator/wallet'
+import { Route as ApiPlatformHealthRouteImport } from './routes/api/platform/health'
+import { Route as ApiPlatformWhoamiRouteImport } from './routes/api/platform/whoami'
+import { Route as ApiSportsbookCallbackRouteImport } from './routes/api/sportsbook/callback'
+import { Route as ApiSportsbookEventsRouteImport } from './routes/api/sportsbook/events'
+import { Route as ApiSportsbookSessionRouteImport } from './routes/api/sportsbook/session'
+import { Route as ShellSportsClubSlugRouteImport } from './routes/_shell/sports.club.$slug'
+import { Route as ShellSportsPlayerSlugRouteImport } from './routes/_shell/sports.player.$slug'
+import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth/google.callback'
+import { Route as ApiAuthGoogleDiagRouteImport } from './routes/api/auth/google.diag'
+import { Route as ApiSportsbookCallbackActionRouteImport } from './routes/api/sportsbook/callback.$action'
 
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
@@ -158,6 +177,21 @@ const ShellVipRoute = ShellVipRouteImport.update({
   path: '/vip',
   getParentRoute: () => ShellRoute,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformRoute = ApiPlatformRouteImport.update({
+  id: '/api/platform',
+  path: '/api/platform',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTreasuryRoute = ApiTreasuryRouteImport.update({
+  id: '/api/treasury',
+  path: '/api/treasury',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShellGamesIdRoute = ShellGamesIdRouteImport.update({
   id: '/games/$id',
   path: '/games/$id',
@@ -181,6 +215,36 @@ const ShellSportsIdRoute = ShellSportsIdRouteImport.update({
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
+  id: '/api/auth/google',
+  path: '/api/auth/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthMeRoute = ApiAuthMeRouteImport.update({
+  id: '/api/auth/me',
+  path: '/api/auth/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBridgeHealthRoute = ApiBridgeHealthRouteImport.update({
+  id: '/api/bridge/health',
+  path: '/api/bridge/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBridgeWebhookRoute = ApiBridgeWebhookRouteImport.update({
+  id: '/api/bridge/webhook',
+  path: '/api/bridge/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFlexrixCallbackRoute = ApiFlexrixCallbackRouteImport.update({
+  id: '/api/flexrix/callback',
+  path: '/api/flexrix/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFlexrixLaunchDemoRoute = ApiFlexrixLaunchDemoRouteImport.update({
+  id: '/api/flexrix/launch-demo',
+  path: '/api/flexrix/launch-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOperatorCallbackRoute = ApiOperatorCallbackRouteImport.update({
@@ -213,6 +277,57 @@ const ApiOperatorWalletRoute = ApiOperatorWalletRouteImport.update({
   path: '/api/operator/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPlatformHealthRoute = ApiPlatformHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => ApiPlatformRoute,
+} as any)
+const ApiPlatformWhoamiRoute = ApiPlatformWhoamiRouteImport.update({
+  id: '/whoami',
+  path: '/whoami',
+  getParentRoute: () => ApiPlatformRoute,
+} as any)
+const ApiSportsbookCallbackRoute = ApiSportsbookCallbackRouteImport.update({
+  id: '/api/sportsbook/callback',
+  path: '/api/sportsbook/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSportsbookEventsRoute = ApiSportsbookEventsRouteImport.update({
+  id: '/api/sportsbook/events',
+  path: '/api/sportsbook/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSportsbookSessionRoute = ApiSportsbookSessionRouteImport.update({
+  id: '/api/sportsbook/session',
+  path: '/api/sportsbook/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShellSportsClubSlugRoute = ShellSportsClubSlugRouteImport.update({
+  id: '/club/$slug',
+  path: '/club/$slug',
+  getParentRoute: () => ShellSportsRoute,
+} as any)
+const ShellSportsPlayerSlugRoute = ShellSportsPlayerSlugRouteImport.update({
+  id: '/player/$slug',
+  path: '/player/$slug',
+  getParentRoute: () => ShellSportsRoute,
+} as any)
+const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => ApiAuthGoogleRoute,
+} as any)
+const ApiAuthGoogleDiagRoute = ApiAuthGoogleDiagRouteImport.update({
+  id: '/diag',
+  path: '/diag',
+  getParentRoute: () => ApiAuthGoogleRoute,
+} as any)
+const ApiSportsbookCallbackActionRoute =
+  ApiSportsbookCallbackActionRouteImport.update({
+    id: '/$action',
+    path: '/$action',
+    getParentRoute: () => ApiSportsbookCallbackRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -237,17 +352,36 @@ export interface FileRoutesByFullPath {
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/platform': typeof ApiPlatformRouteWithChildren
+  '/api/treasury': typeof ApiTreasuryRoute
   '/games/$id': typeof ShellGamesIdRoute
   '/originals/$id': typeof ShellOriginalsIdRoute
   '/play/$slug': typeof ShellPlaySlugRoute
   '/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/bridge/health': typeof ApiBridgeHealthRoute
+  '/api/bridge/webhook': typeof ApiBridgeWebhookRoute
+  '/api/flexrix/callback': typeof ApiFlexrixCallbackRoute
+  '/api/flexrix/launch-demo': typeof ApiFlexrixLaunchDemoRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
   '/api/operator/games': typeof ApiOperatorGamesRoute
   '/api/operator/launch': typeof ApiOperatorLaunchRoute
   '/api/operator/payments': typeof ApiOperatorPaymentsRoute
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
+  '/api/platform/health': typeof ApiPlatformHealthRoute
+  '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
+  '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
+  '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
+  '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/sports/club/$slug': typeof ShellSportsClubSlugRoute
+  '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
+  '/api/auth/google/diag': typeof ApiAuthGoogleDiagRoute
+  '/api/sportsbook/callback/$action': typeof ApiSportsbookCallbackActionRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -271,18 +405,37 @@ export interface FileRoutesByTo {
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/platform': typeof ApiPlatformRouteWithChildren
+  '/api/treasury': typeof ApiTreasuryRoute
   '/': typeof ShellIndexRoute
   '/games/$id': typeof ShellGamesIdRoute
   '/originals/$id': typeof ShellOriginalsIdRoute
   '/play/$slug': typeof ShellPlaySlugRoute
   '/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/bridge/health': typeof ApiBridgeHealthRoute
+  '/api/bridge/webhook': typeof ApiBridgeWebhookRoute
+  '/api/flexrix/callback': typeof ApiFlexrixCallbackRoute
+  '/api/flexrix/launch-demo': typeof ApiFlexrixLaunchDemoRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
   '/api/operator/games': typeof ApiOperatorGamesRoute
   '/api/operator/launch': typeof ApiOperatorLaunchRoute
   '/api/operator/payments': typeof ApiOperatorPaymentsRoute
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
+  '/api/platform/health': typeof ApiPlatformHealthRoute
+  '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
+  '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
+  '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
+  '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/sports/club/$slug': typeof ShellSportsClubSlugRoute
+  '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
+  '/api/auth/google/diag': typeof ApiAuthGoogleDiagRoute
+  '/api/sportsbook/callback/$action': typeof ApiSportsbookCallbackActionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -308,18 +461,37 @@ export interface FileRoutesById {
   '/_shell/token': typeof ShellTokenRoute
   '/_shell/vault': typeof ShellVaultRoute
   '/_shell/vip': typeof ShellVipRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/platform': typeof ApiPlatformRouteWithChildren
+  '/api/treasury': typeof ApiTreasuryRoute
   '/_shell/': typeof ShellIndexRoute
   '/_shell/games/$id': typeof ShellGamesIdRoute
   '/_shell/originals/$id': typeof ShellOriginalsIdRoute
   '/_shell/play/$slug': typeof ShellPlaySlugRoute
   '/_shell/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/bridge/health': typeof ApiBridgeHealthRoute
+  '/api/bridge/webhook': typeof ApiBridgeWebhookRoute
+  '/api/flexrix/callback': typeof ApiFlexrixCallbackRoute
+  '/api/flexrix/launch-demo': typeof ApiFlexrixLaunchDemoRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
   '/api/operator/games': typeof ApiOperatorGamesRoute
   '/api/operator/launch': typeof ApiOperatorLaunchRoute
   '/api/operator/payments': typeof ApiOperatorPaymentsRoute
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
+  '/api/platform/health': typeof ApiPlatformHealthRoute
+  '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
+  '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
+  '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
+  '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/_shell/sports/club/$slug': typeof ShellSportsClubSlugRoute
+  '/_shell/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
+  '/api/auth/google/diag': typeof ApiAuthGoogleDiagRoute
+  '/api/sportsbook/callback/$action': typeof ApiSportsbookCallbackActionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -346,17 +518,36 @@ export interface FileRouteTypes {
     | '/token'
     | '/vault'
     | '/vip'
+    | '/api/health'
+    | '/api/platform'
+    | '/api/treasury'
     | '/games/$id'
     | '/originals/$id'
     | '/play/$slug'
     | '/sports/$id'
     | '/api/auth/$'
+    | '/api/auth/google'
+    | '/api/auth/me'
+    | '/api/bridge/health'
+    | '/api/bridge/webhook'
+    | '/api/flexrix/callback'
+    | '/api/flexrix/launch-demo'
     | '/api/operator/callback'
     | '/api/operator/games'
     | '/api/operator/launch'
     | '/api/operator/payments'
     | '/api/operator/skills'
     | '/api/operator/wallet'
+    | '/api/platform/health'
+    | '/api/platform/whoami'
+    | '/api/sportsbook/callback'
+    | '/api/sportsbook/events'
+    | '/api/sportsbook/session'
+    | '/sports/club/$slug'
+    | '/sports/player/$slug'
+    | '/api/auth/google/callback'
+    | '/api/auth/google/diag'
+    | '/api/sportsbook/callback/$action'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -380,18 +571,37 @@ export interface FileRouteTypes {
     | '/token'
     | '/vault'
     | '/vip'
+    | '/api/health'
+    | '/api/platform'
+    | '/api/treasury'
     | '/'
     | '/games/$id'
     | '/originals/$id'
     | '/play/$slug'
     | '/sports/$id'
     | '/api/auth/$'
+    | '/api/auth/google'
+    | '/api/auth/me'
+    | '/api/bridge/health'
+    | '/api/bridge/webhook'
+    | '/api/flexrix/callback'
+    | '/api/flexrix/launch-demo'
     | '/api/operator/callback'
     | '/api/operator/games'
     | '/api/operator/launch'
     | '/api/operator/payments'
     | '/api/operator/skills'
     | '/api/operator/wallet'
+    | '/api/platform/health'
+    | '/api/platform/whoami'
+    | '/api/sportsbook/callback'
+    | '/api/sportsbook/events'
+    | '/api/sportsbook/session'
+    | '/sports/club/$slug'
+    | '/sports/player/$slug'
+    | '/api/auth/google/callback'
+    | '/api/auth/google/diag'
+    | '/api/sportsbook/callback/$action'
   id:
     | '__root__'
     | '/_shell'
@@ -416,30 +626,61 @@ export interface FileRouteTypes {
     | '/_shell/token'
     | '/_shell/vault'
     | '/_shell/vip'
+    | '/api/health'
+    | '/api/platform'
+    | '/api/treasury'
     | '/_shell/'
     | '/_shell/games/$id'
     | '/_shell/originals/$id'
     | '/_shell/play/$slug'
     | '/_shell/sports/$id'
     | '/api/auth/$'
+    | '/api/auth/google'
+    | '/api/auth/me'
+    | '/api/bridge/health'
+    | '/api/bridge/webhook'
+    | '/api/flexrix/callback'
+    | '/api/flexrix/launch-demo'
     | '/api/operator/callback'
     | '/api/operator/games'
     | '/api/operator/launch'
     | '/api/operator/payments'
     | '/api/operator/skills'
     | '/api/operator/wallet'
+    | '/api/platform/health'
+    | '/api/platform/whoami'
+    | '/api/sportsbook/callback'
+    | '/api/sportsbook/events'
+    | '/api/sportsbook/session'
+    | '/_shell/sports/club/$slug'
+    | '/_shell/sports/player/$slug'
+    | '/api/auth/google/callback'
+    | '/api/auth/google/diag'
+    | '/api/sportsbook/callback/$action'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiPlatformRoute: typeof ApiPlatformRouteWithChildren
+  ApiTreasuryRoute: typeof ApiTreasuryRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiAuthGoogleRoute: typeof ApiAuthGoogleRouteWithChildren
+  ApiAuthMeRoute: typeof ApiAuthMeRoute
+  ApiBridgeHealthRoute: typeof ApiBridgeHealthRoute
+  ApiBridgeWebhookRoute: typeof ApiBridgeWebhookRoute
+  ApiFlexrixCallbackRoute: typeof ApiFlexrixCallbackRoute
+  ApiFlexrixLaunchDemoRoute: typeof ApiFlexrixLaunchDemoRoute
   ApiOperatorCallbackRoute: typeof ApiOperatorCallbackRoute
   ApiOperatorGamesRoute: typeof ApiOperatorGamesRoute
   ApiOperatorLaunchRoute: typeof ApiOperatorLaunchRoute
   ApiOperatorPaymentsRoute: typeof ApiOperatorPaymentsRoute
   ApiOperatorSkillsRoute: typeof ApiOperatorSkillsRoute
   ApiOperatorWalletRoute: typeof ApiOperatorWalletRoute
+  ApiSportsbookCallbackRoute: typeof ApiSportsbookCallbackRouteWithChildren
+  ApiSportsbookEventsRoute: typeof ApiSportsbookEventsRoute
+  ApiSportsbookSessionRoute: typeof ApiSportsbookSessionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -605,6 +846,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellVipRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform': {
+      id: '/api/platform'
+      path: '/api/platform'
+      fullPath: '/api/platform'
+      preLoaderRoute: typeof ApiPlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/treasury': {
+      id: '/api/treasury'
+      path: '/api/treasury'
+      fullPath: '/api/treasury'
+      preLoaderRoute: typeof ApiTreasuryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_shell/games/$id': {
       id: '/_shell/games/$id'
       path: '/games/$id'
@@ -638,6 +900,48 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/google': {
+      id: '/api/auth/google'
+      path: '/api/auth/google'
+      fullPath: '/api/auth/google'
+      preLoaderRoute: typeof ApiAuthGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/me': {
+      id: '/api/auth/me'
+      path: '/api/auth/me'
+      fullPath: '/api/auth/me'
+      preLoaderRoute: typeof ApiAuthMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bridge/health': {
+      id: '/api/bridge/health'
+      path: '/api/bridge/health'
+      fullPath: '/api/bridge/health'
+      preLoaderRoute: typeof ApiBridgeHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bridge/webhook': {
+      id: '/api/bridge/webhook'
+      path: '/api/bridge/webhook'
+      fullPath: '/api/bridge/webhook'
+      preLoaderRoute: typeof ApiBridgeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/flexrix/callback': {
+      id: '/api/flexrix/callback'
+      path: '/api/flexrix/callback'
+      fullPath: '/api/flexrix/callback'
+      preLoaderRoute: typeof ApiFlexrixCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/flexrix/launch-demo': {
+      id: '/api/flexrix/launch-demo'
+      path: '/api/flexrix/launch-demo'
+      fullPath: '/api/flexrix/launch-demo'
+      preLoaderRoute: typeof ApiFlexrixLaunchDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/operator/callback': {
@@ -682,6 +986,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOperatorWalletRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/platform/health': {
+      id: '/api/platform/health'
+      path: '/health'
+      fullPath: '/api/platform/health'
+      preLoaderRoute: typeof ApiPlatformHealthRouteImport
+      parentRoute: typeof ApiPlatformRoute
+    }
+    '/api/platform/whoami': {
+      id: '/api/platform/whoami'
+      path: '/whoami'
+      fullPath: '/api/platform/whoami'
+      preLoaderRoute: typeof ApiPlatformWhoamiRouteImport
+      parentRoute: typeof ApiPlatformRoute
+    }
+    '/api/sportsbook/callback': {
+      id: '/api/sportsbook/callback'
+      path: '/api/sportsbook/callback'
+      fullPath: '/api/sportsbook/callback'
+      preLoaderRoute: typeof ApiSportsbookCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sportsbook/events': {
+      id: '/api/sportsbook/events'
+      path: '/api/sportsbook/events'
+      fullPath: '/api/sportsbook/events'
+      preLoaderRoute: typeof ApiSportsbookEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sportsbook/session': {
+      id: '/api/sportsbook/session'
+      path: '/api/sportsbook/session'
+      fullPath: '/api/sportsbook/session'
+      preLoaderRoute: typeof ApiSportsbookSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_shell/sports/club/$slug': {
+      id: '/_shell/sports/club/$slug'
+      path: '/club/$slug'
+      fullPath: '/sports/club/$slug'
+      preLoaderRoute: typeof ShellSportsClubSlugRouteImport
+      parentRoute: typeof ShellSportsRoute
+    }
+    '/_shell/sports/player/$slug': {
+      id: '/_shell/sports/player/$slug'
+      path: '/player/$slug'
+      fullPath: '/sports/player/$slug'
+      preLoaderRoute: typeof ShellSportsPlayerSlugRouteImport
+      parentRoute: typeof ShellSportsRoute
+    }
+    '/api/auth/google/callback': {
+      id: '/api/auth/google/callback'
+      path: '/callback'
+      fullPath: '/api/auth/google/callback'
+      preLoaderRoute: typeof ApiAuthGoogleCallbackRouteImport
+      parentRoute: typeof ApiAuthGoogleRoute
+    }
+    '/api/auth/google/diag': {
+      id: '/api/auth/google/diag'
+      path: '/diag'
+      fullPath: '/api/auth/google/diag'
+      preLoaderRoute: typeof ApiAuthGoogleDiagRouteImport
+      parentRoute: typeof ApiAuthGoogleRoute
+    }
+    '/api/sportsbook/callback/$action': {
+      id: '/api/sportsbook/callback/$action'
+      path: '/$action'
+      fullPath: '/api/sportsbook/callback/$action'
+      preLoaderRoute: typeof ApiSportsbookCallbackActionRouteImport
+      parentRoute: typeof ApiSportsbookCallbackRoute
+    }
   }
 }
 
@@ -699,10 +1073,14 @@ const ShellOriginalsRouteWithChildren = ShellOriginalsRoute._addFileChildren(
 
 interface ShellSportsRouteChildren {
   ShellSportsIdRoute: typeof ShellSportsIdRoute
+  ShellSportsClubSlugRoute: typeof ShellSportsClubSlugRoute
+  ShellSportsPlayerSlugRoute: typeof ShellSportsPlayerSlugRoute
 }
 
 const ShellSportsRouteChildren: ShellSportsRouteChildren = {
   ShellSportsIdRoute: ShellSportsIdRoute,
+  ShellSportsClubSlugRoute: ShellSportsClubSlugRoute,
+  ShellSportsPlayerSlugRoute: ShellSportsPlayerSlugRoute,
 }
 
 const ShellSportsRouteWithChildren = ShellSportsRoute._addFileChildren(
@@ -763,16 +1141,69 @@ const ShellRouteChildren: ShellRouteChildren = {
 
 const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
 
+interface ApiPlatformRouteChildren {
+  ApiPlatformHealthRoute: typeof ApiPlatformHealthRoute
+  ApiPlatformWhoamiRoute: typeof ApiPlatformWhoamiRoute
+}
+
+const ApiPlatformRouteChildren: ApiPlatformRouteChildren = {
+  ApiPlatformHealthRoute: ApiPlatformHealthRoute,
+  ApiPlatformWhoamiRoute: ApiPlatformWhoamiRoute,
+}
+
+const ApiPlatformRouteWithChildren = ApiPlatformRoute._addFileChildren(
+  ApiPlatformRouteChildren,
+)
+
+interface ApiAuthGoogleRouteChildren {
+  ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
+  ApiAuthGoogleDiagRoute: typeof ApiAuthGoogleDiagRoute
+}
+
+const ApiAuthGoogleRouteChildren: ApiAuthGoogleRouteChildren = {
+  ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
+  ApiAuthGoogleDiagRoute: ApiAuthGoogleDiagRoute,
+}
+
+const ApiAuthGoogleRouteWithChildren = ApiAuthGoogleRoute._addFileChildren(
+  ApiAuthGoogleRouteChildren,
+)
+
+interface ApiSportsbookCallbackRouteChildren {
+  ApiSportsbookCallbackActionRoute: typeof ApiSportsbookCallbackActionRoute
+}
+
+const ApiSportsbookCallbackRouteChildren: ApiSportsbookCallbackRouteChildren = {
+  ApiSportsbookCallbackActionRoute: ApiSportsbookCallbackActionRoute,
+}
+
+const ApiSportsbookCallbackRouteWithChildren =
+  ApiSportsbookCallbackRoute._addFileChildren(
+    ApiSportsbookCallbackRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiPlatformRoute: ApiPlatformRouteWithChildren,
+  ApiTreasuryRoute: ApiTreasuryRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiAuthGoogleRoute: ApiAuthGoogleRouteWithChildren,
+  ApiAuthMeRoute: ApiAuthMeRoute,
+  ApiBridgeHealthRoute: ApiBridgeHealthRoute,
+  ApiBridgeWebhookRoute: ApiBridgeWebhookRoute,
+  ApiFlexrixCallbackRoute: ApiFlexrixCallbackRoute,
+  ApiFlexrixLaunchDemoRoute: ApiFlexrixLaunchDemoRoute,
   ApiOperatorCallbackRoute: ApiOperatorCallbackRoute,
   ApiOperatorGamesRoute: ApiOperatorGamesRoute,
   ApiOperatorLaunchRoute: ApiOperatorLaunchRoute,
   ApiOperatorPaymentsRoute: ApiOperatorPaymentsRoute,
   ApiOperatorSkillsRoute: ApiOperatorSkillsRoute,
   ApiOperatorWalletRoute: ApiOperatorWalletRoute,
+  ApiSportsbookCallbackRoute: ApiSportsbookCallbackRouteWithChildren,
+  ApiSportsbookEventsRoute: ApiSportsbookEventsRoute,
+  ApiSportsbookSessionRoute: ApiSportsbookSessionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
