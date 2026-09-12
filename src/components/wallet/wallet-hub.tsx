@@ -35,6 +35,7 @@ import { formatUsd, toUsd, useValueMode, type ValueMode } from "@/lib/value-mode
 import { useWallet } from "@/lib/wallet-context";
 import { useBetHistory } from "@/lib/bet-history";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
+import { WalletCashier } from "@/components/wallet/wallet-cashier";
 import { cn } from "cn";
 
 export type WalletHubTab = "wallet" | "settings" | "tx" | "vault";
@@ -85,23 +86,26 @@ function WalletHub() {
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="flex w-[min(100%,44rem)] flex-col gap-0 p-0 sm:max-w-xl md:max-w-3xl"
+        className={cn(
+          "flex flex-col gap-0 p-0",
+          tab === "wallet" ? "w-[min(100%,26rem)] sm:max-w-md" : "w-[min(100%,44rem)] sm:max-w-xl md:max-w-3xl",
+        )}
       >
-        <SheetHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border px-4 py-3">
-          <SheetTitle>Wallet</SheetTitle>
+        <SheetHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-2">
+          <SheetTitle className={tab === "wallet" ? "sr-only" : undefined}>Wallet</SheetTitle>
           <SheetDescription className="sr-only">Balances, cashier, and account settings</SheetDescription>
-          <div className="flex items-center gap-2">
-            <ValueToggle mode={mode} onChange={setMode} />
+          <div className="ml-auto flex items-center gap-2">
+            {tab !== "wallet" ? <ValueToggle mode={mode} onChange={setMode} /> : null}
             <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => setOpen(false)}>
               <RiCloseLine className="size-4" />
             </Button>
           </div>
         </SheetHeader>
         <div className="flex min-h-0 flex-1">
-          <AccountRail active={tab} onTab={openTab} onNavigate={() => setOpen(false)} />
+          {tab !== "wallet" ? <AccountRail active={tab} onTab={openTab} onNavigate={() => setOpen(false)} /> : null}
           <ScrollArea className="min-h-0 flex-1">
-            <div className="p-4">
-              {tab === "wallet" ? <WalletPane /> : null}
+            <div className="p-4 md:p-5">
+              {tab === "wallet" ? <WalletCashier onHistory={() => openTab("tx")} /> : null}
               {tab === "settings" ? <SettingsPane /> : null}
               {tab === "tx" ? <TxPane /> : null}
               {tab === "vault" ? <VaultPane /> : null}
