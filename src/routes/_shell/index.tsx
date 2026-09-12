@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_shell/")({
 
 function Home() {
   const [cat, setCat] = useState<GameCategory | "all">("all");
-  const { games: studio } = useRemoteCatalog();
+  const { games: studio, ready, flexrix } = useRemoteCatalog();
   const originals = GAMES.filter((g) => g.original);
   const local = cat === "all" ? originals : gamesByCategory(cat);
   const remote =
@@ -45,6 +45,9 @@ function Home() {
       : cat === "originals"
         ? []
         : studio.filter((g) => (cat === "live" ? g.live : g.category === cat));
+  const slots = studio.filter((g) => !g.live && g.category === "slots");
+  const live = studio.filter((g) => g.live);
+  const hubDown = Boolean(flexrix.error) && studio.length === 0;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 md:gap-8">
@@ -88,12 +91,34 @@ function Home() {
           <GameGrid games={local} />
         </section>
       ) : null}
-      {remote.length > 0 ? (
+      {cat === "all" || cat === "slots" ? (
         <section>
           <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
-            {cat === "live" ? "Live show" : "Studio"}
+            Slots
           </BluescreenTitle>
-          <GameGrid games={remote} />
+          {hubDown ? (
+            <p className="text-sm text-muted-foreground">
+              Flexrix hub is configured but not listing games yet. Check FLEXRIX_MERCHANT_KEY on Vercel.
+            </p>
+          ) : (
+            <GameGrid games={cat === "all" ? slots : remote} loading={!ready && slots.length === 0} />
+          )}
+        </section>
+      ) : null}
+      {cat === "all" || cat === "live" ? (
+        <section>
+          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
+            Live show
+          </BluescreenTitle>
+          <GameGrid games={cat === "all" ? live : remote} loading={!ready && live.length === 0} />
+        </section>
+      ) : null}
+      {cat !== "all" && cat !== "slots" && cat !== "live" && cat !== "originals" ? (
+        <section>
+          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
+            Studio
+          </BluescreenTitle>
+          <GameGrid games={remote} loading={!ready && remote.length === 0} />
         </section>
       ) : null}
     </main>

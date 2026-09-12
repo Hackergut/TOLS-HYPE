@@ -2,6 +2,7 @@ import type { AggregatorAdapter } from "@/lib/operator/adapter";
 import { flexrixBase, flexrixConfigured, flexrixSign } from "@/lib/operator/flexrix-sign";
 import type { LaunchResponse, RemoteGame, SeamlessRequest } from "@/lib/operator/types";
 import { operatorServer } from "@/lib/operator/env.server";
+import { lobbyQuota } from "@/lib/operator/lobby-quota";
 
 type HubGame = {
   uuid?: string;
@@ -20,7 +21,8 @@ const cache = globalThis as typeof globalThis & {
 function hubItems(data: unknown): HubGame[] {
   if (!data || typeof data !== "object") return [];
   const o = data as Record<string, unknown>;
-  const raw = o.items ?? o.data ?? o.games;
+  const nested = o.data && typeof o.data === "object" && !Array.isArray(o.data) ? (o.data as Record<string, unknown>) : null;
+  const raw = o.items ?? nested?.items ?? o.games ?? o.data;
   return Array.isArray(raw) ? (raw as HubGame[]) : [];
 }
 
@@ -42,6 +44,9 @@ async function hubJson<T>(path: string, init: RequestInit & { signParams?: Recor
 function mapGame(g: HubGame): RemoteGame | null {
   const slug = String(g.slug || g.uuid || "");
   if (!slug) return null;
+  const type = String(g.type || "").toLowerCase();
+  const live = type.includes("live") || type === "game_show";
+  const category = live ? "live" : type.includes("table") || type.includes("roulette") || type.includes("blackjack") ? "table" : "slots";
   return {
     id: slug,
     slug,
@@ -49,7 +54,8 @@ function mapGame(g: HubGame): RemoteGame | null {
     provider: String(g.provider || "Flexrix"),
     cover: g.image,
     rtp: g.rtp,
-    live: String(g.type || "").toLowerCase().includes("live"),
+    live,
+    category,
     gameType: g.type,
   };
 }
@@ -77,8 +83,9 @@ export const flexrixAdapter: AggregatorAdapter = {
       }
       if (items.length < 100) break;
     }
-    cache.__flexrixGames__ = { at: Date.now(), games: out };
-    return out;
+    const trimmed = lobbyQuota(out);
+    cache.__flexrixGames__ = { at: Date.now(), games: trimmed };
+    return trimmed;
   },
   async launch(req): Promise<LaunchResponse> {
     const slug = req.gameId.replace(/^flexrix:/, "");

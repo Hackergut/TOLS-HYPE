@@ -5,6 +5,14 @@ import type { RemoteGame } from "@/lib/operator/types";
 
 const KEY = "tols-remote-catalog-v1";
 
+export type FlexrixMeta = {
+  configured?: boolean;
+  count?: number;
+  error?: string | null;
+  merchantSet?: boolean;
+  merchantFxc?: boolean;
+};
+
 function readCache(): CatalogGame[] {
   if (typeof sessionStorage === "undefined") return [];
   try {
@@ -20,15 +28,17 @@ function readCache(): CatalogGame[] {
 export function useRemoteCatalog() {
   const [games, setGames] = useState<CatalogGame[]>(readCache);
   const [ready, setReady] = useState(() => readCache().length > 0);
+  const [flexrix, setFlexrix] = useState<FlexrixMeta>({});
 
   useEffect(() => {
     const ac = new AbortController();
     void fetch("/api/operator/games", { signal: ac.signal })
       .then((r) => r.json())
-      .then((j: { remote?: RemoteGame[] }) => {
+      .then((j: { remote?: RemoteGame[]; flexrix?: FlexrixMeta }) => {
         const remote = Array.isArray(j.remote) ? j.remote : [];
         const next = remote.map(remoteToCatalog).filter((g): g is CatalogGame => g != null);
         setGames(next);
+        setFlexrix(j.flexrix ?? {});
         try {
           sessionStorage.setItem(KEY, JSON.stringify(next.slice(0, 800)));
         } catch {
@@ -43,5 +53,5 @@ export function useRemoteCatalog() {
     return () => ac.abort();
   }, []);
 
-  return { games, ready };
+  return { games, ready, flexrix };
 }

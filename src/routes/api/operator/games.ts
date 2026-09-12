@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listRemoteGames } from "@/lib/operator/operator.server";
 import { CATALOG } from "@/lib/operator/catalog";
-import { flexrixConfigured } from "@/lib/operator/flexrix-sign";
+import { flexrixConfigured, flexrixMerchant } from "@/lib/operator/flexrix-sign";
 
 export const Route = createFileRoute("/api/operator/games")({
   server: {
@@ -14,10 +14,18 @@ export const Route = createFileRoute("/api/operator/games")({
         } catch (err) {
           error = err instanceof Error ? err.message : "Flexrix list failed";
         }
+        const merchant = flexrixMerchant();
         return Response.json({
           originals: CATALOG,
           remote,
-          flexrix: { configured: flexrixConfigured(), count: remote.length, error },
+          flexrix: {
+            configured: flexrixConfigured(),
+            count: remote.length,
+            error,
+            merchantSet: Boolean(merchant),
+            merchantFxc: /^FXC_/i.test(merchant),
+            merchantLen: merchant.length,
+          },
         });
       },
     },
