@@ -9,6 +9,7 @@ import { NotificationProvider } from "@/lib/notifications/client";
 import { WalletHubProvider } from "@/components/wallet/wallet-hub";
 import { RoundViewerProvider } from "@/components/games/round-dialog";
 import { GamePreviewProvider } from "@/components/games/guest-game-preview";
+import { SupportWidget } from "@/components/layout/support-widget";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -30,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <MobileTabBar />
         </SidebarInset>
         <RightDock />
+        <SupportWidget />
       </RightDockProvider>
       </WalletHubProvider>
       </GamePreviewProvider>
