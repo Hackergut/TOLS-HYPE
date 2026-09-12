@@ -299,6 +299,11 @@
     border-color: #00ffbd;
     color: #0d0d10;
   }
+  .sb-odd.is-row {
+    flex-direction: row;
+    min-height: 2rem;
+    padding: 0 0.5rem;
+  }
   .sb-live {
     color: #e1514e;
   }

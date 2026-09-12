@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { cn } from "cn";
 import { formatOdds, type OddsFormat } from "@/lib/odds";
 import { TeamCrest } from "@/components/sports/team-crest";
@@ -26,135 +26,131 @@ export function EventCard({
   format: OddsFormat;
   onToggle: (pick: SlipPick) => void;
 }) {
-  const [more, setMore] = useState(false);
   const all = outcomesFor(event);
   const ml = all.filter((o) => o.market === "ml");
-  const spread = all.filter((o) => o.market === "spread");
-  const total = all.filter((o) => o.market === "total");
-  const extra = all.filter((o) => o.market === "btts" || o.market === "dc");
   const draw = hasDraw(event);
 
   function click(o: Outcome) {
     onToggle(toSlipPick(event, o));
   }
 
-  return (
-    <article className="sb-card overflow-hidden px-2.5 py-2">
-      <p className="font-sub mb-2 flex items-center justify-center gap-1.5 text-[0.6rem] tracking-[0.12em] text-muted-foreground uppercase">
-        {event.live ? (
-          <>
-            <span className="sb-pip" />
-            <span className="sb-live">Live {event.minute}</span>
-          </>
-        ) : (
-          <span>{event.start}</span>
-        )}
-        <span className="inline-flex items-center gap-1 text-muted-foreground/70">
-          · {leagueCrest(event.league) ? (
-            <img src={leagueCrest(event.league)} alt="" className="inline size-3.5 object-contain" />
-          ) : null}
-          {event.league}
-        </span>
-      </p>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+  if (event.sport === "tennis" || event.sport === "mma") {
+    return (
+      <article className="sb-card overflow-hidden px-3 py-3">
+        <Header event={event} />
+        <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <EntityLink event={event} side="home">
-            <Side name={event.home} abbr={event.homeAbbr} score={event.score?.[0]} align="left" />
+            <Portrait name={event.home} abbr={event.homeAbbr} />
           </EntityLink>
-          <Link to="/sports/$id" params={{ id: event.id }} className="px-1 text-center hover:opacity-90">
+          <Link to="/sports/$id" params={{ id: event.id }} className="text-center">
             {event.score ? (
-              <p className="font-heading text-lg tabular-nums sm:text-xl">
+              <p className="font-heading text-2xl tabular-nums">
                 {event.score[0]}
-                <span className="mx-0.5 text-lime">–</span>
+                <span className="mx-1 text-lime">:</span>
                 {event.score[1]}
               </p>
             ) : (
-              <p className="font-heading text-xs tracking-[0.18em] text-lime">VS</p>
+              <p className="font-heading text-xs tracking-[0.2em] text-lime">VS</p>
             )}
+            <p className="font-sub mt-1 text-[0.6rem] text-muted-foreground uppercase">
+              {event.live ? event.minute : event.start}
+            </p>
           </Link>
           <EntityLink event={event} side="away">
-            <Side name={event.away} abbr={event.awayAbbr} score={event.score?.[1]} align="right" />
+            <Portrait name={event.away} abbr={event.awayAbbr} />
           </EntityLink>
         </div>
-      <div className="mt-2 grid min-w-0 grid-cols-2 gap-1.5 md:grid-cols-3">
-          <MarketCol title={draw ? "1X2" : "ML"} cols={draw ? 3 : 2} className="col-span-2 md:col-span-1">
-            {ml.map((o) => (
-              <OddBtn key={o.id} o={o} format={format} on={selected.has(o.id)} onClick={() => click(o)} />
-            ))}
-          </MarketCol>
-          <MarketCol title="Spread" cols={2}>
-            {spread.length ? (
-              spread.map((o) => (
-                <OddBtn key={o.id} o={o} format={format} on={selected.has(o.id)} onClick={() => click(o)} />
-              ))
-            ) : (
-              <span className="col-span-2 self-center text-center text-[0.65rem] text-muted-foreground">—</span>
-            )}
-          </MarketCol>
-          <MarketCol title="Total" cols={2}>
-            {total.length ? (
-              total.map((o) => (
-                <OddBtn key={o.id} o={o} format={format} on={selected.has(o.id)} onClick={() => click(o)} />
-              ))
-            ) : (
-              <span className="col-span-2 self-center text-center text-[0.65rem] text-muted-foreground">—</span>
-            )}
-          </MarketCol>
+        <div className={cn("mt-3 grid gap-1.5", draw ? "grid-cols-3" : "grid-cols-2")}>
+          {ml.map((o) => (
+            <OddBtn key={o.id} o={o} format={format} on={selected.has(o.id)} onClick={() => click(o)} />
+          ))}
         </div>
-      {extra.length ? (
-        <div className="mt-1.5">
-          <button
-            type="button"
-            className="font-sub text-[0.6rem] tracking-[0.12em] text-muted-foreground uppercase hover:text-lime"
-            onClick={() => setMore((v) => !v)}
-          >
-            {more ? "Hide" : `+${extra.length} markets`}
-          </button>
-          {more ? (
-            <div className="mt-1.5 grid grid-cols-3 gap-1 sm:grid-cols-5">
-              {extra.map((o) => (
-                <OddBtn key={o.id} o={o} format={format} on={selected.has(o.id)} onClick={() => click(o)} />
-              ))}
-            </div>
-          ) : null}
+      </article>
+    );
+  }
+
+  return (
+    <article className="sb-card overflow-hidden px-3 py-2.5">
+      <Header event={event} />
+      <div className="mt-2 flex items-stretch gap-3">
+        <div className="min-w-0 flex-1">
+          <EntityLink event={event} side="home">
+            <TeamRow name={event.home} abbr={event.homeAbbr} score={event.score?.[0]} />
+          </EntityLink>
+          <EntityLink event={event} side="away">
+            <TeamRow name={event.away} abbr={event.awayAbbr} score={event.score?.[1]} />
+          </EntityLink>
         </div>
-      ) : null}
+        <Link to="/sports/$id" params={{ id: event.id }} className="flex w-10 shrink-0 flex-col items-center justify-center">
+          {event.live ? (
+            <span className="font-sub text-[0.6rem] text-lime">{event.minute}</span>
+          ) : (
+            <span className="font-heading text-[0.65rem] tracking-wide text-lime">VS</span>
+          )}
+        </Link>
+        <div className={cn("grid w-[7.5rem] shrink-0 gap-1", draw ? "grid-rows-3" : "grid-rows-2")}>
+          {ml.map((o, i) => (
+            <button
+              key={o.id}
+              type="button"
+              className={cn("sb-odd is-row h-8 justify-between px-2", selected.has(o.id) && "is-on")}
+              onClick={() => click(o)}
+            >
+              <span className="text-[0.6rem] opacity-60">{draw ? ["1", "X", "2"][i] : i === 0 ? "1" : "2"}</span>
+              <span className="text-sm font-semibold tabular-nums">{formatOdds(o.odds, format)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </article>
+  );
+}
+
+function Header({ event }: { event: SportEvent }) {
+  return (
+    <p className="font-sub flex items-center gap-1.5 text-[0.6rem] tracking-[0.12em] text-muted-foreground uppercase">
+      {event.live ? (
+        <span className="sb-live inline-flex items-center gap-1">
+          <span className="sb-pip" />
+          Live
+        </span>
+      ) : null}
+      {leagueCrest(event.league) ? (
+        <img src={leagueCrest(event.league)} alt="" className="size-3.5 object-contain" />
+      ) : null}
+      <span className="truncate">{event.league}</span>
+      {!event.live ? <span className="ml-auto tabular-nums">{event.start}</span> : null}
+    </p>
+  );
+}
+
+function TeamRow({ name, abbr, score }: { name: string; abbr: string; score?: number }) {
+  return (
+    <div className="flex h-9 items-center gap-2">
+      <TeamCrest name={name} abbr={abbr} className="size-7" />
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
+      {score != null ? <span className="w-5 text-right font-heading text-sm tabular-nums">{score}</span> : null}
+    </div>
+  );
+}
+
+function Portrait({ name, abbr }: { name: string; abbr: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <TeamCrest name={name} abbr={abbr} className="size-16 rounded-full object-cover sm:size-20" />
+      <span className="max-w-24 truncate text-center text-xs font-medium">{name}</span>
+    </div>
   );
 }
 
 function EntityLink({ event, side, children }: { event: SportEvent; side: "home" | "away"; children: ReactNode }) {
   const name = side === "home" ? event.home : event.away;
   const slug = entitySlug(name);
-  if (isPlayerSport(event.sport)) {
-    return (
-      <Link to="/sports/player/$slug" params={{ slug }} className="min-w-0 hover:opacity-90">
-        {children}
-      </Link>
-    );
-  }
+  const to = isPlayerSport(event.sport) ? "/sports/player/$slug" : "/sports/club/$slug";
   return (
-    <Link to="/sports/club/$slug" params={{ slug }} className="min-w-0 hover:opacity-90">
+    <Link to={to} params={{ slug }} className="min-w-0 hover:opacity-90">
       {children}
     </Link>
-  );
-}
-
-function MarketCol({
-  title,
-  cols,
-  className,
-  children,
-}: {
-  title: string;
-  cols: 2 | 3;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className={cn("grid gap-0.5", className)}>
-      <p className="font-sub text-center text-[0.55rem] tracking-[0.1em] text-muted-foreground uppercase">{title}</p>
-      <div className={cn("grid gap-0.5", cols === 3 ? "grid-cols-3" : "grid-cols-2")}>{children}</div>
-    </div>
   );
 }
 
@@ -172,26 +168,7 @@ function OddBtn({
   return (
     <button type="button" className={cn("sb-odd", on && "is-on")} onClick={onClick}>
       <span className="max-w-full truncate text-[0.55rem] font-medium tracking-wide uppercase opacity-70">{o.label}</span>
-      <span className="text-xs font-semibold sm:text-sm">{formatOdds(o.odds, format)}</span>
+      <span className="text-sm font-semibold">{formatOdds(o.odds, format)}</span>
     </button>
-  );
-}
-
-function Side({
-  name,
-  abbr,
-  score,
-  align,
-}: {
-  name: string;
-  abbr: string;
-  score?: number;
-  align: "left" | "right";
-}) {
-  return (
-    <div className={cn("flex min-w-0 items-center gap-1.5", align === "right" && "flex-row-reverse text-right")}>
-      <TeamCrest name={name} abbr={abbr} className="size-8 sm:size-9" />
-      <span className="min-w-0 truncate text-sm font-medium">{name}</span>
-    </div>
   );
 }

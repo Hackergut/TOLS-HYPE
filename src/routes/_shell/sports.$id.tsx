@@ -48,7 +48,7 @@ function MatchCenter() {
   const d = useMemo(() => matchDossier(event), [event]);
   const groups = useMemo(() => marketsGrouped(event), [event]);
   const { currency, applyBalances } = useWallet();
-  const [section, setSection] = useState<"odds" | "live" | "stats" | "lineups" | "h2h">("odds");
+  const [section, setSection] = useState<"odds" | "live" | "stats" | "lineups" | "h2h">(event.live ? "live" : "odds");
   const [picks, setPicks] = useState<SlipPick[]>([]);
   const [amount, setAmount] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -146,7 +146,7 @@ function MatchCenter() {
             )}
             onClick={() => setSection(t)}
           >
-            {t === "odds" ? "All odds" : t === "h2h" ? "H2H" : t}
+            {t === "odds" ? "Bet" : t === "live" ? "Live" : t === "h2h" ? "H2H" : t}
           </button>
         ))}
       </div>
@@ -195,7 +195,7 @@ function MatchCenter() {
           <ShotMap shots={d.shots} />
           {live.events.length ? (
             <section className="sb-card px-3 py-3 lg:col-span-2">
-              <h3 className="font-sub mb-2 text-[0.65rem] tracking-[0.14em] text-muted-foreground uppercase">Match feed</h3>
+              <h3 className="font-sub mb-2 text-[0.65rem] tracking-[0.14em] text-muted-foreground uppercase">Live line</h3>
               <ul className="grid gap-1.5 text-sm">
                 {live.events.map((e) => (
                   <li key={`${e.minute}-${e.player}-${e.kind}`} className="flex justify-between gap-2">
@@ -261,7 +261,14 @@ function Crest({ event, side }: { event: import("@/lib/sports-book").SportEvent;
   const to = isPlayerSport(event.sport) ? "/sports/player/$slug" : "/sports/club/$slug";
   return (
     <Link to={to} params={{ slug }} className="min-w-0 text-center hover:opacity-90">
-      <TeamCrest name={name} abbr={abbr} className="mx-auto size-16 sm:size-20" />
+      <TeamCrest
+        name={name}
+        abbr={abbr}
+        className={cn(
+          "mx-auto object-cover",
+          isPlayerSport(event.sport) ? "size-24 rounded-full sm:size-32" : "size-16 sm:size-20",
+        )}
+      />
       <p className="mt-2 truncate text-sm font-medium">{name}</p>
     </Link>
   );
