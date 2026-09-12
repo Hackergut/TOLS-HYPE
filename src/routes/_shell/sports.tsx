@@ -166,7 +166,7 @@ function SportsBook() {
       {sport === "all" ? (
         <section className="grid gap-2 md:grid-cols-2">
           {featured.map((ev) => (
-            <Link to="/sports/$id" params={{ id: ev.id }} className="sb-card text-left">
+            <Link key={ev.id} to="/sports/$id" params={{ id: ev.id }} className="sb-card text-left">
               <FieldBoard event={ev} />
             </Link>
           ))}
