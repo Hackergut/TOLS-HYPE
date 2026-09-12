@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    { "source": "/api/flexrix/:path*", "destination": "https://www.tols.fun/api/flexrix/:path*" },
+    { "source": "/api/vendor/:path*", "destination": "https://www.tols.fun/api/vendor/:path*" },
+    { "source": "/api/eurovirtuals/:path*", "destination": "https://www.tols.fun/api/eurovirtuals/:path*" },
+    { "source": "/api/deposits", "destination": "https://www.tols.fun/api/deposits" },
+    { "source": "/api/deposits/:path*", "destination": "https://www.tols.fun/api/deposits/:path*" },
+    { "source": "/api/withdrawals", "destination": "https://www.tols.fun/api/withdrawals" },
+    { "source": "/api/withdrawals/:path*", "destination": "https://www.tols.fun/api/withdrawals/:path*" },
+    { "source": "/api/buy", "destination": "https://www.tols.fun/api/buy" },
+    { "source": "/api/buy/:path*", "destination": "https://www.tols.fun/api/buy/:path*" },
+    { "source": "/api/payments/:path*", "destination": "https://www.tols.fun/api/payments/:path*" },
+    { "source": "/api/platform/:path*", "destination": "https://www.tols.fun/api/platform/:path*" },
+    { "source": "/api/bridge/:path*", "destination": "https://www.tols.fun/api/bridge/:path*" }
+  ]
+}
