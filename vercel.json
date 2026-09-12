@@ -1,5 +1,14 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": ".vercel/output",
   "rewrites": [
+    { "source": "/api/games-lobby", "destination": "https://www.tols.fun/api/games-lobby" },
+    { "source": "/api/games-lobby/:path*", "destination": "https://www.tols.fun/api/games-lobby/:path*" },
+    { "source": "/api/games", "destination": "https://www.tols.fun/api/games" },
+    { "source": "/api/games/:path*", "destination": "https://www.tols.fun/api/games/:path*" },
+    { "source": "/api/bets", "destination": "https://www.tols.fun/api/bets" },
+    { "source": "/api/bets/:path*", "destination": "https://www.tols.fun/api/bets/:path*" },
+    { "source": "/api/affiliate/:path*", "destination": "https://www.tols.fun/api/affiliate/:path*" },
     { "source": "/api/flexrix/:path*", "destination": "https://www.tols.fun/api/flexrix/:path*" },
     { "source": "/api/vendor/:path*", "destination": "https://www.tols.fun/api/vendor/:path*" },
     { "source": "/api/eurovirtuals/:path*", "destination": "https://www.tols.fun/api/eurovirtuals/:path*" },
