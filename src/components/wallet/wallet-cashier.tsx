@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RiFileCopyLine, RiInformationLine } from "@remixicon/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,14 @@ const TABS: { id: CashierTab; label: string }[] = [
 ];
 
 function networkLabel(currency: Currency, chainId: number) {
+  if (currency === "SOL" || currency === "USDT") return "Solana";
   if (currency === "BTC") return "Bitcoin";
   const chain = TOLS_CHAINS.find((c) => c.id === chainId);
   return chain?.id === 1 ? "ERC20" : chain?.name ?? "ERC20";
 }
 
 function currencyTitle(c: Currency) {
+  if (c === "SOL") return "Solana (SOL)";
   if (c === "USDT") return "Tether (USDT)";
   if (c === "ETH") return "Ether (ETH)";
   return "Bitcoin (BTC)";
@@ -43,7 +45,20 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
   const [amount, setAmount] = useState("");
   const [tipTo, setTipTo] = useState("");
 
-  const address = user ? mockAddressFromUserId(user.id) : "0x—";
+  const [addresses, setAddresses] = useState<Partial<Record<Currency, string>>>({});
+  const [treasuryReady, setTreasuryReady] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/treasury")
+      .then((r) => r.json())
+      .then((j: { addresses?: Partial<Record<Currency, string>>; ready?: boolean }) => {
+        setAddresses(j.addresses ?? {});
+        setTreasuryReady(Boolean(j.ready));
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const address = addresses[currency] || (currency === "SOL" ? "" : user ? mockAddressFromUserId(user.id) : "");
   const net = networkLabel(currency, chainId);
   const qr = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&bgcolor=0f1116&color=ffffff&data=${encodeURIComponent(address)}`;
 
@@ -152,7 +167,7 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
               {net}
               <span className="text-white/35">▾</span>
             </button>
-            {netOpen && currency !== "BTC" ? (
+            {netOpen && currency !== "BTC" && currency !== "SOL" && currency !== "USDT" ? (
               <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-[#12141a] py-1 shadow-xl">
                 {chains.map((c) => (
                   <li key={c.id}>
@@ -181,19 +196,23 @@ export function WalletCashier({ onHistory }: { onHistory: () => void }) {
               {CURRENCY_META[currency].label} ({net}) Address
             </span>
             <div className={cn(field, "justify-between gap-2 font-mono text-[0.65rem] md:text-[0.72rem]")}>
-              <span className="min-w-0 truncate">{address}</span>
-              <button type="button" aria-label="Copy address" onClick={() => void copyAddr()} className="shrink-0 text-white/50 hover:text-white">
+              <span className="min-w-0 truncate">{address || "Set TREASURY_SOL_ADDRESS on Vercel"}</span>
+              <button type="button" aria-label="Copy address" onClick={() => void copyAddr()} className="shrink-0 text-white/50 hover:text-white" disabled={!address}>
                 <RiFileCopyLine className="size-4" />
               </button>
             </div>
           </label>
           <p className="flex items-start gap-1.5 text-[0.65rem] leading-snug text-[#ff6b3d] md:text-[0.75rem]">
             <RiInformationLine className="mt-0.5 size-3.5 shrink-0 md:size-4" />
-            Your deposit must be sent on the {currency === "BTC" ? "Bitcoin" : `${net}`} network to be processed.
+            {treasuryReady
+              ? `Send only on ${net}. House ledger is Solana.`
+              : "Main receive wallet is not configured yet."}
           </p>
+          {address ? (
           <div className="grid place-items-center py-0 md:py-2">
             <img src={qr} alt="Deposit QR" width={128} height={128} className="size-32 rounded-md bg-white p-1.5 md:size-[200px] md:rounded-lg md:p-2" />
           </div>
+          ) : null}
           <button type="button" onClick={onHistory} className="text-center text-xs font-medium text-white underline md:text-sm">
             Deposit history
           </button>

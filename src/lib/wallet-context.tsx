@@ -9,7 +9,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { CURRENCIES, type Currency } from "./games-catalog";
+import { CURRENCIES, emptyBalances, type Currency } from "./games-catalog";
 import { cashier, getWallet, type WalletSnapshot } from "./casino-api";
 
 type WalletContextValue = {
@@ -27,11 +27,11 @@ type WalletContextValue = {
 
 const WalletContext = createContext<WalletContextValue | null>(null);
 
-const EMPTY: Record<Currency, number> = { USDT: 0, BTC: 0, ETH: 0 };
+const EMPTY: Record<Currency, number> = emptyBalances();
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { user, isPending } = useCurrentUserState();
-  const [currency, setCurrency] = useState<Currency>("USDT");
+  const [currency, setCurrency] = useState<Currency>("SOL");
   const [snapshot, setSnapshot] = useState<WalletSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
 

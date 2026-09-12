@@ -1,4 +1,4 @@
-import { CURRENCIES, STARTING_BALANCES, type Currency } from "@/lib/games-catalog";
+import { CURRENCIES, STARTING_BALANCES, emptyBalances, type Currency } from "@/lib/games-catalog";
 import { asNumber } from "@/lib/format";
 import { getPrisma } from "@/lib/prisma.server";
 
@@ -128,7 +128,7 @@ export async function credit(
 export async function snapshotBalances(userId: string): Promise<Record<Currency, number>> {
   const prisma = await getPrisma();
   const rows = await prisma.wallet.findMany({ where: { userId } });
-  const balances = { USDT: 0, BTC: 0, ETH: 0 } as Record<Currency, number>;
+  const balances = emptyBalances();
   for (const row of rows) balances[parseCurrency(row.currency)] = money(row.balance);
   return balances;
 }
@@ -144,11 +144,11 @@ export async function readWallet(userId: string) {
       take: 40,
     }),
     prisma.ledger.aggregate({
-      where: { userId, type: "bet", currency: "USDT" },
+      where: { userId, type: "bet" },
       _sum: { amount: true },
     }),
   ]);
-  const balances = { USDT: 0, BTC: 0, ETH: 0 } as Record<Currency, number>;
+  const balances = emptyBalances();
   for (const row of rows) balances[parseCurrency(row.currency)] = money(row.balance);
   return {
     balances,

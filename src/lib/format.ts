@@ -39,7 +39,7 @@ export function mockAddressFromUserId(userId: string): string {
 
 /** Ethereum mainnet for ETH/USDT display; BTC has no EVM explorer. */
 export function chainIdForCurrency(currency: Currency): number | null {
-  if (currency === "BTC") return null;
+  if (currency === "SOL" || currency === "BTC") return null;
   return 1;
 }
 

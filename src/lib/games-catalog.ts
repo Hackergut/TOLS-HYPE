@@ -1,20 +1,26 @@
-export const CURRENCIES = ["USDT", "BTC", "ETH"] as const;
+export const CURRENCIES = ["SOL", "USDT", "BTC", "ETH"] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
 export const CURRENCY_META: Record<
   Currency,
   { label: string; symbol: string; minBet: number; maxBet: number }
 > = {
+  SOL: { label: "Solana", symbol: "◎", minBet: 0.01, maxBet: 50 },
   USDT: { label: "Tether", symbol: "₮", minBet: 1, maxBet: 500 },
   BTC: { label: "Bitcoin", symbol: "₿", minBet: 0.0001, maxBet: 0.05 },
   ETH: { label: "Ether", symbol: "Ξ", minBet: 0.001, maxBet: 0.5 },
 };
 
 export const STARTING_BALANCES: Record<Currency, number> = {
-  USDT: 1000,
-  BTC: 0.05,
-  ETH: 0.5,
+  SOL: 0,
+  USDT: 0,
+  BTC: 0,
+  ETH: 0,
 };
+
+export function emptyBalances(): Record<Currency, number> {
+  return { SOL: 0, USDT: 0, BTC: 0, ETH: 0 };
+}
 
 export type GameCategory = "originals" | "slots" | "table" | "live" | "crash";
 

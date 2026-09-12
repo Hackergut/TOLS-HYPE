@@ -2,6 +2,17 @@ import type { Currency } from "@/lib/games-catalog";
 import { cn } from "cn";
 
 export function CryptoMark({ currency, className }: { currency: Currency; className?: string }) {
+  if (currency === "SOL") {
+    return (
+      <svg viewBox="0 0 32 32" className={cn("size-8 shrink-0", className)} aria-hidden>
+        <circle cx="16" cy="16" r="16" fill="#9945FF" />
+        <path
+          fill="#fff"
+          d="M9.4 19.6c.2-.2.4-.3.7-.3h12.2c.4 0 .6.5.3.8l-2.4 2.4c-.2.2-.4.3-.7.3H7.3c-.4 0-.6-.5-.3-.8zm0-10.1c.2-.2.4-.3.7-.3h12.2c.4 0 .6.5.3.8l-2.4 2.4c-.2.2-.4.3-.7.3H7.3c-.4 0-.6-.5-.3-.8zm13.5 5.4c-.2-.2-.4-.3-.7-.3H9.9c-.4 0-.6.5-.3.8l2.4 2.4c.2.2.4.3.7.3h12.3c.4 0 .6-.5.3-.8z"
+        />
+      </svg>
+    );
+  }
   if (currency === "BTC") {
     return (
       <svg viewBox="0 0 32 32" className={cn("size-8 shrink-0", className)} aria-hidden>

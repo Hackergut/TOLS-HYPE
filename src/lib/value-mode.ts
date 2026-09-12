@@ -7,6 +7,7 @@ const KEY = "tols-value-mode";
 
 /** Display rates for play-money → USD. */
 export const USD_RATE: Record<Currency, number> = {
+  SOL: 140,
   USDT: 1,
   BTC: 97_450,
   ETH: 3_420,
