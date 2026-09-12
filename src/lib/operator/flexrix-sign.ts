@@ -8,7 +8,9 @@ export function flexrixSecret() {
   return env("FLEXRIX_API_SECRET") ?? env("FLEXRIX_CASINO_SECRET") ?? "";
 }
 export function flexrixBase() {
-  return (env("FLEXRIX_API_BASE") ?? "https://api.upaflex.online").replace(/\/$/, "");
+  const raw = (env("FLEXRIX_API_BASE") ?? "").replace(/\/$/, "");
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return "https://api.upaflex.online";
 }
 export function flexrixConfigured() {
   return Boolean(flexrixMerchant() && flexrixSecret());
