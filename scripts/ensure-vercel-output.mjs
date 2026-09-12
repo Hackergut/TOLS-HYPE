@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Nitro 3 vercel preset can skip Build Output API files; without them
  *  Vercel is Ready then every URL is 79-byte NOT_FOUND. */
-import { mkdirSync, writeFileSync, existsSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, cpSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,4 +44,15 @@ if (!existsSync(vc)) {
     }),
   );
   console.log("[ensure-vercel-output] wrote .vc-config.json");
+}
+
+const libs = join(fn, "_libs");
+mkdirSync(libs, { recursive: true });
+const pgliteDist = join(root, "node_modules", "@electric-sql", "pglite", "dist");
+for (const name of ["pglite.data", "pglite.wasm", "index.wasm", "initdb.wasm"]) {
+  const src = join(pgliteDist, name);
+  if (!existsSync(src)) continue;
+  const dest = join(libs, name);
+  cpSync(src, dest);
+  console.log("[ensure-vercel-output] copied", name);
 }

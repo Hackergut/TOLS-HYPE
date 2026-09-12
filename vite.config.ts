@@ -1,5 +1,5 @@
 import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -178,15 +178,22 @@ export default defineConfig(({ command, isPreview }) => ({
             externals: { inline: ["tslib", "radix-ui", /@radix-ui\//] },
             hooks: {
               compiled() {
-                const src = join(process.cwd(), "node_modules/tslib");
-                if (!existsSync(src)) return;
+                const copies: Array<[string, string]> = [
+                  [join(process.cwd(), "node_modules/tslib"), "node_modules/tslib"],
+                  [join(process.cwd(), "node_modules/@electric-sql/pglite/dist/pglite.data"), "_libs/pglite.data"],
+                  [join(process.cwd(), "node_modules/@electric-sql/pglite/dist/pglite.wasm"), "_libs/pglite.wasm"],
+                ];
                 for (const root of [
                   join(process.cwd(), ".output/server"),
                   join(process.cwd(), ".vercel/output/functions/__server.func"),
                 ]) {
                   if (!existsSync(root)) continue;
-                  mkdirSync(join(root, "node_modules"), { recursive: true });
-                  cpSync(src, join(root, "node_modules/tslib"), { recursive: true });
+                  for (const [src, rel] of copies) {
+                    if (!existsSync(src)) continue;
+                    const dest = join(root, rel);
+                    mkdirSync(dirname(dest), { recursive: true });
+                    cpSync(src, dest, { recursive: true });
+                  }
                 }
               },
             },
