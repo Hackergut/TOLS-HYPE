@@ -15,7 +15,7 @@ import { matchLive } from "@/lib/match-live";
 import { type OddsFormat } from "@/lib/odds";
 import { eventById, type SlipPick } from "@/lib/sports-book";
 import { useWallet } from "@/lib/wallet-context";
-import { cn } from "cn";
+import { TeamCrest } from "@/components/sports/team-crest";
 
 export const Route = createFileRoute("/_shell/sports/$id")({
   component: MatchPage,
@@ -200,9 +200,7 @@ function MatchCenter() {
 function Crest({ abbr, name }: { abbr: string; name: string }) {
   return (
     <div className="min-w-0 text-center">
-      <span className="mx-auto grid size-14 place-items-center rounded-full bg-muted font-heading text-sm font-semibold tracking-wide text-lime ring-1 ring-lime/30">
-        {abbr}
-      </span>
+      <TeamCrest name={name} abbr={abbr} className="mx-auto size-14" />
       <p className="mt-2 truncate text-sm font-medium">{name}</p>
     </div>
   );

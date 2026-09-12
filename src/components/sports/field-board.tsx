@@ -1,4 +1,6 @@
 import { SPORT_META, type SportEvent } from "@/lib/sports-book";
+import { TeamCrest } from "@/components/sports/team-crest";
+import { leagueCrest } from "@/lib/club-crests";
 
 export function FieldBoard({ event }: { event: SportEvent }) {
   const field = SPORT_META[event.sport].field;
@@ -32,7 +34,7 @@ export function FieldBoard({ event }: { event: SportEvent }) {
           ) : (
             <p className="font-heading text-sm tracking-[0.2em] text-lime">VS</p>
           )}
-          <p className="font-sub text-[0.6rem] tracking-[0.14em] text-muted-foreground uppercase">{event.league}</p>
+          <p className="font-sub mt-1 text-[0.65rem] tracking-[0.14em] text-muted-foreground uppercase">{event.league}</p>
         </div>
         <Crest abbr={event.awayAbbr} name={event.away} align="right" />
       </div>
@@ -43,9 +45,7 @@ export function FieldBoard({ event }: { event: SportEvent }) {
 function Crest({ abbr, name, align }: { abbr: string; name: string; align: "left" | "right" }) {
   return (
     <div className={`flex min-w-0 items-center gap-2 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
-      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-black/55 font-heading text-[0.7rem] font-semibold tracking-wide text-lime ring-1 ring-lime/30">
-        {abbr}
-      </span>
+      <TeamCrest name={name} abbr={abbr} className="size-8" />
       <span className="hidden truncate text-sm font-medium sm:block">{name}</span>
     </div>
   );

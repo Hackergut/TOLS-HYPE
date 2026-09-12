@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { cn } from "cn";
 import { formatOdds, type OddsFormat } from "@/lib/odds";
+import { TeamCrest } from "@/components/sports/team-crest";
+import { leagueCrest } from "@/lib/club-crests";
 import {
   hasDraw,
   outcomesFor,
@@ -47,7 +49,12 @@ export function EventCard({
             ) : (
               <span>{event.start}</span>
             )}
-            <span className="text-muted-foreground/70">· {event.league}</span>
+            <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+              · {leagueCrest(event.league) ? (
+                <img src={leagueCrest(event.league)} alt="" className="inline size-3.5 object-contain" />
+              ) : null}
+              {event.league}
+            </span>
           </p>
           <div className="mt-1 grid gap-0.5">
             <TeamRow abbr={event.homeAbbr} name={event.home} score={event.score?.[0]} />
@@ -143,9 +150,7 @@ function OddBtn({
 function TeamRow({ abbr, name, score }: { abbr: string; name: string; score?: number }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="grid size-6 place-items-center rounded bg-muted font-heading text-[0.6rem] font-semibold tracking-wide text-lime">
-        {abbr}
-      </span>
+      <TeamCrest name={name} abbr={abbr} className="size-6 sm:size-7" />
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
       {typeof score === "number" ? (
         <span className="w-5 text-right font-heading text-sm tabular-nums">{score}</span>
