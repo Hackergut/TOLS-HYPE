@@ -1,4 +1,5 @@
-import { getRequest } from "@tanstack/react-start/server";
+import { getRequest, getCookie, setCookie } from "@tanstack/react-start/server";
+import { randomBytes } from "node:crypto";
 import { gateIdentityEnabled } from "./gate-identity.server";
 import { auth, authConfigured } from "./server";
 
@@ -19,14 +20,25 @@ const databaseConfigured = Boolean(process.env.DATABASE_URL?.trim());
 export { authConfigured };
 
 if (databaseConfigured && !authConfigured) {
-  console.error(
-    "[auth] DATABASE_URL is set but auth is disabled (VITE_AUTH_ENABLED=false) " +
-      "— requireUserId() will reject every request (fail closed) rather than " +
-      "share one dev user on a real database.",
+  console.warn(
+    "[auth] DATABASE_URL set, VITE_AUTH_ENABLED=false — bets use a per-browser guest cookie, not a shared dev user.",
   );
 }
 
-/** Dev fallback user id, used only when auth is disabled (VITE_AUTH_ENABLED=false). */
+const GUEST_COOKIE = "tols_guest";
+
+function guestUserId(): string {
+  const existing = getCookie(GUEST_COOKIE)?.trim();
+  if (existing && /^guest_[a-z0-9]{16,}$/i.test(existing)) return existing;
+  const id = `guest_${randomBytes(12).toString("hex")}`;
+  setCookie(GUEST_COOKIE, id, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 400,
+    sameSite: "lax",
+    httpOnly: true,
+  });
+  return id;
+}
 export const DEV_USER_ID = "dev-user";
 
 /**
@@ -76,19 +88,12 @@ export async function getSessionUser(
  * - Auth enabled -> the verified session user id; throws
  *   `UnauthorizedError` when signed out. Works in the sandbox preview too (real
  *   sign-in via the baked preview client).
- * - Auth disabled (`VITE_AUTH_ENABLED=false`) + `DATABASE_URL` set -> throw (fail
- *   closed): one shared dev user on a real database would let every visitor
- *   read/write everyone's rows.
+ * - Auth disabled + DATABASE_URL -> per-browser guest cookie (not shared dev-user).
  * - Auth disabled + no database -> the shared dev user id.
  */
 export async function requireUserId(bearerToken?: string): Promise<string> {
   if (!authConfigured && !gateIdentityEnabled()) {
-    if (databaseConfigured) {
-      throw new Error(
-        "Auth is disabled (VITE_AUTH_ENABLED=false) but DATABASE_URL is set — " +
-          "refusing to fall back to the shared dev user against a real database.",
-      );
-    }
+    if (databaseConfigured) return guestUserId();
     return DEV_USER_ID;
   }
   const user = await getSessionUser(bearerToken);
