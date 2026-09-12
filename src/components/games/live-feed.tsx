@@ -13,6 +13,7 @@ import { useBetHistory, type BetRound } from "@/lib/bet-history";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
 import { formatMoney } from "@/lib/format";
 import { BetPlayerCard, PlayerShot } from "@/components/players/player-shot";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "cn";
 
 type Tab = "my" | "high" | "race" | "lottery";
@@ -86,31 +87,47 @@ function Result({ win, children }: { win: boolean; children: string }) {
 }
 
 function MyBets({ rows, onOpen }: { rows: BetRound[]; onOpen: (r: BetRound) => void }) {
-  if (!rows.length) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">No bets yet on this table.</p>;
-  }
+  const { user } = useCurrentUserState();
+  const handle = user?.displayName?.split("@")[0] || user?.primaryEmail?.split("@")[0] || "you";
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>User</TableHead>
           <TableHead>Game</TableHead>
-          <TableHead>Bet</TableHead>
+          <TableHead>Bet Amount</TableHead>
+          <TableHead>Multiplier</TableHead>
           <TableHead className="text-right">Payout</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.slice(0, 12).map((r) => (
-          <TableRow key={r.id} className="cursor-pointer" onClick={() => onOpen(r)}>
-            <TableCell>
-              <p className="font-medium">{r.title}</p>
-              <p className="text-[0.7rem] text-muted-foreground">{r.label}</p>
-            </TableCell>
-            <TableCell className="tabular-nums">{r.stake}</TableCell>
-            <TableCell className="text-right">
-              <Result win={r.win}>{r.win ? `+${r.payout}` : "0"}</Result>
+        {rows.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+              No bets yet on this table.
             </TableCell>
           </TableRow>
-        ))}
+        ) : (
+          rows.slice(0, 12).map((r) => (
+            <TableRow key={r.id} className="cursor-pointer" onClick={() => onOpen(r)}>
+              <TableCell>
+                <span className="inline-flex items-center gap-2">
+                  <PlayerShot handle={handle} />
+                  <span className="font-medium">{handle}</span>
+                </span>
+              </TableCell>
+              <TableCell>
+                <p className="font-medium">{r.title}</p>
+                <p className="text-[0.7rem] text-muted-foreground">{r.label}</p>
+              </TableCell>
+              <TableCell className="tabular-nums">{r.stake}</TableCell>
+              <TableCell className="tabular-nums">{r.multiplier.toFixed(2)}×</TableCell>
+              <TableCell className="text-right">
+                <Result win={r.win}>{r.win ? `+${r.payout}` : "0"}</Result>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
       </TableBody>
     </Table>
   );
