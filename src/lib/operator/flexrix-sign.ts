@@ -47,14 +47,19 @@ export function flexrixSign(params: Record<string, string | number | boolean>) {
 export function flexrixVerify(
   params: Record<string, string>,
   headers: { merchantId: string | null; timestamp: string | null; nonce: string | null; sign: string | null },
-) {
-  if (!flexrixConfigured()) return false;
+  windowSec = 300,
+): { ok: true } | { ok: false; code: string } {
+  if (!flexrixConfigured()) return { ok: false, code: "NOT_CONFIGURED" };
   const merchantId = headers.merchantId ?? "";
   const timestamp = headers.timestamp ?? "";
   const nonce = headers.nonce ?? "";
   const sign = (headers.sign ?? "").toLowerCase();
-  if (!merchantId || !timestamp || !nonce || !sign) return false;
-  if (merchantId !== flexrixMerchant()) return false;
+  if (!merchantId || !timestamp || !nonce || !sign) return { ok: false, code: "AUTH_REQUIRED" };
+  if (merchantId !== flexrixMerchant()) return { ok: false, code: "BAD_SIGNATURE" };
+  const ts = Number(timestamp);
+  if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > windowSec) {
+    return { ok: false, code: "TIMESTAMP_EXPIRED" };
+  }
   const merged = {
     ...params,
     "X-Merchant-Id": merchantId,
@@ -65,8 +70,9 @@ export function flexrixVerify(
   try {
     const a = Buffer.from(expected);
     const b = Buffer.from(sign);
-    return a.length === b.length && timingSafeEqual(a, b);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return { ok: false, code: "BAD_SIGNATURE" };
   } catch {
-    return false;
+    return { ok: false, code: "BAD_SIGNATURE" };
   }
+  return { ok: true };
 }

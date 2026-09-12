@@ -1,17 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { inboundWallet } from "@/lib/operator/operator.server";
+import { handleFlexrixWallet } from "@/lib/operator/flexrix-wallet";
 
-async function bodyFrom(request: Request): Promise<unknown> {
+async function formBody(request: Request): Promise<Record<string, string>> {
   const ct = request.headers.get("content-type") ?? "";
-  if (ct.includes("application/x-www-form-urlencoded")) {
-    const text = await request.text();
-    return Object.fromEntries(new URLSearchParams(text));
+  if (ct.includes("application/json")) {
+    const json = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(json).map(([k, v]) => [k, v == null ? "" : String(v)]));
   }
-  try {
-    return await request.json();
-  } catch {
-    return {};
-  }
+  const text = await request.text();
+  return Object.fromEntries(new URLSearchParams(text));
 }
 
 function headersOf(request: Request): Record<string, string> {
@@ -25,10 +22,15 @@ function headersOf(request: Request): Record<string, string> {
 export const Route = createFileRoute("/api/flexrix/callback")({
   server: {
     handlers: {
-      GET: async () => Response.json({ ok: true, path: "/api/flexrix/callback" }),
+      GET: async () =>
+        Response.json({
+          ok: true,
+          path: "/api/flexrix/callback",
+          hint: "Register this URL as flexrixCasinoCallbackUrl. POST action=balance|bet|win|refund|rollback",
+        }),
       POST: async ({ request }) => {
-        const result = await inboundWallet(await bodyFrom(request), headersOf(request));
-        return Response.json(result, { status: result.ok ? 200 : 400 });
+        const { status, json } = await handleFlexrixWallet(await formBody(request), headersOf(request));
+        return Response.json(json, { status });
       },
     },
   },
