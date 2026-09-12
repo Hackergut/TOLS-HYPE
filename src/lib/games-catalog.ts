@@ -58,8 +58,8 @@ export const ORIGINALS: CatalogGame[] = [
     hot: true,
     original: true,
     players: 1842,
-    edge: 0.04,
-    rtp: 96,
+    edge: 0.01,
+    rtp: 99,
     blurb: "Ride the curve. Cash out before it snaps.",
     cover: "/brand/games/crash.jpg",
     cta: "Ride",
@@ -132,8 +132,8 @@ export const ORIGINALS: CatalogGame[] = [
     original: true,
     isNew: true,
     players: 1290,
-    edge: 0.03,
-    rtp: 97,
+    edge: 0.01,
+    rtp: 99,
     blurb: "Twenty-five tiles. Cash out while you can.",
     cover: "/brand/games/mines.jpg",
     cta: "Bet",
@@ -321,10 +321,11 @@ export const HERO_SLIDES = [
 
 export const CATEGORIES: { id: GameCategory | "all"; label: string }[] = [
   { id: "all", label: "Lobby" },
-  { id: "table", label: "Table Games" },
   { id: "originals", label: "Originals" },
-  { id: "live", label: "Live Show" },
   { id: "slots", label: "Slots" },
+  { id: "table", label: "Table Games" },
+  { id: "live", label: "Live Show" },
+  { id: "crash", label: "Crash" },
 ];
 
 export function getGame(id: string): CatalogGame | undefined {
@@ -336,41 +337,7 @@ export function gamesByCategory(category: GameCategory | "all"): CatalogGame[] {
   return GAMES.filter((g) => g.category === category);
 }
 
-export const SPORTS = [
-  {
-    id: "ucl-1",
-    league: "Champions League",
-    home: "Milan",
-    away: "Lisbon",
-    start: "Tonight 20:00",
-    moneyline: [1.82, 2.05] as [number, number],
-    live: true,
-  },
-  {
-    id: "nba-1",
-    league: "NBA",
-    home: "Ospreys",
-    away: "Kings",
-    start: "Tonight 01:30",
-    moneyline: [1.64, 2.28] as [number, number],
-  },
-  {
-    id: "ufc-1",
-    league: "UFC",
-    home: "Vale",
-    away: "Okafor",
-    start: "Sat 23:00",
-    moneyline: [1.55, 2.5] as [number, number],
-  },
-  {
-    id: "epl-1",
-    league: "Premier League",
-    home: "North End",
-    away: "Harbor",
-    start: "Sun 16:00",
-    moneyline: [2.1, 1.78] as [number, number],
-  },
-];
+export { SPORT_EVENTS as SPORTS } from "@/lib/sports-book";
 
 export type PromoCtaTo = "/login" | "/vip" | "/profile" | "/casino" | "/affiliate" | "/promotions";
 

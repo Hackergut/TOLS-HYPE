@@ -19,6 +19,8 @@ import {
   readWallet,
   snapshotBalances,
 } from "@/lib/wallet.server";
+import { comboOdds, vigPrice } from "@/lib/odds";
+import { resolveOutcome, type MarketKind } from "@/lib/sports-book";
 import {
   crashElapsedFor,
   crashMultiplierAt,
@@ -189,25 +191,65 @@ export const placeSportBet = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
     z.object({
-      eventId: z.string(),
-      side: z.enum(["home", "away"]),
-      odds: z.number().positive(),
       amount: z.number().positive(),
       currency: currencySchema,
+      mode: z.enum(["single", "combo"]),
+      legs: z
+        .array(
+          z.object({
+            eventId: z.string(),
+            market: z.enum(["ml", "spread", "total", "btts", "dc"]),
+            selection: z.string(),
+          }),
+        )
+        .min(1)
+        .max(12),
     }),
   )
   .handler(async ({ context, data }) => {
     assertBet(data.currency, data.amount);
     await ensureWallets(context.userId);
-    await debit(context.userId, data.currency, data.amount, "bet", data.eventId, "sports");
-    const fair = await takeFair(context.userId, 1);
-    const win = fair.floats[0]! < 1 / data.odds - 0.04;
-    const payout = win ? data.amount * data.odds : 0;
-    if (payout > 0) {
-      await credit(context.userId, data.currency, payout, "win", data.eventId, "sports");
+    const resolved = data.legs.map((leg) => {
+      const o = resolveOutcome(leg.eventId, leg.market as MarketKind, leg.selection);
+      if (!o) throw new Error("Market closed");
+      return o;
+    });
+    const fair = await takeFair(context.userId, data.mode === "combo" ? 1 : resolved.length);
+
+    if (data.mode === "combo") {
+      const price = comboOdds(resolved.map((o) => o.odds));
+      await debit(context.userId, data.currency, data.amount, "bet", resolved[0]!.eventId, "sports-acca");
+      const win = fair.floats[0]! < vigPrice(price);
+      const payout = win ? data.amount * price : 0;
+      if (payout > 0) {
+        await credit(context.userId, data.currency, payout, "win", resolved[0]!.eventId, "sports-acca");
+      }
+      return {
+        mode: "combo" as const,
+        price,
+        hits: win ? resolved.length : 0,
+        payout,
+        balances: await snapshot(context.userId),
+      };
+    }
+
+    let hits = 0;
+    let payout = 0;
+    for (let i = 0; i < resolved.length; i++) {
+      const o = resolved[i]!;
+      await debit(context.userId, data.currency, data.amount, "bet", o.eventId, o.marketLabel);
+      const win = fair.floats[i]! < vigPrice(o.odds);
+      if (win) {
+        hits += 1;
+        const won = data.amount * o.odds;
+        payout += won;
+        await credit(context.userId, data.currency, won, "win", o.eventId, o.marketLabel);
+      }
     }
     return {
-      win,
+      mode: "single" as const,
+      price: null as number | null,
+      hits,
       payout,
       balances: await snapshot(context.userId),
     };
@@ -698,6 +740,11 @@ export const playKeno = createServerFn({ method: "POST" })
 type HiloCard = { rank: number; suit: "♠" | "♥" | "♦" | "♣" };
 const HILO_SUITS: HiloCard["suit"][] = ["♠", "♥", "♦", "♣"];
 
+function readPayload<T>(raw: unknown): T {
+  if (typeof raw === "string") return JSON.parse(raw) as T;
+  return raw as T;
+}
+
 function drawHilo(u0: number, u1: number): HiloCard {
   return {
     rank: 1 + pickIndex(u0, 13),
@@ -740,38 +787,84 @@ export const playHilo = createServerFn({ method: "POST" })
     `;
     const round = rows[0];
     if (!round || round.status !== "open") throw new Error("Round not open");
-    assertBet(data.currency, data.amount);
-    await ensureWallets(context.userId);
-    await debit(context.userId, data.currency, data.amount, "bet", round.game_id, "hilo");
-    const payload = JSON.parse(round.payload) as { card: HiloCard };
+    const payload = readPayload<HiloPayload>(round.payload);
+    if (!payload?.card) throw new Error("No card in play");
     const current = payload.card;
+    if (!payload.live) {
+      assertBet(data.currency, data.amount);
+      await ensureWallets(context.userId);
+      await debit(context.userId, data.currency, data.amount, "bet", round.game_id, "hilo");
+      payload.live = true;
+      payload.amount = data.amount;
+      payload.currency = data.currency;
+      payload.multiplier = 1;
+    }
     const fair = await takeFair(context.userId, 2);
     const next = drawHilo(fair.floats[0]!, fair.floats[1]!);
-    const pHigher = (14 - current.rank) / 13;
-    const pLower = current.rank / 13;
-    const p = data.pick === "higher" ? pHigher : pLower;
     const win =
       data.pick === "higher" ? next.rank >= current.rank : next.rank <= current.rank;
-    const multiplier = win ? 0.99 / p : 0;
-    const payout = win ? data.amount * multiplier : 0;
-    if (payout > 0) {
-      await credit(context.userId, data.currency, payout, "win", round.game_id, "hilo");
+    const p = data.pick === "higher" ? (14 - current.rank) / 13 : current.rank / 13;
+    const step = 0.99 / p;
+    if (win) {
+      payload.multiplier = (payload.multiplier ?? 1) * step;
+      payload.card = next;
+    } else {
+      payload.live = false;
+      payload.multiplier = 0;
+      payload.card = next;
     }
     await sql`
       update game_rounds
-      set payload = ${JSON.stringify({ card: next })}, bet_amount = ${data.amount}, currency = ${data.currency}
+      set payload = ${JSON.stringify(payload)}, bet_amount = ${payload.amount ?? data.amount}, currency = ${payload.currency ?? data.currency}
       where id = ${data.roundId} and user_id = ${context.userId}
     `;
     return {
       previous: current,
       card: next,
       win,
-      multiplier,
-      payout,
-      pHigher,
-      pLower,
+      live: Boolean(payload.live),
+      multiplier: payload.multiplier ?? 0,
+      payout: 0,
+      step,
       balances: await snapshot(context.userId),
     };
+  });
+
+type HiloPayload = {
+  card: HiloCard;
+  live?: boolean;
+  amount?: number;
+  currency?: Currency;
+  multiplier?: number;
+};
+
+export const cashOutHilo = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ roundId: z.string() }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const rows = await sql<{ payload: string; status: string; game_id: string; bet_amount: string; currency: string }>`
+      select payload, status, game_id, bet_amount, currency from game_rounds
+      where id = ${data.roundId} and user_id = ${context.userId}
+    `;
+    const round = rows[0];
+    if (!round || round.status !== "open") throw new Error("Round not open");
+    const payload = readPayload<HiloPayload>(round.payload);
+    if (!payload.live) throw new Error("Nothing to cash out");
+    const multiplier = payload.multiplier ?? 1;
+    const amount = payload.amount ?? asNumber(round.bet_amount);
+    const currency = payload.currency ?? parseCurrency(round.currency);
+    const payout = amount * multiplier;
+    if (payout > 0) {
+      await credit(context.userId, currency, payout, "win", round.game_id, "hilo cash out");
+    }
+    payload.live = false;
+    payload.multiplier = 1;
+    await sql`
+      update game_rounds set payload = ${JSON.stringify(payload)}
+      where id = ${data.roundId} and user_id = ${context.userId}
+    `;
+    return { payout, multiplier, card: payload.card, balances: await snapshot(context.userId) };
   });
 
 export const playPool = createServerFn({ method: "POST" })

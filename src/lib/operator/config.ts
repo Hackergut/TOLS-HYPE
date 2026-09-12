@@ -29,10 +29,11 @@ export const operator = {
   license: vite("VITE_OPERATOR_LICENSE") ?? "",
   supportEmail: vite("VITE_OPERATOR_SUPPORT") ?? "support@tols.fun",
   backend: (vite("VITE_OPERATOR_BACKEND") as OperatorBackend) || "local",
-  aggregatorKind: (vite("VITE_AGGREGATOR_KIND") as import("@/lib/operator/adapter").AggregatorKind) || "local",
+  aggregatorKind: (vite("VITE_AGGREGATOR_KIND") as import("@/lib/operator/adapter").AggregatorKind) || "tols-next",
   aggregatorUrl: vite("VITE_AGGREGATOR_URL") ?? "",
   supabaseUrl: vite("VITE_SUPABASE_URL") ?? "",
-  governanceUrl: vite("VITE_GOVERNANCE_URL") ?? "",
+  governanceUrl: vite("VITE_GOVERNANCE_URL") ?? "https://gov.tols.fun",
+  casinoOrigin: (vite("VITE_CASINO_ORIGIN") ?? "https://www.tols.fun").replace(/\/$/, ""),
 };
 
 export function backendLabel(kind: OperatorBackend) {

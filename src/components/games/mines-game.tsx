@@ -8,6 +8,7 @@ import { useGameTable } from "@/components/games/game-table";
 import { FieldLabel, StakeField } from "@/components/games/stake-field";
 import { formatMoney, formatMultiplier } from "@/lib/format";
 import { CURRENCY_META } from "@/lib/games-catalog";
+import { playSfx } from "@/lib/game-sound";
 
 export function MinesGame({ gameId }: { gameId: string }) {
   return (
@@ -54,19 +55,22 @@ function MinesTable({ gameId }: { gameId: string }) {
         setMines(res.mines);
         if (res.balances) applyBalances(res.balances);
         setRoundId(null);
+        playSfx("boom");
         reportRound({
           win: false,
           label: "Mine",
           stake: amount,
           payout: 0,
           multiplier: 0,
-          view: { kind: "mines", boom: true, multiplier: 0 },
+          view: { kind: "mines", boom: true, multiplier: 0, revealed: res.revealed, mines: res.mines },
           replay: () => {
             setRevealed(res.revealed);
             setMines(res.mines);
           },
         });
         toast.error("Mine. Round over.");
+      } else {
+        playSfx("gem");
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Reveal failed");
@@ -80,13 +84,14 @@ function MinesTable({ gameId }: { gameId: string }) {
       applyBalances(res.balances);
       setMines(res.mines);
       setRoundId(null);
+      playSfx("cash");
       reportRound({
         win: true,
         label: `Cashout ${res.multiplier.toFixed(2)}×`,
         stake: amount,
         payout: res.payout,
         multiplier: res.multiplier,
-        view: { kind: "mines", boom: false, multiplier: res.multiplier },
+        view: { kind: "mines", boom: false, multiplier: res.multiplier, revealed, mines: res.mines },
         replay: () => setMines(res.mines),
       });
       toast.success(`Cashed ${formatMoney(res.payout, currency)} ${currency}`);
@@ -151,7 +156,7 @@ function MinesTable({ gameId }: { gameId: string }) {
 
 function Gem() {
   return (
-    <svg viewBox="0 0 24 24" className="mx-auto size-1/2 text-primary-foreground" fill="currentColor" aria-hidden>
+    <svg viewBox="0 0 24 24" className="mx-auto size-1/2 text-black" fill="currentColor" aria-hidden>
       <path d="M12 2 4 9l8 13 8-13-8-7zm0 3.2 4.6 4.3L12 18.4 7.4 9.5 12 5.2z" />
     </svg>
   );

@@ -8,7 +8,9 @@ import { useGameTable } from "@/components/games/game-table";
 import { StakeField } from "@/components/games/stake-field";
 import { formatMoney } from "@/lib/format";
 import { CURRENCY_META } from "@/lib/games-catalog";
-import type { SlotSymbol } from "@/lib/rng";
+import { playSfx } from "@/lib/game-sound";
+import { sleep, speedDelay } from "@/lib/game-speed";
+import { SLOT_SYMBOLS, type SlotSymbol } from "@/lib/rng";
 
 export function SlotsGame({ gameId }: { gameId: string }) {
   return (
@@ -29,9 +31,23 @@ function SlotsTable({ gameId }: { gameId: string }) {
   async function play() {
     setBusy(true);
     try {
+      playSfx("spin");
       const res = await playInstant({ data: { gameId, currency, amount } });
       applyBalances(res.balances);
       const next = res.detail.reels as [SlotSymbol, SlotSymbol, SlotSymbol];
+      const reel = speedDelay("reel");
+      if (reel > 0) {
+        const spins = reel > 40 ? 10 : 5;
+        for (let i = 0; i < spins; i += 1) {
+          setReels([
+            SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)]!,
+            SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)]!,
+            SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)]!,
+          ]);
+          playSfx("tick");
+          await sleep(reel);
+        }
+      }
       setReels(next);
       reportRound({
         win: res.payout > 0,

@@ -11,16 +11,24 @@ function FairnessPage() {
       <h1 className="font-heading mt-6 text-3xl font-semibold tracking-tight">Fairness</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         Every Original is a SHA-256 HMAC round. The house commits to a server seed hash
-        before you bet. Your client seed and a nonce feed the HMAC. After the bet, the
-        float in [0, 1) is the only randomness — dice, crash, mines, keno, hi-lo, slots,
-        roulette, blackjack shuffles, and Pool Rush physics jitter all consume it.
+        before you bet. Your client seed, a nonce, and a counter feed the HMAC. Discrete
+        outcomes (dice, roulette, mines, keno, slots, hi-lo, blackjack shuffle) use
+        rejection sampling so every bucket in 0..N-1 is equally likely. Crash and Pool
+        Rush consume 53-bit units in [0, 1).
       </p>
-      <pre className="mt-6 overflow-x-auto rounded-xl bg-muted p-4 text-xs">{`HMAC_SHA256(serverSeed, clientSeed:nonce:chunk)
-float = first 4 bytes / 2^32
+      <pre className="mt-6 overflow-x-auto rounded-xl bg-muted p-4 text-xs">{`HMAC_SHA256(serverSeed, clientSeed:nonce:counter)
+u64    = first 8 bytes, big-endian
+int(N) = u64 mod N, redraw if u64 ≥ floor(2^64 / N) * N   // rejection sampling
+unit   = (u64 >> 11) / 2^53                               // uniform [0, 1)
 
-dice    roll = floor(float * 10000) / 100     RTP 99%
-crash   if float < edge → 1.00x else (1-edge)/(1-float)
-pool    floats jitter the rack; 2D elastic break; RTP 96%`}</pre>
+dice      roll = int(10000) / 100                         RTP 99%
+roulette  pocket = int(37)
+crash     if unit < edge → 1.00x else (1-edge)/(1-unit)
+mines     sample without replacement via int(remaining)
+keno      10 unique draws from 1..40 via int(remaining)
+slots     weighted symbol via int(sum weights)
+blackjack Fisher–Yates with int(i+1)
+pool      53-bit units jitter the rack; 2D elastic break; RTP 96%`}</pre>
       <h2 className="font-heading mt-8 text-xl font-semibold">Published RTP</h2>
       <table className="mt-3 w-full text-sm">
         <thead>

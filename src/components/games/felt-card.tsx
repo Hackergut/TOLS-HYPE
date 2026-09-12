@@ -9,42 +9,47 @@ export function FeltCard({
   hidden,
   size = "md",
   stripe,
+  brand,
 }: {
   rank?: string | number;
   suit?: string;
   hidden?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   stripe?: boolean;
+  brand?: boolean;
 }) {
   const dim =
     size === "lg"
       ? "h-44 w-32 md:h-52 md:w-36"
       : size === "sm"
         ? "h-20 w-14"
-        : "h-28 w-20";
+        : size === "xs"
+          ? "h-12 w-9"
+          : "h-28 w-20";
   if (hidden) {
     return (
       <div
         className={`relative flex ${dim} items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-border`}
       >
-        <TolsT className="size-10" />
+        <TolsT className={size === "xs" ? "size-5" : "size-10"} />
         <span className="absolute inset-x-0 bottom-0 h-1.5 bg-lime" />
       </div>
     );
   }
   const face = typeof rank === "number" ? (HILO_FACES[rank - 1] ?? String(rank)) : rank;
   const red = suit === "♥" || suit === "♦";
+  const ink = brand ? (red ? "text-purple" : "text-zinc-900") : red ? "text-destructive" : "text-zinc-900";
   return (
     <div
-      className={`relative flex ${dim} flex-col justify-between overflow-hidden rounded-xl bg-white p-2.5 shadow-lg ${
-        red ? "text-destructive" : "text-zinc-900"
-      }`}
+      className={`relative flex ${dim} flex-col justify-between overflow-hidden rounded-xl bg-white shadow-lg ${
+        size === "xs" ? "p-1" : "p-2.5"
+      } ${ink}`}
     >
       <div>
-        <p className="font-heading text-2xl leading-none font-bold">{face}</p>
-        <p className="text-lg leading-none">{suit}</p>
+        <p className={size === "xs" ? "font-heading text-sm leading-none font-bold" : "font-heading text-2xl leading-none font-bold"}>{face}</p>
+        <p className={size === "xs" ? "text-xs leading-none" : "text-lg leading-none"}>{suit}</p>
       </div>
-      <p className="self-end text-3xl">{suit}</p>
+      <p className={size === "xs" ? "self-end text-base" : "self-end text-3xl"}>{suit}</p>
       {stripe ? <span className="absolute inset-x-0 bottom-0 h-1.5 bg-lime" /> : null}
     </div>
   );
@@ -58,7 +63,7 @@ export function FeltFromPlaying({
 }: {
   card?: PlayingCard;
   hidden?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   stripe?: boolean;
 }) {
   if (hidden || !card) return <FeltCard hidden size={size} stripe={stripe} />;

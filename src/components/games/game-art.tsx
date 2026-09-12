@@ -24,24 +24,38 @@ function CrashArt({ hue }: { hue: number }) {
   );
 }
 
-function RouletteArt({ hue }: { hue: number }) {
-  const slices = 18;
+function RouletteArt({ hue: _hue }: { hue: number }) {
+  const slices = 24;
+  function star8(rOut: number, rIn: number) {
+    const pts: string[] = [];
+    for (let i = 0; i < 16; i++) {
+      const r = i % 2 === 0 ? rOut : rIn;
+      const a = (i * Math.PI) / 8 - Math.PI / 2;
+      pts.push(`${r * Math.cos(a)},${r * Math.sin(a)}`);
+    }
+    return `M ${pts.join(" L ")} Z`;
+  }
   return (
     <svg viewBox="0 0 300 400" className="size-full" aria-hidden>
-      <rect width="300" height="400" fill={`hsl(${hue} 8% 8%)`} />
+      <rect width="300" height="400" fill="#09090c" />
       <g transform="translate(150 210)">
+        <circle r="96" fill="#545454" />
+        <circle r="92" fill="none" stroke="#2d2d2d" strokeWidth="8" />
+        <circle r="78" fill="#545454" />
+        <circle r="74" fill="none" stroke="#2d2d2d" strokeWidth="10" />
+        <circle r="66" fill="none" stroke="#c1ff72" strokeWidth="4" />
         {Array.from({ length: slices }).map((_, i) => (
           <path
             key={i}
-            d="M 0 0 L 0 -92 A 92 92 0 0 1 31.8 -86 Z"
-            fill={i % 2 === 0 ? "#2a2a2c" : "#151517"}
+            d="M 0 -48 L 0 -62 A 62 62 0 0 1 16.1 -59.8 L 12.4 -47.2 Z"
+            fill={i % 2 === 0 ? "#c1ff72" : "var(--color-purple)"}
             transform={`rotate(${(360 / slices) * i})`}
           />
         ))}
-        <circle r="96" fill="none" stroke="#cdf32b" strokeWidth="4" />
-        <circle r="28" fill="#1c1c1e" />
-        <circle r="10" fill="#cdf32b" />
-        <circle cx="0" cy="-78" r="6" fill="#cdf32b" />
+        <circle r="46" fill="#545454" />
+        <circle r="34" fill="none" stroke="#2d2d2d" strokeWidth="6" />
+        <path d={star8(22, 9)} fill="#c1ff72" stroke="#000" strokeWidth="2" />
+        <path d={star8(15, 5)} fill="#2d2d2d" />
       </g>
     </svg>
   );

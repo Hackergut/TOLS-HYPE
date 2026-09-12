@@ -1,6 +1,6 @@
 import { operatorServer } from "@/lib/operator/env.server";
 
-/** Payments stay on tols-casino-next: on-chain deposits, Moonpay, withdrawals. */
+/** Real payment rails on tols-casino-next. `/api/casino-deposits` is retired (410). */
 export async function casinoFetch(path: string, init?: RequestInit) {
   const base = operatorServer().casinoOrigin;
   const res = await fetch(`${base}${path}`, {
@@ -9,19 +9,23 @@ export async function casinoFetch(path: string, init?: RequestInit) {
   });
   const json = (await res.json().catch(() => ({}))) as unknown;
   if (!res.ok) {
-    const err = json && typeof json === "object" && "error" in json ? String((json as { error: string }).error) : `HTTP ${res.status}`;
+    const err =
+      json && typeof json === "object" && "error" in json
+        ? String((json as { error: string }).error)
+        : `HTTP ${res.status}`;
     throw new Error(err);
   }
   return json;
 }
 
-export function paymentEndpoints() {
+export function publicCashierLinks() {
   const origin = operatorServer().casinoOrigin;
   return {
-    deposits: `${origin}/api/casino-deposits`,
-    withdrawals: `${origin}/api/casino-withdrawals`,
-    payments: `${origin}/api/payments`,
-    buy: `${origin}/api/buy`,
-    watch: `${origin}/api/cron/watch-deposits`,
+    cashier: `${origin}/deposit`,
+    wallet: `${origin}/account/wallet`,
   };
+}
+
+export function paymentEndpoints() {
+  return publicCashierLinks();
 }

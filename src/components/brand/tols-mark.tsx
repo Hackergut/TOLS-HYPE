@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 
-/** Hollow lime T from the official mark. */
+/** Official TOLS T — same file as the lockup. */
 export function TolsT({ className }: { className?: string }) {
   return (
     <img
@@ -12,7 +12,11 @@ export function TolsT({ className }: { className?: string }) {
   );
 }
 
-/** Lime-outline TOLS wordmark from the official lockup. */
+export function OriginalsIcon({ className }: { className?: string }) {
+  return <TolsT className={className} />;
+}
+
+/** Official lockup. */
 export function TolsWordmark({ className }: { className?: string }) {
   return (
     <img

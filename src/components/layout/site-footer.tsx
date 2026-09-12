@@ -41,7 +41,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {COLS.map((col) => (
           <nav key={col.title} aria-label={col.title}>
-            <p className="font-heading text-xs font-semibold tracking-[0.16em] text-foreground uppercase">
+            <p className="font-sub text-[0.65rem] font-medium tracking-[0.14em] text-foreground uppercase">
               {col.title}
             </p>
             <ul className="mt-3 space-y-2">
@@ -63,7 +63,7 @@ export function SiteFooter() {
           </nav>
         ))}
         <nav aria-label="Community">
-          <p className="font-heading text-xs font-semibold tracking-[0.16em] text-foreground uppercase">
+          <p className="font-sub text-[0.65rem] font-medium tracking-[0.14em] text-foreground uppercase">
             Community
           </p>
           <ul className="mt-3 space-y-2">

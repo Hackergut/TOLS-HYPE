@@ -14,7 +14,9 @@ theirs; the rules below name the file to open at each point it matters.
 
 Skills are auto-listed with trigger words; open the matching `SKILL.md` (plus
 its `references/`) **before** you build or polish. Routing the triggers miss:
-DOM / overlay UI **including game chrome** → **`design-ui`**; game / canvas / 3D
+DOM / overlay UI **including game chrome** → **`design-ui`**; **TOLS brand
+color / originals paint / lime-purple** → **`tols-design`** (wins over
+design-ui on color); game / canvas / 3D
 → **`building-games`**, both for a game with UI chrome; **`controls`** before
 any WASD / vehicle / flight movement (inverted A/D is the top ship-blocker);
 the viewer's real Google/Microsoft/Notion/etc. data (calendar, mail, files,

@@ -13,8 +13,10 @@ import { AggregatorFrame } from "@/components/games/aggregator-frame";
 import { GameLegend } from "@/components/games/game-legend";
 import { LiveFeed } from "@/components/games/live-feed";
 import { GameTableProvider } from "@/components/games/game-table";
+import { GuestGamePanel, useGamePreviewOptional } from "@/components/games/guest-game-preview";
 import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
 import { GAMES, getGame } from "@/lib/games-catalog";
+import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
 export const Route = createFileRoute("/_shell/games/$id")({
   component: GamePage,
@@ -22,20 +24,60 @@ export const Route = createFileRoute("/_shell/games/$id")({
 
 function GamePage() {
   const { id } = Route.useParams();
-  const game = getGame(id);
-  if (!game) {
+  const { games: remote } = useRemoteCatalog();
+  const game = getGame(id) ?? remote.find((g) => g.id === id);
+  const preview = useGamePreviewOptional();
+  const more = GAMES.filter((g) => g.id !== id).slice(0, 6);
+
+  if (game && preview?.isGuest) {
     return (
-      <main className="mx-auto max-w-lg py-16 text-center">
-        <h1 className="font-heading text-2xl font-semibold">Table closed</h1>
-        <p className="mt-2 text-sm text-muted-foreground">That id is not in the catalog.</p>
-        <Link to="/casino" className="mt-4 inline-block text-sm text-primary">
-          Return to casino
-        </Link>
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+        <TolsBreadcrumb
+          items={[
+            { label: "Lobby", to: "/" },
+            { label: "Casino", to: "/casino" },
+            { label: game.title },
+          ]}
+        />
+        <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+          <GuestGamePanel game={game} />
+        </div>
       </main>
     );
   }
 
-  const more = GAMES.filter((g) => g.id !== game.id).slice(0, 6);
+  if (!game) {
+    return (
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+        <TolsBreadcrumb
+          items={[
+            { label: "Lobby", to: "/" },
+            { label: "Casino", to: "/casino" },
+            { label: id },
+          ]}
+        />
+        {preview?.isGuest ? (
+          <div className="rounded-2xl bg-card p-6 text-sm text-muted-foreground ring-1 ring-border">
+            Sign in to launch this studio table.
+          </div>
+        ) : (
+          <GameTableProvider gameId={id}>
+            <AggregatorFrame gameId={id} />
+            <LiveFeed gameId={id} />
+          </GameTableProvider>
+        )}
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-heading text-lg font-bold">More from TOLS</h2>
+            <Link to="/casino" className="text-xs text-muted-foreground hover:text-foreground">
+              View all
+            </Link>
+          </div>
+          <GameGrid games={more} />
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">

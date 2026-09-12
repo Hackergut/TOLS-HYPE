@@ -1,0 +1,370 @@
+/* TOLS design system — complete game/widget CSS.
+   Chrome (cards, sidebar) stays in styles.css as dark grey.
+   This file paints GAMES only. Skill: .grok/skills/tols-design */
+
+:root {
+  --tols-purple: #904bf9;
+  --tols-uva: #1c0529;
+  --tols-lime: #00ffbd;
+  --tols-lime-fluo: #34edcd;
+  --tols-anthracite: #504756;
+  --tols-orange: #ff8904;
+  --tols-black: #0d0d10;
+  --tols-caelia-grey: #545454;
+  --tols-caelia-rim: #2d2d2d;
+  --tols-caelia-lime: #34edcd;
+  --tols-felt: #2d2d2d;
+  --tols-bar: #3a3a3a;
+  --tols-ink: #0d0d10;
+  --tols-magenta: #ea2fd4;
+  --tols-magenta-dark: #9628a1;
+}
+
+.dark {
+  --tols-purple: #904bf9;
+  --tols-uva: #1c0529;
+  --tols-lime: #00ffbd;
+  --tols-lime-fluo: #34edcd;
+  --tols-anthracite: #504756;
+  --tols-orange: #ff8904;
+  --tols-black: #0d0d10;
+  --tols-caelia-grey: #545454;
+  --tols-caelia-rim: #2d2d2d;
+  --tols-caelia-lime: #34edcd;
+  --tols-felt: #2d2d2d;
+  --tols-bar: #3a3a3a;
+  --tols-ink: #0d0d10;
+  --tols-magenta: #ea2fd4;
+  --tols-magenta-dark: #9628a1;
+}
+
+@layer components {
+  /* Ink: lime fill → black type; purple fill → lime type */
+  .tols-fill-lime {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+  .tols-fill-lime:hover:not(:disabled) {
+    background: var(--tols-lime-fluo);
+  }
+  .tols-fill-purple {
+    background: var(--tols-purple);
+    color: var(--tols-lime);
+  }
+  .tols-fill-uva {
+    background: var(--tols-uva);
+    color: var(--tols-lime);
+  }
+  .tols-fill-orange {
+    background: var(--tols-orange);
+    color: var(--tols-ink);
+  }
+
+  .tols-widget-win {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+  .tols-widget-lose {
+    background: var(--tols-purple);
+    color: var(--tols-lime);
+  }
+
+  /* Felt table (roulette mock) */
+  .tols-felt {
+    background: var(--tols-felt);
+    border: 1px solid var(--tols-lime);
+    color: var(--tols-lime);
+  }
+  .tols-cell {
+    border-width: 2px;
+    border-style: solid;
+    background: var(--tols-felt);
+    color: var(--tols-lime);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .tols-cell-lime {
+    border-color: var(--tols-lime);
+  }
+  .tols-cell-purple {
+    border-color: var(--tols-purple);
+  }
+  .tols-cell-lime.is-on,
+  .tols-cell-lime[aria-pressed="true"] {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+  .tols-cell-purple.is-on,
+  .tols-cell-purple[aria-pressed="true"] {
+    background: var(--tols-purple);
+    color: var(--tols-lime);
+  }
+
+  .tols-bar {
+    background: var(--tols-bar);
+    color: #d4d4d8;
+    font-weight: 600;
+  }
+  .tols-bar.is-on,
+  .tols-bar[aria-pressed="true"] {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+
+  /* CAELIA wheel greys — body unpainted */
+  .tols-wheel-disc {
+    color: var(--tols-caelia-grey);
+  }
+  .tols-wheel-rim {
+    color: var(--tols-caelia-rim);
+  }
+  .tols-wheel-lime {
+    color: var(--tols-caelia-lime);
+  }
+
+  .tols-stroke-lime {
+    background: transparent;
+    color: var(--tols-lime);
+    box-shadow: inset 0 0 0 2px var(--tols-lime);
+  }
+  .tols-stroke-purple {
+    background: transparent;
+    color: var(--tols-lime);
+    box-shadow: inset 0 0 0 2px var(--tols-purple);
+  }
+
+  .tols-hot {
+    color: var(--tols-orange);
+  }
+
+  .keno-idle {
+    background: #213743;
+    color: #9db4c4;
+  }
+  .keno-pick {
+    background: #7b3ff2;
+    color: #fff;
+  }
+  .keno-hit {
+    background: #00e701;
+    color: #000;
+    box-shadow: 0 0 0 3px #7b3ff2;
+  }
+  .keno-house {
+    background: #213743;
+    color: #e9113c;
+  }
+}
+
+/* Product chrome — wallet/VIP/trust. Not game paint. */
+@layer components {
+  .tols-cta {
+    background: #00ffbd;
+    color: #0d0d10;
+    font-weight: 700;
+    box-shadow: 0 0 24px rgb(0 255 189 / 0.28);
+  }
+  .tols-cta:hover:not(:disabled) {
+    background: #34edcd;
+  }
+  .tols-cta:active:not(:disabled) {
+    background: #7c3aed;
+  }
+  .tols-card-vip {
+    background: var(--bg-1);
+    border: 1px solid #ea2fd4;
+    color: var(--text-1);
+    box-shadow: 0 0 24px rgb(234 47 212 / 0.15);
+  }
+  .tols-link-info {
+    color: #00ffbd;
+  }
+  .tols-live-dot {
+    background: #e1514e;
+    box-shadow: 0 0 8px rgb(225 81 78 / 0.6);
+  }
+  .tols-warn {
+    color: var(--warning);
+  }
+  .tols-error {
+    color: var(--error-text);
+  }
+  .badge-win {
+    background: #00ffbd;
+    color: #0d0d10;
+    font-weight: 700;
+    border-radius: 9999px;
+    box-shadow: 0 0 16px rgb(0 255 189 / 0.3);
+  }
+  .tols-game-card {
+    overflow: hidden;
+    border-radius: 16px;
+    background: #16171b;
+    border: 1px solid #ffffff14;
+    content-visibility: auto;
+    contain-intrinsic-size: 180px 320px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+  .group:hover .tols-game-card,
+  .tols-game-card:hover {
+    border-color: #904bf9;
+    box-shadow: 0 0 24px rgb(144 75 249 / 0.28);
+    transform: translateY(-2px);
+  }
+  .group:hover .tols-game-card.is-original,
+  .tols-game-card.is-original:hover {
+    border-color: #ea2fd4;
+    box-shadow: 0 0 28px rgb(234 47 212 / 0.32);
+  }
+  .tols-game-card.is-live {
+    border-color: #904bf9;
+  }
+  @media (hover: none) {
+    .group:hover .tols-game-card,
+    .tols-game-card:hover {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tols-game-card {
+      transition: none;
+    }
+    .group:hover .tols-game-card,
+    .tols-game-card:hover {
+      transform: none;
+    }
+  }
+  .tols-game-card-wash {
+    background: linear-gradient(to top, rgb(20 8 40 / 0.92) 0%, rgb(144 75 249 / 0.28) 38%, transparent 62%);
+  }
+  .tols-game-card-bar {
+    height: 3px;
+    background: linear-gradient(90deg, #904bf9, #00ffbd);
+  }
+  .tols-badge-original {
+    background: linear-gradient(135deg, #904bf9, #00ffbd);
+    color: #0d0d10;
+    font-weight: 700;
+  }
+  .tols-badge-live {
+    background: #e1514e;
+    color: #fff;
+    box-shadow: 0 0 8px rgb(225 81 78 / 0.55);
+  }
+  .vip-progress {
+    background: #202024;
+    border-radius: 9999px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .vip-progress-bar {
+    background: linear-gradient(135deg, #9628a1, #ea2fd4);
+    height: 100%;
+    border-radius: 9999px;
+  }
+  .sb-card {
+    background: #16171b;
+    border: 1px solid #ffffff14;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .sb-card:hover {
+    border-color: #904bf9;
+  }
+  .sb-odd {
+    display: flex;
+    min-height: 2.75rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0.15rem 0.25rem;
+    border-radius: 8px;
+    border: 1px solid #ffffff14;
+    background: #202024;
+    color: #fafafa;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .sb-odd:hover {
+    border-color: #00ffbd;
+    color: #00ffbd;
+  }
+  .sb-odd.is-on {
+    background: #00ffbd;
+    border-color: #00ffbd;
+    color: #0d0d10;
+  }
+  .sb-live {
+    color: #e1514e;
+  }
+  .sb-field {
+    background: #09090c;
+  }
+  .player-shot {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: inherit;
+    background: #00ffbd;
+  }
+  .player-shot[data-tone="mint"] {
+    background: #00ffbd;
+  }
+  .player-shot[data-tone="blue"] {
+    background: #3b82f6;
+  }
+  .player-shot[data-tone="violet"] {
+    background: #904bf9;
+  }
+  .player-shot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.2);
+    mix-blend-mode: multiply;
+  }
+  .player-shot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0 10px,
+        rgb(0 0 0 / 0.18) 10px 12px
+      );
+    mix-blend-mode: multiply;
+  }
+  .player-shot::after {
+    content: "";
+    position: absolute;
+    top: 28%;
+    right: 6%;
+    width: 22%;
+    height: 18%;
+    background: #000;
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .bet-player {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #16171b;
+    border: 1px solid #ffffff14;
+  }
+  .bet-player .player-shot {
+    min-height: 5.5rem;
+  }
+}

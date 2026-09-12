@@ -17,7 +17,7 @@ export type Crumb = {
 
 export function TolsBreadcrumb({ items }: { items: Crumb[] }) {
   return (
-    <Breadcrumb>
+    <Breadcrumb className="hidden md:block">
       <BreadcrumbList>
         {items.map((item, i) => {
           const last = i === items.length - 1;

@@ -33,8 +33,10 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { CURRENCIES, PROMOS } from "@/lib/games-catalog";
 import { formatMoney } from "@/lib/format";
 import { useWallet } from "@/lib/wallet-context";
-import { subscribeChatShare, type BetRound } from "@/lib/bet-history";
+import { shortHash, subscribeChatShare, type BetRound } from "@/lib/bet-history";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
+import { RoundClone } from "@/components/games/round-clone";
+import { PlayerShot } from "@/components/players/player-shot";
 
 export type DockTab = "chat";
 
@@ -96,7 +98,7 @@ export function RightDock() {
           {tab ? (
             <>
               <header className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
-                <p className="font-heading text-sm font-semibold">{active?.label}</p>
+                <p className="font-sub text-sm font-medium">{active?.label}</p>
                 <Button variant="ghost" size="icon-sm" aria-label="Collapse" onClick={() => setTab(null)}>
                   <RiCloseLine className="size-4" />
                 </Button>
@@ -195,7 +197,9 @@ function ChatPanel() {
       <ScrollArea className="min-h-0 flex-1 px-3 py-3">
         <ul className="grid gap-2.5">
           {msgs.map((m) => (
-            <li key={m.id} className="text-sm">
+            <li key={m.id} className="flex gap-2 text-sm">
+              <PlayerShot handle={m.user} className="mt-0.5 size-8 shrink-0 rounded-md" />
+              <div className="min-w-0 flex-1">
               <span className="text-[0.65rem] font-semibold tracking-wider text-primary uppercase">
                 {m.vip}
               </span>{" "}
@@ -205,11 +209,16 @@ function ChatPanel() {
                 <button
                   type="button"
                   onClick={() => viewer?.open(m.round!)}
-                  className="mt-1 rounded-lg bg-muted px-2 py-1 text-left text-[0.7rem] font-semibold text-lime"
+                  className="mt-1 w-full rounded-lg bg-muted/70 p-1.5 text-left"
                 >
-                  {m.round.win ? "WIN" : "LOSE"} · {m.round.title} · {m.round.label}
+                  <RoundClone view={m.round.view} win={m.round.win} label={m.round.label} size="card" />
+                  <p className="mt-1 text-[0.65rem] font-semibold tabular-nums text-muted-foreground">
+                    {m.round.win ? "WIN" : "LOSE"} · {m.round.label}
+                    {m.round.fair ? ` #${shortHash(m.round.fair.serverHash)}` : ""}
+                  </p>
                 </button>
               ) : null}
+              </div>
             </li>
           ))}
         </ul>

@@ -13,12 +13,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AdvancedSettings } from "@/components/games/advanced-settings";
+import { SpeedPills } from "@/components/games/speed-pills";
 import { getGame } from "@/lib/games-catalog";
 import { isFavorite, loadAnimOn, loadSoundOn, saveAnimOn, saveSoundOn, toggleFavorite } from "@/lib/game-prefs";
 import { playSfx } from "@/lib/game-sound";
 import { newBetId, recordBet, useBetHistory } from "@/lib/bet-history";
-import { saveBetRound } from "@/lib/bet-history.server";
-import { getFairState } from "@/lib/fair.server";
+import { saveBetRound } from "@/lib/bet-history-api";
+import { getFairState } from "@/lib/fair-api";
 import { analyzeRounds, type RoundAnalysis, type RoundSnap } from "@/lib/round-stats";
 import { useWallet } from "@/lib/wallet-context";
 import { cn } from "cn";
@@ -164,6 +165,10 @@ export function GameToolbar() {
         </PopoverTrigger>
         <PopoverContent align="start" className="max-h-[min(72vh,36rem)] w-72 gap-3 overflow-y-auto p-3">
           <p className="font-heading text-sm font-semibold">Table settings</p>
+          <div className="flex items-center justify-between text-sm">
+            Speed
+            <SpeedPills />
+          </div>
           <label className="flex items-center justify-between text-sm">
             Animations
             <input
@@ -268,6 +273,7 @@ export function GameToolbar() {
           )}
         </PopoverContent>
       </Popover>
+      <SpeedPills />
       <button
         type="button"
         className={cn("grid size-8 place-items-center rounded-md hover:bg-muted", sound ? "text-foreground" : "text-muted-foreground")}

@@ -10,6 +10,8 @@ import { playPool } from "@/lib/casino-api";
 import { formatMoney } from "@/lib/format";
 import { CURRENCY_META } from "@/lib/games-catalog";
 import { loadAnimOn, loadHotkeysOn, loadInstantOn } from "@/lib/game-prefs";
+import { playSfx } from "@/lib/game-sound";
+import { poolFrameMs } from "@/lib/game-speed";
 import {
   BALL_R,
   PLAY_H,
@@ -25,6 +27,7 @@ import {
   type PoolDiff,
   type PoolFrame,
 } from "@/lib/pool-physics";
+import { TOLS_HEX } from "@/lib/palette";
 import { useWallet } from "@/lib/wallet-context";
 
 const DIFFS: PoolDiff[] = ["beginner", "intermediate", "expert", "pro"];
@@ -34,7 +37,7 @@ const BALL_FILL: Record<number, string> = {
   1: "#f5c518",
   2: "#2f6bff",
   3: "#e23b3b",
-  4: "#7c3aed",
+  4: TOLS_HEX.purple,
   5: "#f97316",
   6: "#16a34a",
   7: "#9f1239",
@@ -42,7 +45,7 @@ const BALL_FILL: Record<number, string> = {
   9: "#f5c518",
   10: "#2f6bff",
   11: "#e23b3b",
-  12: "#7c3aed",
+  12: TOLS_HEX.purple,
   13: "#f97316",
   14: "#16a34a",
   15: "#9f1239",
@@ -100,25 +103,30 @@ function PoolTable({ gameId }: { gameId: string }) {
     setAim((Math.atan2(y - cue.y, x - cue.x) * 180) / Math.PI);
   }
 
-  function playFrames(frames: PoolFrame[], result: { balls: number; multiplier: number; scratch: boolean }) {
+  function playFrames(frames: PoolFrame[]): Promise<void> {
     cancelAnimationFrame(raf.current);
-    if (!loadAnimOn() || loadInstantOn() || frames.length < 2) {
+    const msPer = poolFrameMs();
+    if (!loadAnimOn() || loadInstantOn() || msPer <= 0 || frames.length < 2) {
       setFrame(frames[frames.length - 1] ?? restFrame());
       setStriking(0);
-      return;
+      return Promise.resolve();
     }
-    let i = 0;
-    const t0 = performance.now();
-    const msPer = 1000 / 60;
-    const tick = (now: number) => {
-      i = Math.min(frames.length - 1, Math.floor((now - t0) / msPer));
-      setFrame(frames[i]!);
-      if (i < frames.length - 1) raf.current = requestAnimationFrame(tick);
-      else setStriking(0);
-    };
-    setStriking(1);
-    raf.current = requestAnimationFrame(tick);
-    void result;
+    return new Promise((resolve) => {
+      let i = 0;
+      const t0 = performance.now();
+      const tick = (now: number) => {
+        i = Math.min(frames.length - 1, Math.floor((now - t0) / msPer));
+        setFrame(frames[i]!);
+        if (i < frames.length - 1) raf.current = requestAnimationFrame(tick);
+        else {
+          setStriking(0);
+          resolve();
+        }
+      };
+      setStriking(1);
+      playSfx("hit");
+      raf.current = requestAnimationFrame(tick);
+    });
   }
 
   async function breakShot() {
@@ -135,7 +143,9 @@ function PoolTable({ gameId }: { gameId: string }) {
         floats: res.floats,
         difficulty: diff,
       });
-      playFrames(sim.frames, { balls: res.balls, multiplier: res.multiplier, scratch: res.scratch });
+      await playFrames(sim.frames);
+      if (res.balls > 0) playSfx("pocket");
+      else playSfx("lose");
       setLast({ balls: res.balls, multiplier: res.multiplier, scratch: res.scratch });
       reportRound({
         win: res.multiplier > 0,
@@ -145,7 +155,9 @@ function PoolTable({ gameId }: { gameId: string }) {
         multiplier: res.multiplier,
         fair: res.fair,
         view: { kind: "pool", balls: res.balls, scratch: res.scratch, pocketed: res.pocketed },
-        replay: () => playFrames(sim.frames, res),
+        replay: () => {
+          void playFrames(sim.frames);
+        },
       });
       if (res.scratch) toast.message("Scratch · 0×");
       else if (res.multiplier > 0) toast.success(`${res.balls} pocketed · ${res.multiplier}×`);
@@ -218,43 +230,114 @@ function PoolTable({ gameId }: { gameId: string }) {
               </span>
             ))}
           </div>
+          <div className="flex items-stretch gap-3">
           <svg
             ref={svgRef}
             viewBox={`0 0 ${TABLE_W} ${TABLE_H}`}
-            className="w-full cursor-crosshair touch-none rounded-xl"
+            className="min-w-0 flex-1 cursor-crosshair touch-none rounded-xl"
             onPointerDown={aimFromEvent}
             onPointerMove={(e) => {
               if (e.buttons) aimFromEvent(e);
             }}
           >
-            <rect width={TABLE_W} height={TABLE_H} rx="22" fill="#3a2412" />
-            <rect x="8" y="8" width={TABLE_W - 16} height={TABLE_H - 16} rx="16" fill="#5a3a1c" />
-            <rect x={RAIL} y={RAIL} width={PLAY_W} height={PLAY_H} fill="#2a1254" />
-            <rect x={RAIL} y={RAIL} width={PLAY_W} height={PLAY_H} fill="#3b1a70" opacity="0.55" />
-            {/* Head string */}
+            <defs>
+              <linearGradient id="pool-felt" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#5a1cb8" />
+                <stop offset="50%" stopColor={TOLS_HEX.purple} />
+                <stop offset="100%" stopColor="#4a1288" />
+              </linearGradient>
+            </defs>
+            <rect width={TABLE_W} height={TABLE_H} rx="28" fill="#141416" />
+            <rect x="8" y="8" width={TABLE_W - 16} height={TABLE_H - 16} rx="22" fill="#1c1c20" />
+            <rect x={RAIL} y={RAIL} width={PLAY_W} height={PLAY_H} fill="url(#pool-felt)" />
+            <rect
+              x={RAIL}
+              y={RAIL}
+              width={PLAY_W}
+              height={PLAY_H}
+              fill="none"
+              stroke={TOLS_HEX.lime}
+              strokeWidth="3"
+            />
             <line
               x1={RAIL + PLAY_W * 0.25}
-              y1={RAIL + 8}
+              y1={RAIL + 10}
               x2={RAIL + PLAY_W * 0.25}
-              y2={RAIL + PLAY_H - 8}
-              stroke="#c8f04d"
-              strokeOpacity="0.18"
-              strokeDasharray="4 6"
+              y2={RAIL + PLAY_H - 10}
+              stroke={TOLS_HEX.lime}
+              strokeOpacity="0.55"
+              strokeWidth="1.2"
             />
-            {/* Diamonds */}
+            <line
+              x1={RAIL + 12}
+              y1={RAIL + PLAY_H / 2}
+              x2={RAIL + PLAY_W * 0.25}
+              y2={RAIL + PLAY_H / 2}
+              stroke={TOLS_HEX.lime}
+              strokeOpacity="0.45"
+              strokeWidth="1.2"
+            />
+            <circle
+              cx={RAIL + PLAY_W * 0.25}
+              cy={RAIL + PLAY_H / 2}
+              r="28"
+              fill="none"
+              stroke={TOLS_HEX.lime}
+              strokeOpacity="0.55"
+              strokeWidth="1.3"
+            />
+            <line
+              x1={RAIL + PLAY_W * 0.25}
+              y1={RAIL + PLAY_H / 2}
+              x2={RAIL + PLAY_W * 0.75}
+              y2={RAIL + PLAY_H / 2}
+              stroke={TOLS_HEX.lime}
+              strokeOpacity="0.28"
+              strokeDasharray="3 6"
+              strokeWidth="1.1"
+            />
             {[0.25, 0.5, 0.75].map((t) => (
               <g key={`d-${t}`}>
-                <circle cx={RAIL + PLAY_W * t} cy={18} r="3" fill="#e8d5a3" />
-                <circle cx={RAIL + PLAY_W * t} cy={TABLE_H - 18} r="3" fill="#e8d5a3" />
+                <rect
+                  x={RAIL + PLAY_W * t - 3.5}
+                  y={14}
+                  width="7"
+                  height="7"
+                  rx="0.5"
+                  fill={TOLS_HEX.lime}
+                  transform={`rotate(45 ${RAIL + PLAY_W * t} 17.5)`}
+                />
+                <rect
+                  x={RAIL + PLAY_W * t - 3.5}
+                  y={TABLE_H - 21}
+                  width="7"
+                  height="7"
+                  rx="0.5"
+                  fill={TOLS_HEX.lime}
+                  transform={`rotate(45 ${RAIL + PLAY_W * t} ${TABLE_H - 17.5})`}
+                />
               </g>
             ))}
-            {[0.5].map((t) => (
+            {[0.25, 0.5, 0.75].map((t) => (
               <g key={`s-${t}`}>
-                <circle cx={18} cy={RAIL + PLAY_H * t} r="3" fill="#e8d5a3" />
-                <circle cx={TABLE_W - 18} cy={RAIL + PLAY_H * t} r="3" fill="#e8d5a3" />
+                <rect
+                  x={14}
+                  y={RAIL + PLAY_H * t - 3.5}
+                  width="7"
+                  height="7"
+                  fill={TOLS_HEX.lime}
+                  transform={`rotate(45 17.5 ${RAIL + PLAY_H * t})`}
+                />
+                <rect
+                  x={TABLE_W - 21}
+                  y={RAIL + PLAY_H * t - 3.5}
+                  width="7"
+                  height="7"
+                  fill={TOLS_HEX.lime}
+                  transform={`rotate(45 ${TABLE_W - 17.5} ${RAIL + PLAY_H * t})`}
+                />
               </g>
             ))}
-            {/* Pockets */}
             {[
               [RAIL, RAIL],
               [RAIL + PLAY_W, RAIL],
@@ -263,21 +346,23 @@ function PoolTable({ gameId }: { gameId: string }) {
               [RAIL + PLAY_W / 2, RAIL],
               [RAIL + PLAY_W / 2, RAIL + PLAY_H],
             ].map(([x, y], i) => (
-              <circle key={i} cx={x} cy={y} r={i < 4 ? 16 : 14} fill="#0b0b10" stroke="#c8f04d" strokeWidth="1.4" />
+              <circle key={i} cx={x} cy={y} r={i < 4 ? 16 : 14} fill={TOLS_HEX.black} stroke={TOLS_HEX.lime} strokeWidth="1.6" />
             ))}
             {/* Aim + cue */}
             {!frame[0]?.p ? (
               <>
-                <line
-                  x1={cue.x}
-                  y1={cue.y}
-                  x2={ghostX}
-                  y2={ghostY}
-                  stroke="#c8f04d"
-                  strokeDasharray="4 5"
-                  strokeWidth="1.2"
-                  opacity="0.55"
-                />
+                {!busy && !striking ? (
+                  <line
+                    x1={cue.x}
+                    y1={cue.y}
+                    x2={ghostX}
+                    y2={ghostY}
+                    stroke={TOLS_HEX.lime}
+                    strokeDasharray="4 5"
+                    strokeWidth="1.2"
+                    opacity="0.55"
+                  />
+                ) : null}
                 <line
                   x1={cue.x}
                   y1={cue.y}
@@ -317,20 +402,27 @@ function PoolTable({ gameId }: { gameId: string }) {
               );
             })}
           </svg>
-          <label className="flex items-center gap-3">
-            <span className="text-[0.65rem] font-bold tracking-wider text-lime">PWR</span>
-            <input
-              type="range"
-              min={0.15}
-              max={1}
-              step={0.01}
-              value={power}
-              onChange={(e) => setPower(Number(e.target.value))}
-              className="h-2 flex-1 cursor-pointer accent-[oklch(0.897_0.196_126.665)]"
-              aria-label="Power"
-            />
-            <span className="w-8 text-right text-xs tabular-nums">{Math.round(power * 100)}</span>
+          <label className="flex w-8 shrink-0 flex-col items-center gap-1 self-stretch py-1">
+            <span className="relative flex-1 w-3 overflow-hidden rounded-full bg-[#2d2d2d]">
+              <span
+                className="absolute inset-x-0 bottom-0 rounded-full bg-lime"
+                style={{ height: `${Math.round(power * 100)}%` }}
+              />
+              <input
+                type="range"
+                min={0.15}
+                max={1}
+                step={0.01}
+                value={power}
+                onChange={(e) => setPower(Number(e.target.value))}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                style={{ writingMode: "vertical-lr", direction: "rtl" }}
+                aria-label="Power"
+              />
+            </span>
+            <span className="text-[0.6rem] font-bold tracking-wider text-lime">PWR</span>
           </label>
+          </div>
           {last ? (
             <p className="text-center text-sm tabular-nums">
               {last.scratch ? "Scratch" : `${last.balls} pocketed`} ·{" "}

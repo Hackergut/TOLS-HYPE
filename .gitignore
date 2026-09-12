@@ -3,3 +3,9 @@ node_modules/
 .github_repo
 .env
 .env.*
+.vercel/output
+.grok/preview.log
+.grok/status
+artifacts/
+attachments/
+screenshots/

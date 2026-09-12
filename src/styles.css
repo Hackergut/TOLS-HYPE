@@ -5,6 +5,9 @@
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/outfit";
 @import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource-variable/tektur";
+@import "@fontsource-variable/oswald";
+@import "./tols.css";
 
 .typeset-docs {
   --typeset-font-body: var(--font-source-sans-3);
@@ -35,9 +38,12 @@
   }
   html {
     @apply font-sans antialiased;
+    overflow-x: clip;
+  }
+  body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   html.dark {
     background-color: var(--background);
@@ -65,17 +71,27 @@
   h2,
   h3 {
     text-wrap: balance;
+    font-family: var(--font-heading);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
-  p {
-    text-wrap: pretty;
+  h4,
+  h5,
+  .font-sub {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
   }
 }
 
 @theme inline {
-  --font-heading: "IBM Plex Sans Variable", sans-serif;
-  --font-sans: "Outfit Variable", sans-serif;
+  --font-heading: "Oswald Variable", Oswald, sans-serif;
+  --font-sans: "IBM Plex Sans Variable", "IBM Plex Sans", sans-serif;
   --font-mono: var(--font-roboto);
-  --font-bluescreens: "TT Bluescreens", Tektur, "IBM Plex Sans Variable", sans-serif;
+  --font-bluescreens: "Oswald Variable", Oswald, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -101,6 +117,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-bright: var(--primary-bright);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -117,11 +134,29 @@
   --color-lime-200: var(--lime-200);
   --color-lime-300: var(--lime-300);
   --color-lime-400: var(--lime-400);
+  --color-purple: var(--purple);
+  --color-purple-deep: var(--purple-deep);
+  --color-uva: var(--uva);
+  --color-anthracite: var(--anthracite);
+  --color-orange: var(--orange);
+  --color-wheel: var(--wheel);
+  --color-wheel-line: var(--wheel-line);
+  --color-felt: var(--felt);
+  --color-rim: var(--rim);
+  --color-caelia-lime: var(--caelia-lime);
   --color-win: var(--win);
   --color-loss: var(--loss);
   --color-tile: var(--tile);
   --color-win-bar: var(--win-bar);
   --color-loss-bar: var(--loss-bar);
+  --color-cta: var(--cta);
+  --color-cta-hover: var(--cta-hover);
+  --color-info: var(--info);
+  --color-vip: var(--vip);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-error-text: var(--error-text);
+  --color-live: var(--live);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -142,13 +177,14 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
   --primary: oklch(0.30 0.22 306);
-  --primary-foreground: #cdf32b;
+  --primary-foreground: #ffffff;
+  --primary-bright: oklch(0.42 0.20 306);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.967 0.001 286.375);
   --muted-foreground: oklch(0.552 0.016 285.938);
   --accent: oklch(0.30 0.22 306);
-  --accent-foreground: #cdf32b;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
@@ -161,7 +197,7 @@
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.30 0.22 306);
-  --sidebar-primary-foreground: #cdf32b;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: oklch(0.967 0.001 286.375);
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
@@ -171,8 +207,18 @@
   --lime-50: oklch(0.986 0.031 120.757);
   --lime-100: oklch(0.967 0.067 122.328);
   --lime-200: oklch(0.938 0.127 124.321);
-  --lime-300: #cdf32b;
-  --lime-400: #b2d81f;
+  --lime-300: #00ffbd;
+  --lime-400: #34edcd;
+  --purple: #904bf9;
+  --purple-deep: #1c0529;
+  --uva: #1c0529;
+  --anthracite: #504756;
+  --orange: #ff8904;
+  --wheel: #e4e4e7;
+  --wheel-line: #d4d4d8;
+  --felt: #2d2d2d;
+  --rim: #2d2d2d;
+  --caelia-lime: #34edcd;
   --win: var(--lime-300);
   --loss: oklch(0.62 0.16 25);
   --tile: var(--muted);
@@ -182,6 +228,22 @@
   --neon-foreground: var(--primary-foreground);
   --gold: oklch(0.75 0.14 85);
   --gold-foreground: oklch(0.25 0.05 85);
+  --cta: #ff8904;
+  --cta-hover: #ffa733;
+  --cta-active: #e67700;
+  --info: #38bdf8;
+  --vip: #8b5cf6;
+  --vip-hover: #a78bfa;
+  --warning: #facc15;
+  --error: #ef4444;
+  --error-text: #f87171;
+  --live: #ef4444;
+  --bg-0: #09090c;
+  --bg-1: #16171b;
+  --bg-2: #1c0529;
+  --text-1: #f8fafc;
+  --text-2: #a1a1aa;
+  --text-3: #52525b;
   --glow-violet: oklch(0.42 0.22 306 / 0.22);
   --glow-violet-soft: oklch(0.42 0.18 306 / 0.12);
   --glow-lime: oklch(0.9 0.2 126 / 0.14);
@@ -193,63 +255,96 @@
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Color psychology
-   Anthracite canvas, purple chrome, lime on go/win */
+/* Color roles — Solana accents on TOLS chrome
+   canvas    #0d0d10 / cards #16171b
+   primary   #904BF9  CTA / brand / focus
+   success   #00FFBD  win / bet / fair
+   vip       #EA2FD4 / #9628A1
+   ink on mint = #0d0d10; ink on violet = #fff */
 
 .dark {
-  --background: oklch(0.16 0.006 280);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0.008 280);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0.008 280);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.32 0.20 306);
-  --primary-foreground: #cdf32b;
-  --secondary: oklch(0.245 0.008 280);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.245 0.008 280);
-  --muted-foreground: oklch(0.72 0.012 280);
-  --accent: oklch(0.32 0.20 306);
-  --accent-foreground: #cdf32b;
-  --destructive: oklch(0.63 0.18 25);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.86 0.2 126);
-  --chart-1: oklch(0.897 0.196 126.665);
-  --chart-2: oklch(0.768 0.233 130.85);
-  --chart-3: oklch(0.648 0.2 131.684);
-  --chart-4: oklch(0.532 0.157 131.589);
-  --chart-5: oklch(0.453 0.124 130.933);
-  --sidebar: oklch(0.14 0.006 280);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.32 0.20 306);
-  --sidebar-primary-foreground: #cdf32b;
-  --sidebar-accent: oklch(0.245 0.008 280);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.86 0.2 126);
+  --background: #0d0d10;
+  --foreground: #fafafa;
+  --card: #16171b;
+  --card-foreground: #fafafa;
+  --popover: #16171b;
+  --popover-foreground: #fafafa;
+  --primary: #904bf9;
+  --primary-foreground: #ffffff;
+  --primary-bright: #a665f5;
+  --secondary: #202024;
+  --secondary-foreground: #fafafa;
+  --muted: #202024;
+  --muted-foreground: #a3a4ac;
+  --accent: #904bf9;
+  --accent-foreground: #ffffff;
+  --destructive: #e1514e;
+  --border: #ffffff14;
+  --input: #ffffff1f;
+  --ring: #904bf9;
+  --chart-1: #00ffbd;
+  --chart-2: #904bf9;
+  --chart-3: #ea2fd4;
+  --chart-4: #34edcd;
+  --chart-5: #9628a1;
+  --sidebar: #09090c;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #904bf9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #202024;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #ffffff14;
+  --sidebar-ring: #904bf9;
   --bg: var(--background);
   --surface: var(--card);
   --lime-50: oklch(0.986 0.031 120.757);
   --lime-100: oklch(0.967 0.067 122.328);
   --lime-200: oklch(0.938 0.127 124.321);
-  --lime-300: #cdf32b;
-  --lime-400: #b2d81f;
-  --win: var(--lime-300);
-  --loss: oklch(0.62 0.16 25);
-  --tile: oklch(0.26 0.008 280);
-  --win-bar: oklch(0.86 0.2 126);
-  --loss-bar: oklch(0.58 0.14 25);
-  --neon: var(--primary);
-  --neon-foreground: var(--primary-foreground);
+  --lime-300: #00ffbd;
+  --lime-400: #34edcd;
+  --purple: #904bf9;
+  --purple-deep: #1c0529;
+  --uva: #1c0529;
+  --anthracite: #504756;
+  --orange: #ff8904;
+  --wheel: #504756;
+  --wheel-line: #09090c;
+  --felt: #2d2d2d;
+  --rim: #2d2d2d;
+  --caelia-lime: #34edcd;
+  --win: #00ffbd;
+  --loss: #d55753;
+  --tile: #202024;
+  --win-bar: #00ffbd;
+  --loss-bar: #d55753;
+  --neon: #904bf9;
+  --neon-foreground: #ffffff;
   --gold: oklch(0.82 0.14 85);
   --gold-foreground: oklch(0.22 0.05 85);
-  --glow-violet: oklch(0.42 0.22 306 / 0.38);
-  --glow-violet-soft: oklch(0.42 0.18 306 / 0.18);
-  --glow-lime: oklch(0.9 0.2 126 / 0.18);
-  --shadow-border: 0 0 0 1px oklch(1 0 0 / 8%);
-  --shadow-glow: 0 0 56px oklch(0.42 0.22 306 / 0.22), 0 0 90px oklch(0.9 0.2 126 / 0.1);
-  --shadow-fab: 0 0 24px oklch(0.9 0.2 126 / 0.55);
+  --cta: #904bf9;
+  --cta-hover: #a665f5;
+  --cta-active: #7c3aed;
+  --info: #00ffbd;
+  --vip: #ea2fd4;
+  --vip-hover: #9628a1;
+  --warning: #facc15;
+  --error: #e1514e;
+  --error-text: #f87171;
+  --live: #e1514e;
+  --bg-0: #0d0d10;
+  --bg-1: #16171b;
+  --bg-2: #1c0529;
+  --text-1: #fafafa;
+  --text-2: #a3a4ac;
+  --text-3: #52525b;
+  --grad-solana: linear-gradient(135deg, #904bf9, #00ffbd);
+  --grad-solana-vip: linear-gradient(135deg, #9628a1, #ea2fd4);
+  --glow-violet: rgb(144 75 249 / 0.38);
+  --glow-violet-soft: rgb(144 75 249 / 0.18);
+  --glow-lime: rgb(0 255 189 / 0.18);
+  --shadow-border: 0 0 0 1px #ffffff14;
+  --shadow-glow: 0 0 56px rgb(144 75 249 / 0.28), 0 0 90px rgb(0 255 189 / 0.1);
+  --shadow-fab: 0 0 24px rgb(0 255 189 / 0.45);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -303,4 +398,28 @@
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+@font-face {
+  font-family: "TT Bluescreens";
+  src:
+    url("/fonts/TTBluescreens-Regular.woff2") format("woff2"),
+    url("/fonts/TTBluescreens-Regular.woff") format("woff"),
+    url("/fonts/TTBluescreens-Regular.otf") format("opentype"),
+    url("/fonts/TTBluescreens-Regular.ttf") format("truetype"),
+    local("TT Bluescreens"),
+    local("TT Bluescreens Regular"),
+    local("TT Bluescreens Bold"),
+    local("TTBluescreens");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-bluescreens {
+  font-family: "Oswald Variable", Oswald, sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }

@@ -4,16 +4,22 @@ import type { AggregatorKind } from "@/lib/operator/adapter";
 
 export function operatorServer() {
   const backend = (env("OPERATOR_BACKEND") ?? env("VITE_OPERATOR_BACKEND") ?? "local") as OperatorBackend;
-  const aggregatorKind = (env("AGGREGATOR_KIND") ?? env("VITE_AGGREGATOR_KIND") ?? "local") as AggregatorKind;
+  const aggregatorKind = (env("AGGREGATOR_KIND") ?? env("VITE_AGGREGATOR_KIND") ?? "tols-next") as AggregatorKind;
   return {
     backend,
     aggregatorKind,
     databaseUrl: env("DATABASE_URL") ?? env("PRISMA_DATABASE_URL"),
     supabaseUrl: env("SUPABASE_URL") ?? env("VITE_SUPABASE_URL"),
     supabaseKey: env("SUPABASE_SERVICE_ROLE_KEY") ?? env("SUPABASE_ANON_KEY"),
-    governanceUrl:
-      env("GOVERNANCE_TOWER_URL") ?? env("GOVERNANCE_URL") ?? env("VITE_GOVERNANCE_URL"),
-    governanceKey: env("GOVERNANCE_API_KEY") ?? env("GOVERNANCE_BRIDGE_SECRET"),
+    governanceUrl: (
+      env("GOVERNANCE_TOWER_URL") ??
+      env("GOVERNANCE_URL") ??
+      env("VITE_GOVERNANCE_URL") ??
+      "https://gov.tols.fun"
+    ).replace(/\/$/, ""),
+    /** Shared HMAC with Next + Tower. Alias SKIN_SSO_SECRET for player SSO. */
+    governanceKey:
+      env("SKIN_SSO_SECRET") ?? env("GOVERNANCE_BRIDGE_SECRET") ?? env("GOVERNANCE_API_KEY") ?? env("GOVERNANCE_WEBHOOK_SECRET"),
     aggregatorUrl: env("AGGREGATOR_URL") ?? env("VITE_AGGREGATOR_URL"),
     aggregatorKey: env("AGGREGATOR_API_KEY"),
     aggregatorOperatorId: env("AGGREGATOR_OPERATOR_ID"),

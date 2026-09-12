@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { RiGiftLine } from "@remixicon/react";
 import { PromoTile } from "@/components/home/promo-card";
+import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import { PROMOS } from "@/lib/games-catalog";
 
 export function PromoBanner() {
@@ -8,17 +8,16 @@ export function PromoBanner() {
     <section className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="font-heading flex items-center gap-2 text-xl font-bold tracking-tight uppercase">
-            <RiGiftLine className="size-5 text-lime" />
+          <BluescreenTitle as="h2" className="flex items-center gap-2 text-xl font-bold">
             Promotions
-          </h2>
+          </BluescreenTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Every official TOLS offer — tap a card for full details
           </p>
         </div>
         <Link
           to="/promotions"
-          className="rounded-full border border-lime/40 px-3 py-1.5 text-xs text-lime hover:bg-lime hover:text-primary"
+          className="rounded-full border border-lime/40 px-3 py-1.5 text-xs text-lime hover:bg-lime hover:text-black"
         >
           All promos
         </Link>

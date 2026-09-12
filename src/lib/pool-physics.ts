@@ -171,33 +171,48 @@ export function simulateBreak(input: BreakInput): BreakResult {
   const balls = [cue, ...rack];
 
   const aim = (input.aimDeg * Math.PI) / 180;
-  const speed = 640 + Math.max(0, Math.min(1, power)) * 1180;
+  const speed = 720 + Math.max(0, Math.min(1, power)) * 1320;
   cue.vx = Math.cos(aim) * speed;
   cue.vy = Math.sin(aim) * speed;
 
-  const dt = 1 / 180;
-  const mu = 155;
+  const dt = 1 / 120;
+  const mu = 130;
   const frames: PoolFrame[] = [];
-  const emitEvery = 3;
   let steps = 0;
-  const maxSteps = 180 * 8;
-  let packed = true;
+  const maxSteps = 120 * 7;
+  let cracked = false;
 
-  const snapshot = (): PoolFrame =>
-    balls.map((b) => ({ x: b.x, y: b.y, p: b.pocketed }));
+  const snapshot = (): PoolFrame => balls.map((b) => ({ x: b.x, y: b.y, p: b.pocketed }));
   frames.push(snapshot());
+
+  function crack(hit: PoolBall) {
+    cracked = true;
+    collide(cue, hit);
+    const kick = 220 + power * 380;
+    for (const b of balls) {
+      if (b.id === 0 || b.pocketed) continue;
+      const dx = b.x - hit.x;
+      const dy = b.y - hit.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const spread = kick * (0.35 + (jitter[b.id] ?? 0.5) * 0.9) / Math.max(1, dist / BALL_D);
+      b.vx += (dx / dist) * spread + cue.vx * 0.22;
+      b.vy += (dy / dist) * spread + cue.vy * 0.22;
+    }
+    hit.vx += Math.cos(aim) * speed * 0.45;
+    hit.vy += Math.sin(aim) * speed * 0.45;
+    cue.vx *= 0.28;
+    cue.vy *= 0.28;
+  }
 
   while (steps < maxSteps) {
     steps += 1;
     let moving = false;
     for (const b of balls) {
       if (b.pocketed) continue;
-      if (packed && b.id !== 0) continue;
       const sp = Math.hypot(b.vx, b.vy);
-      if (sp > 2) {
+      if (sp > 1.2) {
         moving = true;
-        const drop = mu * dt;
-        const ns = Math.max(0, sp - drop);
+        const ns = Math.max(0, sp - mu * dt);
         b.vx *= ns / sp;
         b.vy *= ns / sp;
       } else {
@@ -214,27 +229,13 @@ export function simulateBreak(input: BreakInput): BreakResult {
         cushions(b, difficulty);
       }
     }
-    if (packed) {
-      const apex = balls.find((b) => b.id === 1);
-      const cueB = balls[0]!;
-      if (apex && !apex.pocketed) {
-        const d = Math.hypot(apex.x - cueB.x, apex.y - cueB.y);
-        if (d < BALL_D * 1.02) {
-          packed = false;
-          collide(cueB, apex);
-          cueB.vx *= 0.12;
-          cueB.vy *= 0.12;
-          for (const b of balls) {
-            if (b.id === 0) continue;
-            const dx = b.x - apex.x;
-            const dy = b.y - apex.y;
-            const dist = Math.hypot(dx, dy) || 1;
-            const kick = 55 + (jitter[b.id] ?? 0.5) * 90;
-            b.vx += (dx / dist) * kick + cueB.vx * 0.15;
-            b.vy += (dy / dist) * kick + cueB.vy * 0.15;
-          }
-          apex.vx += Math.cos(aim) * speed * 0.22;
-          apex.vy += Math.sin(aim) * speed * 0.22;
+    if (!cracked) {
+      for (const b of balls) {
+        if (b.id === 0 || b.pocketed) continue;
+        const d = Math.hypot(b.x - cue.x, b.y - cue.y);
+        if (d < BALL_D * 1.04) {
+          crack(b);
+          break;
         }
       }
     } else {
@@ -246,9 +247,8 @@ export function simulateBreak(input: BreakInput): BreakResult {
         }
       }
     }
-    if (steps % emitEvery === 0) frames.push(snapshot());
-    if (!moving && packed && steps > 220) break;
-    if (!moving && !packed && steps > 40) break;
+    if (steps % 2 === 0) frames.push(snapshot());
+    if (!moving && steps > 30) break;
   }
 
   const scratch = Boolean(balls[0]?.pocketed);

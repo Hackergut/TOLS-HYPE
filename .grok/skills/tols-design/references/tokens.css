@@ -1,0 +1,135 @@
+/* TOLS design system — complete game/widget CSS.
+   Chrome (cards, sidebar) stays in styles.css as dark grey.
+   This file paints GAMES only. Skill: .grok/skills/tols-design */
+
+:root {
+  --tols-purple: #6f1cb6;
+  --tols-uva: #1c0529;
+  --tols-lime: #bfe328;
+  --tols-lime-fluo: #7caf10;
+  --tols-anthracite: #504756;
+  --tols-orange: #ff8904;
+  --tols-black: #09090c;
+  --tols-caelia-grey: #545454;
+  --tols-caelia-rim: #2d2d2d;
+  --tols-caelia-lime: #c1ff72;
+  --tols-felt: #2d2d2d;
+  --tols-bar: #3a3a3a;
+  --tols-ink: #09090c;
+}
+
+.dark {
+  --tols-purple: #6f1cb6;
+  --tols-uva: #1c0529;
+  --tols-lime: #bfe328;
+  --tols-lime-fluo: #7caf10;
+  --tols-anthracite: #504756;
+  --tols-orange: #ff8904;
+  --tols-black: #09090c;
+  --tols-caelia-grey: #545454;
+  --tols-caelia-rim: #2d2d2d;
+  --tols-caelia-lime: #c1ff72;
+  --tols-felt: #2d2d2d;
+  --tols-bar: #3a3a3a;
+  --tols-ink: #09090c;
+}
+
+@layer components {
+  /* Ink: lime fill → black type; purple fill → lime type */
+  .tols-fill-lime {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+  .tols-fill-lime:hover:not(:disabled) {
+    background: var(--tols-lime-fluo);
+  }
+  .tols-fill-purple {
+    background: var(--tols-purple);
+    color: var(--tols-lime);
+  }
+  .tols-fill-uva {
+    background: var(--tols-uva);
+    color: var(--tols-lime);
+  }
+  .tols-fill-orange {
+    background: var(--tols-orange);
+    color: var(--tols-ink);
+  }
+
+  .tols-widget-win {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+  .tols-widget-lose {
+    background: var(--tols-purple);
+    color: var(--tols-lime);
+  }
+
+  /* Felt table (roulette mock) */
+  .tols-felt {
+    background: var(--tols-felt);
+    border: 1px solid var(--tols-lime);
+    color: var(--tols-lime);
+  }
+  .tols-cell {
+    border-width: 2px;
+    border-style: solid;
+    background: var(--tols-felt);
+    color: var(--tols-lime);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .tols-cell-lime {
+    border-color: var(--tols-lime);
+  }
+  .tols-cell-purple {
+    border-color: var(--tols-purple);
+  }
+  .tols-cell-lime.is-on,
+  .tols-cell-lime[aria-pressed="true"] {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+  .tols-cell-purple.is-on,
+  .tols-cell-purple[aria-pressed="true"] {
+    background: var(--tols-purple);
+    color: var(--tols-lime);
+  }
+
+  .tols-bar {
+    background: var(--tols-bar);
+    color: #d4d4d8;
+    font-weight: 600;
+  }
+  .tols-bar.is-on,
+  .tols-bar[aria-pressed="true"] {
+    background: var(--tols-lime);
+    color: var(--tols-ink);
+  }
+
+  /* CAELIA wheel greys — body unpainted */
+  .tols-wheel-disc {
+    color: var(--tols-caelia-grey);
+  }
+  .tols-wheel-rim {
+    color: var(--tols-caelia-rim);
+  }
+  .tols-wheel-lime {
+    color: var(--tols-caelia-lime);
+  }
+
+  .tols-stroke-lime {
+    background: transparent;
+    color: var(--tols-lime);
+    box-shadow: inset 0 0 0 2px var(--tols-lime);
+  }
+  .tols-stroke-purple {
+    background: transparent;
+    color: var(--tols-lime);
+    box-shadow: inset 0 0 0 2px var(--tols-purple);
+  }
+
+  .tols-hot {
+    color: var(--tols-orange);
+  }
+}

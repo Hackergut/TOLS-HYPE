@@ -4,7 +4,9 @@ import { Hero } from "@/components/home/hero";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { GameGrid } from "@/components/games/game-grid";
 import { Button } from "@/components/ui/button";
+import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import { CATEGORIES, GAMES, gamesByCategory, type GameCategory } from "@/lib/games-catalog";
+import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
 const TITLE = "TOLS — Originals casino | Crash, Dice, Roulette, Blackjack";
 const DESC =
@@ -34,7 +36,15 @@ export const Route = createFileRoute("/_shell/")({
 
 function Home() {
   const [cat, setCat] = useState<GameCategory | "all">("all");
+  const { games: studio } = useRemoteCatalog();
   const originals = GAMES.filter((g) => g.original);
+  const local = cat === "all" ? originals : gamesByCategory(cat);
+  const remote =
+    cat === "all"
+      ? studio.filter((g) => !g.live)
+      : cat === "originals"
+        ? []
+        : studio.filter((g) => (cat === "live" ? g.live : g.category === cat));
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 md:gap-8">
@@ -70,14 +80,20 @@ function Home() {
         ))}
       </div>
       <PromoBanner />
-      <section>
-        <h2 className="font-heading mb-4 text-lg font-bold tracking-tight md:text-xl">Originals</h2>
-        <GameGrid games={cat === "all" ? originals : gamesByCategory(cat)} />
-      </section>
-      {cat === "all" ? (
+      {cat !== "slots" && cat !== "live" ? (
         <section>
-          <h2 className="font-heading mb-4 text-lg font-bold tracking-tight md:text-xl">Full lobby</h2>
-          <GameGrid games={GAMES} />
+          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
+            Originals
+          </BluescreenTitle>
+          <GameGrid games={local} />
+        </section>
+      ) : null}
+      {remote.length > 0 ? (
+        <section>
+          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
+            {cat === "live" ? "Live show" : "Studio"}
+          </BluescreenTitle>
+          <GameGrid games={remote} />
         </section>
       ) : null}
     </main>

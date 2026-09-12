@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { RiAddLine, RiChat3Line, RiSearchLine } from "@remixicon/react";
+import { RiAddLine, RiChat3Line } from "@remixicon/react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
@@ -10,6 +9,7 @@ import { TolsMark } from "@/components/brand/tols-mark";
 import { useRightDock } from "@/components/layout/right-dock";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { GameSearch } from "@/components/layout/game-search";
 import { WalletChip, useWalletHub } from "@/components/wallet/wallet-hub";
 
 export function SiteHeader() {
@@ -21,12 +21,8 @@ export function SiteHeader() {
     <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/70 px-2 backdrop-blur-xl md:h-16 md:gap-3 md:px-5">
       <SidebarTrigger className="size-11 md:hidden" />
       <TolsMark />
-      <div className="relative mx-auto hidden max-w-md flex-1 md:block">
-        <RiSearchLine className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search games..."
-          className="h-10 rounded-lg border-border bg-muted/40 pl-9"
-        />
+      <div className="hidden flex-1 md:block">
+        <GameSearch />
       </div>
       <div className="ml-auto flex items-center gap-1.5 md:gap-2">
         {isPending ? (
@@ -57,11 +53,14 @@ export function SiteHeader() {
         ) : (
           <>
             <SignedOut>
-              <Button asChild variant="outline" className="h-9 rounded-lg px-3 md:h-10 md:px-4">
+              <Button asChild variant="outline" className="hidden h-9 rounded-lg px-3 sm:inline-flex md:h-10 md:px-4">
                 <Link to="/login">Login</Link>
               </Button>
               <Button asChild className="h-9 rounded-lg px-3 md:h-10 md:px-4">
-                <Link to="/login">Register</Link>
+                <Link to="/login">
+                  <span className="sm:hidden">Join</span>
+                  <span className="hidden sm:inline">Register</span>
+                </Link>
               </Button>
             </SignedOut>
             <SignedIn>

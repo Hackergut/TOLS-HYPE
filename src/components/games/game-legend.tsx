@@ -68,7 +68,7 @@ export function GameLegend({ game }: { game: CatalogGame }) {
         <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left md:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <img src={game.cover} alt="" className="size-10 rounded-lg object-cover" />
-            <h2 className="font-heading truncate text-lg font-bold">{game.title}</h2>
+            <h2 className="font-bluescreens truncate text-lg font-bold">{game.title}</h2>
           </div>
           <RiArrowDownSLine className={cn("size-5 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
         </CollapsibleTrigger>
@@ -184,7 +184,7 @@ function LegendBlock({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 py-3 text-left">
-        <span className="font-heading text-sm font-semibold">{title}</span>
+        <span className="font-sub text-sm font-medium">{title}</span>
         <RiArrowDownSLine className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </CollapsibleTrigger>
       <CollapsibleContent className="pb-3">{children}</CollapsibleContent>

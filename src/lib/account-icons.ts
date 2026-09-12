@@ -15,6 +15,7 @@ import {
   RiTvLine,
   RiBasketballLine,
   RiShieldCheckLine,
+  RiDashboard3Line,
 } from "@remixicon/react";
 import type { NavLink } from "@/lib/nav";
 
@@ -22,6 +23,7 @@ export const ACCOUNT_ICONS: Record<NavLink["icon"], typeof RiWallet3Line> = {
   home: RiHome5Line,
   dice: RiDiceLine,
   live: RiTvLine,
+  dashboard: RiDashboard3Line,
   sports: RiBasketballLine,
   fairness: RiShieldCheckLine,
   wallet: RiWallet3Line,

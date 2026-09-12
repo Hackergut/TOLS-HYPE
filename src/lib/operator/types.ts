@@ -23,6 +23,7 @@ export type LaunchRequest = {
   gameId: string;
   userId: string;
   currency: string;
+  email?: string | null;
   language?: string;
   returnUrl?: string;
 };
@@ -35,10 +36,14 @@ export type LaunchResponse = {
 
 export type RemoteGame = {
   id: string;
+  slug?: string;
   title: string;
   provider: string;
   category?: string;
   cover?: string;
   rtp?: number;
   live?: boolean;
+  featured?: boolean;
+  isNew?: boolean;
+  gameType?: string;
 };

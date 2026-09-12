@@ -7,6 +7,7 @@ export type NavLink = {
     | "home"
     | "dice"
     | "live"
+    | "dashboard"
     | "sports"
     | "fairness"
     | "wallet"
@@ -22,16 +23,63 @@ export type NavLink = {
     | "help";
 };
 
-/** Left rail / mobile drawer — browse the house. */
+/** Left rail / mobile drawer — house home. */
 export const BROWSE_NAV: NavLink[] = [
   { title: "Lobby", to: "/", icon: "home" },
-  { title: "Casino", to: "/casino", icon: "dice" },
-  { title: "Live", to: "/live", icon: "live" },
-  { title: "Sports", to: "/sports", icon: "sports" },
+  { title: "Dashboard", to: "/dashboard", icon: "dashboard" },
 ];
 
 export const BROWSE_FOOT: NavLink[] = [
   { title: "Fairness", to: "/fairness", icon: "fairness" },
+];
+
+export type OriginalNav = {
+  title: string;
+  id: string;
+};
+
+/** TOLS Originals — deep links into playable tables. */
+export const ORIGINAL_SECTIONS: OriginalNav[] = [
+  { title: "Crash", id: "neon-crash" },
+  { title: "Dice", id: "signal-dice" },
+  { title: "Mines", id: "grid-mines" },
+  { title: "Keno", id: "keno-40" },
+  { title: "Hi-Lo", id: "hilo-ace" },
+  { title: "Roulette", id: "midnight-roulette" },
+  { title: "Blackjack", id: "obsidian-blackjack" },
+  { title: "Neon Sevens", id: "pulse-slots" },
+  { title: "Pool Rush", id: "pool-rush" },
+];
+
+export type CasinoSection = {
+  title: string;
+  to: "/casino" | "/live";
+  cat?: "all" | "originals" | "slots" | "table" | "live" | "crash";
+};
+
+/** Casino categories in the left rail. */
+export const CASINO_SECTIONS: CasinoSection[] = [
+  { title: "Lobby", to: "/casino", cat: "all" },
+  { title: "Originals", to: "/casino", cat: "originals" },
+  { title: "Slots", to: "/casino", cat: "slots" },
+  { title: "Table", to: "/casino", cat: "table" },
+  { title: "Live", to: "/live" },
+  { title: "Crash", to: "/casino", cat: "crash" },
+];
+
+export type SportNav = {
+  title: string;
+  sport: "all" | "football" | "basketball" | "tennis" | "mma" | "esports";
+};
+
+/** Sportsbook rails — never mixed into casino. */
+export const SPORT_SECTIONS: SportNav[] = [
+  { title: "All sports", sport: "all" },
+  { title: "Football", sport: "football" },
+  { title: "Basketball", sport: "basketball" },
+  { title: "Tennis", sport: "tennis" },
+  { title: "MMA", sport: "mma" },
+  { title: "Esports", sport: "esports" },
 ];
 
 /** Avatar menu — account. One source so it never drifts from the dock. */

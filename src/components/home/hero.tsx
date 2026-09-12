@@ -10,8 +10,19 @@ export function Hero() {
   const label = `${slide.titleLime} ${slide.titleRest}`;
 
   useEffect(() => {
-    const t = window.setInterval(() => setI((n) => (n + 1) % HERO_SLIDES.length), 7000);
-    return () => window.clearInterval(t);
+    const tick = () => setI((n) => (n + 1) % HERO_SLIDES.length);
+    let t = 0;
+    function start() {
+      window.clearInterval(t);
+      if (document.hidden) return;
+      t = window.setInterval(tick, 7000);
+    }
+    start();
+    document.addEventListener("visibilitychange", start);
+    return () => {
+      window.clearInterval(t);
+      document.removeEventListener("visibilitychange", start);
+    };
   }, []);
 
   return (
@@ -24,20 +35,23 @@ export function Hero() {
         TOLS casino — originals for crash, dice, roulette, blackjack, mines, keno, pool rush and neon sevens.
         18+ play-money tables.
       </h1>
-      <div className="relative min-h-44 w-full md:min-h-72 lg:min-h-80">
-        {HERO_SLIDES.map((s, idx) => (
-          <img
-            key={s.id}
-            src={s.image}
-            alt={s.alt}
-            width={1792}
-            height={1008}
-            decoding={idx === 0 ? "sync" : "async"}
-            fetchPriority={idx === 0 ? "high" : "low"}
-            className="absolute inset-0 size-full object-cover transition-opacity duration-500"
-            style={{ objectPosition: s.position, opacity: idx === i ? 1 : 0 }}
-          />
-        ))}
+      <div className="relative min-h-48 w-full sm:min-h-56 md:min-h-72 lg:min-h-80">
+        {HERO_SLIDES.map((s, idx) =>
+          idx === i || idx === (i + 1) % HERO_SLIDES.length ? (
+            <img
+              key={s.id}
+              src={s.image}
+              alt={idx === i ? s.alt : ""}
+              width={1280}
+              height={720}
+              decoding={idx === i ? "async" : "async"}
+              fetchPriority={idx === i ? "high" : "low"}
+              loading={idx === i ? "eager" : "lazy"}
+              className="absolute inset-0 size-full object-cover transition-opacity duration-500"
+              style={{ objectPosition: s.position, opacity: idx === i ? 1 : 0 }}
+            />
+          ) : null,
+        )}
         <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/75 via-black/25 to-transparent md:bg-linear-to-r md:from-black/80 md:via-black/35 md:to-transparent" />
         <div className="relative z-10 flex h-full min-h-44 items-end justify-between gap-4 p-4 md:min-h-72 md:p-8">
           <div className="min-w-0 max-w-md">
@@ -53,7 +67,7 @@ export function Hero() {
           </div>
           <Button
             asChild
-            className="mb-0.5 h-10 shrink-0 rounded-lg border border-lime bg-transparent px-5 font-semibold text-lime hover:bg-lime hover:text-primary md:h-11 md:px-6"
+            className="mb-0.5 h-10 shrink-0 rounded-lg border border-lime bg-transparent px-5 font-semibold text-lime hover:bg-lime hover:text-black md:h-11 md:px-6"
           >
             <Link to="/games/$id" params={{ id: slide.id }} aria-label={`${slide.cta} ${label}`}>
               {slide.cta}

@@ -18,10 +18,39 @@ export async function governanceFetch(path: string, init?: RequestInit) {
 export async function governanceHealth() {
   const cfg = operatorServer();
   if (!cfg.governanceUrl) return { ok: false, error: "GOVERNANCE_TOWER_URL unset" };
+  for (const path of ["/api/health", "/api/platform/health"]) {
+    try {
+      const data = await governanceFetch(path);
+      return { ok: true, data };
+    } catch {
+      /* try next */
+    }
+  }
+  return { ok: false, error: "Tower unreachable" };
+}
+
+export async function casinoHealth() {
+  const origin = operatorServer().casinoOrigin;
   try {
-    const data = await governanceFetch("/api/platform/health");
-    return { ok: true, data };
+    const res = await fetch(`${origin}/api/platform/health`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const bridge = (json.bridge as Record<string, unknown> | undefined) ?? {};
+    const db = (json.db as Record<string, unknown> | undefined) ?? {};
+    return {
+      ok: res.ok && (json.success === true || json.status === "ok" || Boolean(json.ok)),
+      jwt: Boolean(bridge.jwtConfigured),
+      db: db.ok !== false,
+      origin,
+    };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Tower unreachable" };
+    return {
+      ok: false,
+      jwt: false,
+      db: false,
+      origin,
+      error: err instanceof Error ? err.message : "Casino unreachable",
+    };
   }
 }

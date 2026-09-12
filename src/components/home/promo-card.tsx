@@ -12,14 +12,14 @@ export function PromoTile({ promo, className }: { promo: Promo; className?: stri
       to="/promotions"
       hash={promo.id}
       className={cn(
-        "relative block min-w-64 shrink-0 overflow-hidden rounded-2xl bg-[#0a0014] sm:min-w-80",
+        "tols-game-card is-original relative block min-w-64 shrink-0 sm:min-w-80",
         className,
       )}
     >
-      <img src={promo.image} alt="" className="h-44 w-full object-cover sm:h-48" />
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary/50 via-black/10 to-transparent" />
+      <img src={promo.image} alt="" className="h-44 w-full object-cover sm:h-48" loading="lazy" decoding="async" width={640} height={192} />
+      <div className="tols-game-card-wash pointer-events-none absolute inset-0" />
       <div className="absolute top-2.5 left-2.5 flex gap-1.5">
-        <span className="rounded-md bg-black/65 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider text-lime uppercase">
+        <span className="tols-badge-original rounded-md px-1.5 py-0.5 text-[0.6rem] tracking-wider uppercase">
           {promo.kicker}
         </span>
         <span className="rounded-md bg-black/65 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider text-white/80 uppercase">
@@ -31,21 +31,21 @@ export function PromoTile({ promo, className }: { promo: Promo; className?: stri
           {promo.title}
         </h3>
         <p className="mt-0.5 line-clamp-1 text-xs text-white/70">{promo.copy}</p>
-        <span className="mt-2 inline-flex rounded-full bg-lime px-2 py-0.5 text-[0.65rem] font-bold text-[#0a0014]">
+        <span className="mt-2 inline-flex rounded-full bg-lime px-2 py-0.5 text-[0.65rem] font-bold text-[#0d0d10]">
           {promo.badge}
         </span>
       </div>
-      <span className="absolute inset-x-0 bottom-0 h-1 bg-lime" />
+      <span className="tols-game-card-bar absolute inset-x-0 bottom-0" />
     </Link>
   );
 }
 
 export function PromoDetail({ promo }: { promo: Promo }) {
   return (
-    <Card id={promo.id} className="scroll-mt-20 gap-0 overflow-hidden rounded-2xl bg-[#05000a] py-0 ring-0">
+    <Card id={promo.id} className="tols-game-card is-original scroll-mt-20 gap-0 overflow-hidden rounded-2xl py-0 ring-0">
       <div className="relative">
         <img src={promo.image} alt="" className="h-44 w-full object-cover sm:h-48" />
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary/50 via-black/10 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 tols-game-card-wash" />
         <div className="absolute top-2.5 left-2.5 flex gap-1.5">
           <span className="rounded-md bg-black/65 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider text-lime uppercase">
             {promo.kicker}
@@ -82,7 +82,7 @@ export function PromoDetail({ promo }: { promo: Promo }) {
           <Link to={promo.to}>{promo.cta}</Link>
         </Button>
       </CardFooter>
-      <span className="h-1 bg-lime" />
+      <span className="tols-game-card-bar" />
     </Card>
   );
 }

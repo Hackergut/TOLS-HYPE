@@ -12,6 +12,7 @@ import {
 import { useBetHistory, type BetRound } from "@/lib/bet-history";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
 import { formatMoney } from "@/lib/format";
+import { BetPlayerCard, PlayerShot } from "@/components/players/player-shot";
 import { cn } from "cn";
 
 type Tab = "my" | "high" | "race" | "lottery";
@@ -117,28 +118,13 @@ function MyBets({ rows, onOpen }: { rows: BetRound[]; onOpen: (r: BetRound) => v
 
 function HighRollers() {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>User</TableHead>
-          <TableHead>Game</TableHead>
-          <TableHead className="text-right">Mult</TableHead>
-          <TableHead className="text-right">Payout</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {HIGH.map((r) => (
-          <TableRow key={`${r.user}-${r.game}-${r.stake}`}>
-            <TableCell className="font-medium">{r.user}</TableCell>
-            <TableCell>{r.game}</TableCell>
-            <TableCell className="text-right tabular-nums">{r.mult.toFixed(2)}×</TableCell>
-            <TableCell className="text-right">
-              <Result win={r.payout > 0}>{r.payout > 0 ? formatMoney(r.payout, "USDT") : "—"}</Result>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ul className="grid gap-2 sm:grid-cols-2">
+      {HIGH.map((r) => (
+        <li key={`${r.user}-${r.game}-${r.stake}`}>
+          <BetPlayerCard user={r.user} game={r.game} stake={r.stake} payout={r.payout} mult={r.mult} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -148,28 +134,21 @@ function WeeklyRace() {
       <p className="mb-3 text-xs text-muted-foreground">
         $100,000 pool · resets Monday · paid bets on Originals
       </p>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>#</TableHead>
-            <TableHead>Player</TableHead>
-            <TableHead className="text-right">Wagered</TableHead>
-            <TableHead className="text-right">Prize</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {RACE.map((r) => (
-            <TableRow key={r.rank}>
-              <TableCell className="text-lime">{r.rank}</TableCell>
-              <TableCell className="font-medium">{r.user}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(r.wagered, "USDT")}</TableCell>
-              <TableCell className="text-right font-semibold text-lime">
-                {formatMoney(r.prize, "USDT")}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <ul className="grid gap-2">
+        {RACE.map((r) => (
+          <li key={r.rank} className="bet-player">
+            <PlayerShot handle={r.user} className="h-full min-h-16 w-16" />
+            <div className="flex min-w-0 items-center justify-between gap-3 px-3 py-2">
+              <div className="min-w-0">
+                <p className="font-sub text-[0.65rem] tracking-[0.14em] text-lime uppercase">#{r.rank}</p>
+                <p className="truncate font-medium">{r.user}</p>
+                <p className="text-xs tabular-nums text-muted-foreground">{formatMoney(r.wagered, "USDT")} wagered</p>
+              </div>
+              <p className="font-heading text-sm tabular-nums text-lime">{formatMoney(r.prize, "USDT")}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -186,7 +165,7 @@ function Lottery() {
           <Link
             to="/promotions"
             hash="jackpot"
-            className="mt-3 inline-flex h-8 items-center rounded-lg bg-lime px-3 text-xs font-bold text-primary"
+            className="mt-3 inline-flex h-8 items-center rounded-lg bg-lime px-3 text-xs font-bold text-black"
           >
             Enter
           </Link>

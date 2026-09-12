@@ -107,8 +107,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return;
     }
     void seedWelcomeNotification().then(() => refresh()).catch(() => void refresh());
-    const t = window.setInterval(() => void refresh(), 12000);
-    return () => window.clearInterval(t);
+    let t = 0;
+    function loop() {
+      window.clearInterval(t);
+      if (document.hidden) return;
+      t = window.setInterval(() => void refresh(), 20000);
+    }
+    loop();
+    document.addEventListener("visibilitychange", loop);
+    return () => {
+      window.clearInterval(t);
+      document.removeEventListener("visibilitychange", loop);
+    };
   }, [user, isPending, refresh]);
 
   useEffect(() => {

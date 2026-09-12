@@ -16,7 +16,7 @@ import { getNetworkMeta } from "@/lib/onchain/config";
 import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
 import { ResponsibleTools } from "@/components/wallet/responsible-tools";
 import { useBetHistory, recordBet } from "@/lib/bet-history";
-import { listBetRounds } from "@/lib/bet-history.server";
+import { listBetRounds } from "@/lib/bet-history-api";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
 import { useEffect } from "react";
 

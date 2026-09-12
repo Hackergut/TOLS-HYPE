@@ -17,6 +17,7 @@ import { Route as ShellAlertsRouteImport } from './routes/_shell/alerts'
 import { Route as ShellAmlRouteImport } from './routes/_shell/aml'
 import { Route as ShellCasinoRouteImport } from './routes/_shell/casino'
 import { Route as ShellConnectRouteImport } from './routes/_shell/connect'
+import { Route as ShellDashboardRouteImport } from './routes/_shell/dashboard'
 import { Route as ShellFairnessRouteImport } from './routes/_shell/fairness'
 import { Route as ShellHelpRouteImport } from './routes/_shell/help'
 import { Route as ShellLiveRouteImport } from './routes/_shell/live'
@@ -31,6 +32,7 @@ import { Route as ShellTokenRouteImport } from './routes/_shell/token'
 import { Route as ShellVaultRouteImport } from './routes/_shell/vault'
 import { Route as ShellVipRouteImport } from './routes/_shell/vip'
 import { Route as ShellGamesIdRouteImport } from './routes/_shell/games.$id'
+import { Route as ShellSportsIdRouteImport } from './routes/_shell/sports.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiOperatorCallbackRouteImport } from './routes/api/operator/callback'
 import { Route as ApiOperatorGamesRouteImport } from './routes/api/operator/games'
@@ -76,6 +78,11 @@ const ShellCasinoRoute = ShellCasinoRouteImport.update({
 const ShellConnectRoute = ShellConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellDashboardRoute = ShellDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellFairnessRoute = ShellFairnessRouteImport.update({
@@ -148,6 +155,11 @@ const ShellGamesIdRoute = ShellGamesIdRouteImport.update({
   path: '/games/$id',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellSportsIdRoute = ShellSportsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ShellSportsRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -192,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/aml': typeof ShellAmlRoute
   '/casino': typeof ShellCasinoRoute
   '/connect': typeof ShellConnectRoute
+  '/dashboard': typeof ShellDashboardRoute
   '/fairness': typeof ShellFairnessRoute
   '/help': typeof ShellHelpRoute
   '/live': typeof ShellLiveRoute
@@ -200,12 +213,13 @@ export interface FileRoutesByFullPath {
   '/promotions': typeof ShellPromotionsRoute
   '/redeem': typeof ShellRedeemRoute
   '/responsible': typeof ShellResponsibleRoute
-  '/sports': typeof ShellSportsRoute
+  '/sports': typeof ShellSportsRouteWithChildren
   '/terms': typeof ShellTermsRoute
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
   '/games/$id': typeof ShellGamesIdRoute
+  '/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
   '/api/operator/games': typeof ApiOperatorGamesRoute
@@ -221,6 +235,7 @@ export interface FileRoutesByTo {
   '/aml': typeof ShellAmlRoute
   '/casino': typeof ShellCasinoRoute
   '/connect': typeof ShellConnectRoute
+  '/dashboard': typeof ShellDashboardRoute
   '/fairness': typeof ShellFairnessRoute
   '/help': typeof ShellHelpRoute
   '/live': typeof ShellLiveRoute
@@ -229,13 +244,14 @@ export interface FileRoutesByTo {
   '/promotions': typeof ShellPromotionsRoute
   '/redeem': typeof ShellRedeemRoute
   '/responsible': typeof ShellResponsibleRoute
-  '/sports': typeof ShellSportsRoute
+  '/sports': typeof ShellSportsRouteWithChildren
   '/terms': typeof ShellTermsRoute
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
   '/': typeof ShellIndexRoute
   '/games/$id': typeof ShellGamesIdRoute
+  '/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
   '/api/operator/games': typeof ApiOperatorGamesRoute
@@ -253,6 +269,7 @@ export interface FileRoutesById {
   '/_shell/aml': typeof ShellAmlRoute
   '/_shell/casino': typeof ShellCasinoRoute
   '/_shell/connect': typeof ShellConnectRoute
+  '/_shell/dashboard': typeof ShellDashboardRoute
   '/_shell/fairness': typeof ShellFairnessRoute
   '/_shell/help': typeof ShellHelpRoute
   '/_shell/live': typeof ShellLiveRoute
@@ -261,13 +278,14 @@ export interface FileRoutesById {
   '/_shell/promotions': typeof ShellPromotionsRoute
   '/_shell/redeem': typeof ShellRedeemRoute
   '/_shell/responsible': typeof ShellResponsibleRoute
-  '/_shell/sports': typeof ShellSportsRoute
+  '/_shell/sports': typeof ShellSportsRouteWithChildren
   '/_shell/terms': typeof ShellTermsRoute
   '/_shell/token': typeof ShellTokenRoute
   '/_shell/vault': typeof ShellVaultRoute
   '/_shell/vip': typeof ShellVipRoute
   '/_shell/': typeof ShellIndexRoute
   '/_shell/games/$id': typeof ShellGamesIdRoute
+  '/_shell/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
   '/api/operator/games': typeof ApiOperatorGamesRoute
@@ -286,6 +304,7 @@ export interface FileRouteTypes {
     | '/aml'
     | '/casino'
     | '/connect'
+    | '/dashboard'
     | '/fairness'
     | '/help'
     | '/live'
@@ -300,6 +319,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/vip'
     | '/games/$id'
+    | '/sports/$id'
     | '/api/auth/$'
     | '/api/operator/callback'
     | '/api/operator/games'
@@ -315,6 +335,7 @@ export interface FileRouteTypes {
     | '/aml'
     | '/casino'
     | '/connect'
+    | '/dashboard'
     | '/fairness'
     | '/help'
     | '/live'
@@ -330,6 +351,7 @@ export interface FileRouteTypes {
     | '/vip'
     | '/'
     | '/games/$id'
+    | '/sports/$id'
     | '/api/auth/$'
     | '/api/operator/callback'
     | '/api/operator/games'
@@ -346,6 +368,7 @@ export interface FileRouteTypes {
     | '/_shell/aml'
     | '/_shell/casino'
     | '/_shell/connect'
+    | '/_shell/dashboard'
     | '/_shell/fairness'
     | '/_shell/help'
     | '/_shell/live'
@@ -361,6 +384,7 @@ export interface FileRouteTypes {
     | '/_shell/vip'
     | '/_shell/'
     | '/_shell/games/$id'
+    | '/_shell/sports/$id'
     | '/api/auth/$'
     | '/api/operator/callback'
     | '/api/operator/games'
@@ -438,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/connect'
       fullPath: '/connect'
       preLoaderRoute: typeof ShellConnectRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/dashboard': {
+      id: '/_shell/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof ShellDashboardRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/fairness': {
@@ -538,6 +569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellGamesIdRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/sports/$id': {
+      id: '/_shell/sports/$id'
+      path: '/$id'
+      fullPath: '/sports/$id'
+      preLoaderRoute: typeof ShellSportsIdRouteImport
+      parentRoute: typeof ShellSportsRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -590,12 +628,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ShellSportsRouteChildren {
+  ShellSportsIdRoute: typeof ShellSportsIdRoute
+}
+
+const ShellSportsRouteChildren: ShellSportsRouteChildren = {
+  ShellSportsIdRoute: ShellSportsIdRoute,
+}
+
+const ShellSportsRouteWithChildren = ShellSportsRoute._addFileChildren(
+  ShellSportsRouteChildren,
+)
+
 interface ShellRouteChildren {
   ShellAffiliateRoute: typeof ShellAffiliateRoute
   ShellAlertsRoute: typeof ShellAlertsRoute
   ShellAmlRoute: typeof ShellAmlRoute
   ShellCasinoRoute: typeof ShellCasinoRoute
   ShellConnectRoute: typeof ShellConnectRoute
+  ShellDashboardRoute: typeof ShellDashboardRoute
   ShellFairnessRoute: typeof ShellFairnessRoute
   ShellHelpRoute: typeof ShellHelpRoute
   ShellLiveRoute: typeof ShellLiveRoute
@@ -604,7 +655,7 @@ interface ShellRouteChildren {
   ShellPromotionsRoute: typeof ShellPromotionsRoute
   ShellRedeemRoute: typeof ShellRedeemRoute
   ShellResponsibleRoute: typeof ShellResponsibleRoute
-  ShellSportsRoute: typeof ShellSportsRoute
+  ShellSportsRoute: typeof ShellSportsRouteWithChildren
   ShellTermsRoute: typeof ShellTermsRoute
   ShellTokenRoute: typeof ShellTokenRoute
   ShellVaultRoute: typeof ShellVaultRoute
@@ -619,6 +670,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellAmlRoute: ShellAmlRoute,
   ShellCasinoRoute: ShellCasinoRoute,
   ShellConnectRoute: ShellConnectRoute,
+  ShellDashboardRoute: ShellDashboardRoute,
   ShellFairnessRoute: ShellFairnessRoute,
   ShellHelpRoute: ShellHelpRoute,
   ShellLiveRoute: ShellLiveRoute,
@@ -627,7 +679,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellPromotionsRoute: ShellPromotionsRoute,
   ShellRedeemRoute: ShellRedeemRoute,
   ShellResponsibleRoute: ShellResponsibleRoute,
-  ShellSportsRoute: ShellSportsRoute,
+  ShellSportsRoute: ShellSportsRouteWithChildren,
   ShellTermsRoute: ShellTermsRoute,
   ShellTokenRoute: ShellTokenRoute,
   ShellVaultRoute: ShellVaultRoute,

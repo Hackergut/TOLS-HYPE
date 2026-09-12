@@ -9,6 +9,8 @@ import { formatMultiplier } from "@/lib/format";
 import { useWallet } from "@/lib/wallet-context";
 import { cashOutCrash, peekCrash, startCrash } from "@/lib/casino-api";
 import { CURRENCY_META } from "@/lib/games-catalog";
+import { playSfx } from "@/lib/game-sound";
+import { effectiveSpeed } from "@/lib/game-speed";
 
 type Phase = "idle" | "running" | "crashed" | "cashed";
 
@@ -28,10 +30,12 @@ function CrashTable({ gameId }: { gameId: string }) {
   const [display, setDisplay] = useState(1);
   const [crashAt, setCrashAt] = useState<number | null>(null);
   const [amount, setAmount] = useState(meta.minBet);
+  const [history, setHistory] = useState<number[]>([]);
   const startedAt = useRef(0);
   const raf = useRef(0);
   const roundRef = useRef<string | null>(null);
   const phaseRef = useRef<Phase>("idle");
+  const lastTick = useRef(0);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -46,6 +50,11 @@ function CrashTable({ gameId }: { gameId: string }) {
   function tick() {
     const elapsed = Date.now() - startedAt.current;
     setDisplay(crashMultiplierAt(elapsed));
+    const gap = effectiveSpeed() === "fast" ? 180 : effectiveSpeed() === "instant" ? 0 : 420;
+    if (gap && Date.now() - lastTick.current > gap) {
+      lastTick.current = Date.now();
+      playSfx("tick");
+    }
     raf.current = requestAnimationFrame(tick);
   }
 
@@ -82,6 +91,8 @@ function CrashTable({ gameId }: { gameId: string }) {
             view: { kind: "crash", crashAt: peek.crashAt ?? 1 },
           });
           toast.error(`Crashed at ${formatMultiplier(peek.crashAt ?? 1)}`);
+          playSfx("boom");
+          setHistory((h) => [peek.crashAt ?? 1, ...h].slice(0, 16));
           return;
         }
       } catch {
@@ -101,6 +112,7 @@ function CrashTable({ gameId }: { gameId: string }) {
         setPhase("crashed");
         setCrashAt(res.crashAt);
         setDisplay(res.crashAt);
+        playSfx("boom");
         reportRound({
           win: false,
           label: `Crash ${formatMultiplier(res.crashAt)}`,
@@ -110,9 +122,12 @@ function CrashTable({ gameId }: { gameId: string }) {
           view: { kind: "crash", crashAt: res.crashAt },
         });
         toast.error(`Crashed at ${formatMultiplier(res.crashAt)}`);
+        setHistory((h) => [res.crashAt, ...h].slice(0, 16));
       } else {
         setPhase("cashed");
         setDisplay(res.multiplier);
+        playSfx("cash");
+        setHistory((h) => [res.multiplier, ...h].slice(0, 16));
         reportRound({
           win: true,
           label: `Cash ${formatMultiplier(res.multiplier)}`,
@@ -128,9 +143,6 @@ function CrashTable({ gameId }: { gameId: string }) {
     }
   }
 
-  const color =
-    phase === "crashed" ? "text-destructive" : phase === "cashed" ? "text-lime" : "text-foreground";
-
   return (
     <GameShell
       controls={
@@ -139,27 +151,94 @@ function CrashTable({ gameId }: { gameId: string }) {
           {phase === "running" ? (
             <LimeBet onClick={() => void cash()}>Cash out {formatMultiplier(display)}</LimeBet>
           ) : (
-            <LimeBet onClick={() => void play()}>Bet</LimeBet>
+            <LimeBet onClick={() => void play()}>Bet (next round)</LimeBet>
           )}
         </>
       }
       play={
-        <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">Multiplier</p>
-          <p className={`mt-4 font-heading text-6xl font-semibold tabular-nums tracking-tight ${color}`}>
-            {formatMultiplier(display)}
-          </p>
-          <div className="mt-10 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-muted">
-            <div
-              className={`h-full rounded-full ${phase === "crashed" ? "bg-destructive" : phase === "cashed" ? "bg-lime" : "bg-primary"}`}
-              style={{ width: `${Math.min(100, Math.log(display) * 40)}%` }}
-            />
-          </div>
-          {crashAt && phase === "crashed" ? (
-            <p className="mt-4 text-sm text-muted-foreground">Round busted at {formatMultiplier(crashAt)}</p>
-          ) : null}
-        </div>
+        <CrashBoard
+          display={display}
+          phase={phase}
+          crashAt={crashAt}
+          history={history}
+        />
       }
     />
+  );
+}
+
+function CrashHex({ n, hot }: { n: number; hot?: boolean }) {
+  return (
+    <span
+      className={`grid size-14 place-items-center text-[0.7rem] font-bold tabular-nums ${
+        hot ? "bg-lime text-black" : n >= 2 ? "bg-lime/80 text-black" : "bg-muted text-muted-foreground"
+      }`}
+      style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}
+    >
+      {formatMultiplier(n)}
+    </span>
+  );
+}
+
+function CrashBoard({
+  display,
+  phase,
+  crashAt,
+  history,
+}: {
+  display: number;
+  phase: Phase;
+  crashAt: number | null;
+  history: number[];
+}) {
+  const fill = Math.min(88, 12 + Math.log(Math.max(1, display)) * 32);
+  const sides = [history[1] ?? 1.01, history[0] ?? 1.28];
+  const right = [history[2] ?? 1.35, history[3] ?? 1.0];
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-wrap justify-center gap-1.5">
+        {history.slice(0, 6).map((n, i) => (
+          <span
+            key={`${n}-${i}`}
+            className={`rounded-md px-2 py-1 text-[0.7rem] font-bold tabular-nums ${
+              n >= 2 ? "bg-lime text-black" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {formatMultiplier(n)}
+          </span>
+        ))}
+      </div>
+      <div className="flex h-64 w-full max-w-md items-end justify-center gap-2">
+        {sides.map((n, i) => (
+          <div key={`l${i}`} className="flex h-[55%] w-16 items-center justify-center rounded-xl bg-muted/40 opacity-50">
+            <CrashHex n={n} />
+          </div>
+        ))}
+        <div
+          className={`relative h-full w-28 overflow-hidden rounded-2xl ring-2 ${
+            phase === "crashed" ? "ring-purple" : "ring-lime"
+          }`}
+        >
+          <div
+            className={`absolute inset-x-0 bottom-0 ${phase === "crashed" ? "bg-purple" : "bg-lime"}`}
+            style={{ height: `${fill}%` }}
+          />
+          <div className="absolute top-[16%] left-1/2 z-10 -translate-x-1/2">
+            <CrashHex n={display} hot={phase !== "crashed"} />
+          </div>
+          <span className="absolute bottom-3 left-1/2 z-10 h-[38%] w-px -translate-x-1/2 bg-white/80" />
+          <span className="absolute bottom-2 left-1/2 z-10 size-3 -translate-x-1/2 rounded-full bg-white" />
+        </div>
+        {right.map((n, i) => (
+          <div key={`r${i}`} className="flex h-[55%] w-16 items-center justify-center rounded-xl bg-muted/40 opacity-50">
+            <CrashHex n={n} />
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        <span className="mr-1 inline-block size-1.5 rounded-full bg-lime" />
+        {phase === "running" ? "Live" : phase === "crashed" ? `Bust ${formatMultiplier(crashAt ?? display)}` : "Next round"}
+      </p>
+    </div>
   );
 }

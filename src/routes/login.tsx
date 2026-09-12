@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TolsMark } from "@/components/brand/tols-mark";
+import { operator } from "@/lib/operator/config";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -12,6 +13,20 @@ function Login() {
   const [mode, setMode] = useState<"in" | "up">("in");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  async function onSocial(providerId: string, idp: string) {
+    setError(null);
+    if (idp === "google") {
+      const next = "/profile";
+      window.location.assign(`${operator.casinoOrigin}/api/auth/google?next=${encodeURIComponent(next)}`);
+      return;
+    }
+    try {
+      await signIn(providerId, { callbackURL: "/" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign-in failed");
+    }
+  }
 
   async function onEmail(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,7 +60,7 @@ function Login() {
           {mode === "in" ? "Sign in" : "Create account"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Google, X, or email. Play-money balances mint on first visit.
+          Official TOLS. Google, X, or email.
         </p>
         {authEnabled ? (
           <div className="mt-6 space-y-3">
@@ -55,7 +70,7 @@ function Login() {
                 type="button"
                 variant="outline"
                 className="h-11 w-full"
-                onClick={() => void signIn(p.providerId, { callbackURL: "/" })}
+                onClick={() => void onSocial(p.providerId, p.idp)}
               >
                 Continue with {p.label}
               </Button>

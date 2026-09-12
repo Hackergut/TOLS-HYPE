@@ -4,6 +4,9 @@ const ANIM_KEY = "tols-anim";
 const INSTANT_KEY = "tols-instant";
 const HOTKEY_KEY = "tols-hotkeys";
 const CONFIRM_KEY = "tols-confirm-max";
+const SPEED_KEY = "tols-speed";
+
+export type GameSpeed = "regular" | "fast" | "instant";
 
 function readList(key: string): string[] {
   if (typeof window === "undefined") return [];
@@ -78,4 +81,16 @@ export function loadConfirmMax(): boolean {
 
 export function saveConfirmMax(on: boolean) {
   window.localStorage.setItem(CONFIRM_KEY, on ? "on" : "off");
+}
+
+export function loadGameSpeed(): GameSpeed {
+  if (typeof window === "undefined") return "regular";
+  const v = window.localStorage.getItem(SPEED_KEY);
+  if (v === "fast" || v === "instant" || v === "regular") return v;
+  return loadInstantOn() ? "instant" : "regular";
+}
+
+export function saveGameSpeed(speed: GameSpeed) {
+  window.localStorage.setItem(SPEED_KEY, speed);
+  saveInstantOn(speed === "instant");
 }

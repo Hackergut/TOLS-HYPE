@@ -55,17 +55,22 @@ export function LimeBet({
   children,
   disabled,
   onClick,
+  className,
 }: {
   children: ReactNode;
   disabled?: boolean;
   onClick?: () => void;
+  className?: string;
 }) {
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="h-12 w-full rounded-lg bg-lime text-base font-semibold text-primary shadow-[var(--shadow-fab)] transition-colors hover:bg-lime-400 disabled:opacity-50"
+      className={cn(
+        "h-12 w-full rounded-lg bg-lime text-base font-semibold text-black shadow-[var(--shadow-fab)] transition-colors hover:bg-lime-400 disabled:opacity-50",
+        className,
+      )}
     >
       {children}
     </button>

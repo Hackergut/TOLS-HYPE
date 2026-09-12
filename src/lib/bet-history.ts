@@ -2,15 +2,17 @@ import { useSyncExternalStore } from "react";
 import type { FairProof } from "@/lib/fair";
 import type { GameKind } from "@/lib/games-catalog";
 
+export type SnapCard = { rank: string | number; suit: string };
+
 export type RoundView =
   | { kind: "dice"; roll: number; over?: boolean; target?: number }
   | { kind: "roulette"; number: number; color: string }
   | { kind: "slots"; reels: string[] }
   | { kind: "crash"; crashAt?: number; cashAt?: number }
-  | { kind: "mines"; boom?: boolean; multiplier?: number }
-  | { kind: "keno"; hits: number }
-  | { kind: "hilo"; label: string }
-  | { kind: "blackjack"; outcome: string }
+  | { kind: "mines"; boom?: boolean; multiplier?: number; revealed?: number[]; mines?: number[] }
+  | { kind: "keno"; hits: number; picks?: number; selected?: number[]; drawn?: number[] }
+  | { kind: "hilo"; label: string; pick?: "higher" | "lower"; prev?: number; next?: number; prevSuit?: string; nextSuit?: string }
+  | { kind: "blackjack"; outcome: string; playerTotal?: number; dealerTotal?: number; player?: SnapCard[]; dealer?: SnapCard[] }
   | { kind: "pool"; balls: number; scratch?: boolean; pocketed?: number[] };
 
 export type BetRound = {
@@ -85,19 +87,17 @@ export function useBetHistory(gameId?: string) {
   return gameId ? all.filter((r) => r.gameId === gameId) : all;
 }
 
+export function shortHash(hash: string, chars = 8): string {
+  return hash.replace(/[^0-9a-f]/gi, "").slice(0, chars).toLowerCase();
+}
+
 export function shareText(r: BetRound) {
   const result = r.win ? "WIN" : "LOSE";
-  const lines = [
-    `TOLS ${r.title} · ${result} ${r.multiplier ? `${r.multiplier.toFixed(2)}×` : ""}`.trim(),
-    r.label,
-    r.stake
-      ? `Stake ${r.stake} ${r.currency} → ${r.payout} ${r.currency}`
-      : undefined,
-    r.fair ? `Hash ${r.fair.serverHash}` : undefined,
-    r.fair ? `Seed ${r.fair.clientSeed} · nonce ${r.fair.nonce}` : undefined,
-    `id ${r.id}`,
-  ].filter(Boolean);
-  return lines.join("\n");
+  const tag = r.fair ? `#${shortHash(r.fair.serverHash)}` : "";
+  const nonce = r.fair ? `n${r.fair.nonce}` : "";
+  return [`TOLS ${r.title} ${result} ${r.label}`, r.stake ? `${r.stake} ${r.currency} → ${r.payout} ${r.currency}` : null, tag, nonce]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 type ChatPayload = { user: string; text: string; round?: BetRound };
@@ -111,6 +111,7 @@ export function subscribeChatShare(fn: (msg: ChatPayload) => void) {
 }
 
 export function shareBetToChat(user: string, round: BetRound) {
-  const text = `${round.win ? "W" : "L"} ${round.title} · ${round.label}`;
+  const tag = round.fair ? `#${shortHash(round.fair.serverHash)}` : "";
+  const text = `${round.win ? "W" : "L"} ${round.title} · ${round.label}${tag ? ` ${tag}` : ""}`;
   chatListeners.forEach((fn) => fn({ user, text, round }));
 }

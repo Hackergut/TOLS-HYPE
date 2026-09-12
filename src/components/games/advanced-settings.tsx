@@ -6,19 +6,19 @@ import {
   getFairState,
   rotateServerSeed,
   setClientSeed,
-} from "@/lib/fair.server";
+} from "@/lib/fair-api";
 import {
   loadConfirmMax,
+  loadGameSpeed,
   loadHotkeysOn,
-  loadInstantOn,
   saveConfirmMax,
+  saveGameSpeed,
   saveHotkeysOn,
-  saveInstantOn,
 } from "@/lib/game-prefs";
 import { cn } from "cn";
 
 export function AdvancedSettings({ rtp }: { rtp?: number }) {
-  const [instant, setInstant] = useState(loadInstantOn);
+  const [instant, setInstant] = useState(() => loadGameSpeed() === "instant");
   const [hotkeys, setHotkeys] = useState(loadHotkeysOn);
   const [confirmMax, setConfirmMax] = useState(loadConfirmMax);
   const [hash, setHash] = useState("");
@@ -42,7 +42,14 @@ export function AdvancedSettings({ rtp }: { rtp?: number }) {
       {rtp != null ? (
         <p className="text-xs tabular-nums text-lime">RTP {rtp.toFixed(1)}%</p>
       ) : null}
-      <Toggle label="Instant result" on={instant} onChange={(v) => { saveInstantOn(v); setInstant(v); }} />
+      <Toggle
+        label="Instant result"
+        on={instant}
+        onChange={(v) => {
+          saveGameSpeed(v ? "instant" : "regular");
+          setInstant(v);
+        }}
+      />
       <Toggle label="Hotkeys (Space)" on={hotkeys} onChange={(v) => { saveHotkeysOn(v); setHotkeys(v); }} />
       <Toggle label="Confirm max bet" on={confirmMax} onChange={(v) => { saveConfirmMax(v); setConfirmMax(v); }} />
       <p className="mt-1 text-[0.65rem] text-muted-foreground">SHA-256 HMAC · client seed + nonce</p>

@@ -10,6 +10,8 @@ import { StakeField } from "@/components/games/stake-field";
 import { FeltFromPlaying } from "@/components/games/felt-card";
 import { formatMoney } from "@/lib/format";
 import { CURRENCY_META } from "@/lib/games-catalog";
+import { playSfx } from "@/lib/game-sound";
+import { sleep, speedDelay } from "@/lib/game-speed";
 import type { PlayingCard } from "@/lib/rng";
 
 type Table = {
@@ -46,6 +48,8 @@ function BlackjackTable({ gameId }: { gameId: string }) {
     try {
       const res = await dealBlackjack({ data: { gameId, currency, amount } });
       applyBalances(res.balances);
+      playSfx("deal");
+      await sleep(speedDelay("deal"));
       setTable({
         roundId: res.roundId,
         player: res.player,
@@ -65,7 +69,14 @@ function BlackjackTable({ gameId }: { gameId: string }) {
           stake: amount,
           payout: res.payout,
           multiplier: amount ? res.payout / amount : 0,
-          view: { kind: "blackjack", outcome: res.outcome ?? "Settled" },
+          view: {
+            kind: "blackjack",
+            outcome: res.outcome ?? "Settled",
+            playerTotal: res.playerTotal,
+            dealerTotal: res.dealerTotal,
+            player: res.player,
+            dealer: res.dealer,
+          },
         });
       }
     } catch (err) {
@@ -81,6 +92,8 @@ function BlackjackTable({ gameId }: { gameId: string }) {
     try {
       const res = await blackjackAction({ data: { roundId: table.roundId, action } });
       applyBalances(res.balances);
+      playSfx(action === "hit" ? "deal" : "click");
+      await sleep(speedDelay("deal"));
       setTable({
         roundId: table.roundId,
         player: res.player,
@@ -101,7 +114,14 @@ function BlackjackTable({ gameId }: { gameId: string }) {
           stake: action === "double" ? amount * 2 : amount,
           payout: res.payout,
           multiplier: amount ? res.payout / (action === "double" ? amount * 2 : amount) : 0,
-          view: { kind: "blackjack", outcome: res.outcome ?? "Settled" },
+          view: {
+            kind: "blackjack",
+            outcome: res.outcome ?? "Settled",
+            playerTotal: res.playerTotal,
+            dealerTotal: res.dealerTotal,
+            player: res.player,
+            dealer: res.dealer,
+          },
         });
       }
     } catch (err) {

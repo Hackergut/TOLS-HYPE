@@ -114,18 +114,22 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
       "Instant settle",
     ],
     payouts: [
-      { label: "Hits vs picks", value: "Paytable (up to high mults)" },
+      { label: "1 pick · 1 hit", value: "3.8×" },
+      { label: "8 picks · 8 hits", value: "400×" },
+      { label: "10 picks · 10 hits", value: "1,200×" },
+      { label: "Risk Low / Normie / Degen", value: "0.7× / 1.25× / 1.7× on the table" },
       { label: "No hits", value: "0×" },
     ],
     symbols: [
-      "Marked spot — your pick",
-      "Drawn spot — house number",
-      "Hit — overlap of both",
+      "Purple stroke — your pick",
+      "Lime fill — hit (win)",
+      "Purple fill — drawn miss",
+      "Tile — empty",
     ],
   },
   hilo: {
     summary:
-      "A card is up. You call higher-or-same or lower-or-same. Price is 0.99 ÷ probability, so the edge stays 1%. Same-rank counts as a win.",
+      "A card is up. Call higher-or-same or lower-or-same. Each hit compounds 0.99 ÷ P. Cash out any time — or miss and the streak dies. Same-rank wins.",
     what: "Hi-Lo is a TOLS Original of the next card. Ace is low, King is high. You can chain rounds on the same shoe of one up-card.",
     how: [
       "A card is dealt face up.",
@@ -144,14 +148,15 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
       { label: "Loss", value: "0×" },
     ],
     symbols: [
-      "Up-card — the rank you are pricing",
-      "Higher — next rank ≥ current",
-      "Lower — next rank ≤ current",
+      "Up-card — lime stripe, purple ink on hearts/diamonds",
+      "Higher or Same — lime",
+      "Lower or Same — purple",
+      "K–A rail — Ace low",
     ],
   },
   crash: {
     summary:
-      "A multiplier climbs from 1.00× until it busts. Cash out before the crash or ride it to zero. Instant-bust chance equals the 4% edge.",
+      "A multiplier climbs from 1.00× until it busts. Cash out before the crash or ride it to zero. Instant-bust chance equals the 1% edge.",
     what: "Crash is a TOLS Original curve. Everyone in the round sees the same climb. Cash out locks your multiplier. If it snaps first, the stake is gone.",
     how: [
       "Set stake (and an auto cash-out if you want a hard stop).",
@@ -162,7 +167,7 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
     features: [
       "Shared round curve",
       "Manual or auto cash-out",
-      "4% edge / 96% RTP",
+      "1% edge / 99% RTP",
       "Hidden crash point until settle",
     ],
     payouts: [
@@ -180,26 +185,27 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
       "European wheel, single zero. Red/black pays 2×, a straight number pays 36×. House edge 2.70% on every bet.",
     what: "TOLS Roulette is a European single-zero original. One spin, one number 0–36. Outside colors and a straight-up number are live in this build.",
     how: [
-      "Set stake and pick Red, Black, Green (0), or a straight number.",
-      "Spin. The ball settles on 0–36.",
-      "Red/black pays even money (2× including stake).",
-      "0 and straight-up pay 36×.",
+      "Set stake. Pick Red/Black, Odd/Even, 1–18/19–36, a dozen, 0, or a straight number.",
+      "Spin. The ball settles on 0–36 (European single zero).",
+      "Even-money bets pay 2×. Dozens pay 3×. Straight and 0 pay 36×.",
+      "0 loses even-money and dozen bets.",
     ],
     features: [
       "European single zero",
-      "2.70% edge",
-      "Color and straight bets",
-      "Live variant uses the same math with table pacing",
+      "2.70% edge on even money",
+      "Red / black / odd / even / high / low",
+      "Dozens and straight-up",
     ],
     payouts: [
-      { label: "Red / Black", value: "2×" },
-      { label: "Green (0)", value: "36×" },
-      { label: "Straight number", value: "36×" },
+      { label: "Red / Black / Odd / Even / 1–18 / 19–36", value: "2×" },
+      { label: "Dozen (1st / 2nd / 3rd 12)", value: "3×" },
+      { label: "Straight number or 0", value: "36×" },
     ],
     symbols: [
-      "Red / black pockets",
-      "Green 0 — the house number",
-      "Ball — the result",
+      "Dark grey wheel",
+      "One lime / purple track — red / black",
+      "Dark purple T hub",
+      "Lime ball",
     ],
   },
   blackjack: {
