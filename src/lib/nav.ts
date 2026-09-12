@@ -53,14 +53,14 @@ export const ORIGINAL_SECTIONS: OriginalNav[] = [
 
 export type CasinoSection = {
   title: string;
-  to: "/casino" | "/live";
+  to: "/casino" | "/live" | "/originals";
   cat?: "all" | "originals" | "slots" | "table" | "live" | "crash";
 };
 
 /** Casino categories in the left rail. */
 export const CASINO_SECTIONS: CasinoSection[] = [
   { title: "Lobby", to: "/casino", cat: "all" },
-  { title: "Originals", to: "/casino", cat: "originals" },
+  { title: "Originals", to: "/originals", cat: "originals" },
   { title: "Slots", to: "/casino", cat: "slots" },
   { title: "Table", to: "/casino", cat: "table" },
   { title: "Live", to: "/live" },

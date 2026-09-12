@@ -27,7 +27,7 @@ export function useRemoteCatalog() {
       .then((r) => r.json())
       .then((j: { remote?: RemoteGame[] }) => {
         const remote = Array.isArray(j.remote) ? j.remote : [];
-        const next = remote.map(remoteToCatalog);
+        const next = remote.map(remoteToCatalog).filter((g): g is CatalogGame => g != null);
         setGames(next);
         try {
           sessionStorage.setItem(KEY, JSON.stringify(next.slice(0, 400)));

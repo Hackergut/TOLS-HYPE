@@ -272,6 +272,39 @@ function operatorGames(): CatalogGame[] {
 
 export const GAMES: CatalogGame[] = [...ORIGINALS, ...operatorGames()];
 
+/** Next / Shuffle slugs → this app's official originals. */
+const ORIGINAL_ALIASES: Record<string, string> = {
+  dice: "signal-dice",
+  crash: "neon-crash",
+  "neon-crash": "neon-crash",
+  mines: "grid-mines",
+  keno: "keno-40",
+  hilo: "hilo-ace",
+  "hi-lo": "hilo-ace",
+  "hi lo": "hilo-ace",
+  roulette: "midnight-roulette",
+  blackjack: "obsidian-blackjack",
+  slots: "pulse-slots",
+  sevens: "pulse-slots",
+  "neon-sevens": "pulse-slots",
+  pool: "pool-rush",
+  limbo: "neon-crash",
+  wheel: "midnight-roulette",
+  coinflip: "signal-dice",
+  coin: "signal-dice",
+  plinko: "keno-40",
+  shoot: "grid-mines",
+};
+
+export function canonicalGameId(id: string): string {
+  const key = id.trim().toLowerCase().replace(/_/g, "-");
+  return ORIGINAL_ALIASES[key] ?? id.trim();
+}
+
+export function isHouseOriginal(game: CatalogGame): boolean {
+  return Boolean(game.original) || game.provider === "TOLS Originals";
+}
+
 export const HERO_SLIDES = [
   {
     id: "obsidian-blackjack",
@@ -329,11 +362,13 @@ export const CATEGORIES: { id: GameCategory | "all"; label: string }[] = [
 ];
 
 export function getGame(id: string): CatalogGame | undefined {
-  return GAMES.find((g) => g.id === id);
+  const canon = canonicalGameId(id);
+  return GAMES.find((g) => g.id === canon || g.id === id);
 }
 
 export function gamesByCategory(category: GameCategory | "all"): CatalogGame[] {
   if (category === "all") return GAMES;
+  if (category === "originals") return GAMES.filter(isHouseOriginal);
   return GAMES.filter((g) => g.category === category);
 }
 

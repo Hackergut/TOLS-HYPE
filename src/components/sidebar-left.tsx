@@ -152,8 +152,10 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
                 const active =
                   item.to === "/live"
                     ? pathname === "/live"
-                    : pathname === "/casino" &&
-                      (item.cat === "all" ? !cat || cat === "all" : cat === item.cat);
+                    : item.to === "/originals"
+                      ? pathname === "/originals"
+                      : pathname === "/casino" &&
+                        (item.cat === "all" ? !cat || cat === "all" : cat === item.cat);
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -164,6 +166,11 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
                     >
                       {item.to === "/live" ? (
                         <Link to="/live" onClick={closeIfMobile}>
+                          <Icon className={active ? "text-lime" : undefined} />
+                          <span>{item.title}</span>
+                        </Link>
+                      ) : item.to === "/originals" ? (
+                        <Link to="/originals" onClick={closeIfMobile}>
                           <Icon className={active ? "text-lime" : undefined} />
                           <span>{item.title}</span>
                         </Link>

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { BlackjackGame } from "@/components/games/blackjack-game";
 import { CrashGame } from "@/components/games/crash-game";
 import { DiceGame } from "@/components/games/dice-game";
@@ -15,10 +15,16 @@ import { LiveFeed } from "@/components/games/live-feed";
 import { GameTableProvider } from "@/components/games/game-table";
 import { GuestGamePanel, useGamePreviewOptional } from "@/components/games/guest-game-preview";
 import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
-import { GAMES, getGame } from "@/lib/games-catalog";
+import { GAMES, canonicalGameId, getGame } from "@/lib/games-catalog";
 import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
 export const Route = createFileRoute("/_shell/games/$id")({
+  beforeLoad: ({ params }) => {
+    const canon = canonicalGameId(params.id);
+    if (canon !== params.id) {
+      throw redirect({ to: "/games/$id", params: { id: canon } });
+    }
+  },
   component: GamePage,
 });
 

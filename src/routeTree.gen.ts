@@ -21,6 +21,7 @@ import { Route as ShellDashboardRouteImport } from './routes/_shell/dashboard'
 import { Route as ShellFairnessRouteImport } from './routes/_shell/fairness'
 import { Route as ShellHelpRouteImport } from './routes/_shell/help'
 import { Route as ShellLiveRouteImport } from './routes/_shell/live'
+import { Route as ShellOriginalsRouteImport } from './routes/_shell/originals'
 import { Route as ShellPrivacyRouteImport } from './routes/_shell/privacy'
 import { Route as ShellProfileRouteImport } from './routes/_shell/profile'
 import { Route as ShellPromotionsRouteImport } from './routes/_shell/promotions'
@@ -32,6 +33,8 @@ import { Route as ShellTokenRouteImport } from './routes/_shell/token'
 import { Route as ShellVaultRouteImport } from './routes/_shell/vault'
 import { Route as ShellVipRouteImport } from './routes/_shell/vip'
 import { Route as ShellGamesIdRouteImport } from './routes/_shell/games.$id'
+import { Route as ShellOriginalsIdRouteImport } from './routes/_shell/originals.$id'
+import { Route as ShellPlaySlugRouteImport } from './routes/_shell/play.$slug'
 import { Route as ShellSportsIdRouteImport } from './routes/_shell/sports.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiOperatorCallbackRouteImport } from './routes/api/operator/callback'
@@ -100,6 +103,11 @@ const ShellLiveRoute = ShellLiveRouteImport.update({
   path: '/live',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellOriginalsRoute = ShellOriginalsRouteImport.update({
+  id: '/originals',
+  path: '/originals',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellPrivacyRoute = ShellPrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -155,6 +163,16 @@ const ShellGamesIdRoute = ShellGamesIdRouteImport.update({
   path: '/games/$id',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellOriginalsIdRoute = ShellOriginalsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ShellOriginalsRoute,
+} as any)
+const ShellPlaySlugRoute = ShellPlaySlugRouteImport.update({
+  id: '/play/$slug',
+  path: '/play/$slug',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellSportsIdRoute = ShellSportsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -208,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/fairness': typeof ShellFairnessRoute
   '/help': typeof ShellHelpRoute
   '/live': typeof ShellLiveRoute
+  '/originals': typeof ShellOriginalsRouteWithChildren
   '/privacy': typeof ShellPrivacyRoute
   '/profile': typeof ShellProfileRoute
   '/promotions': typeof ShellPromotionsRoute
@@ -219,6 +238,8 @@ export interface FileRoutesByFullPath {
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
   '/games/$id': typeof ShellGamesIdRoute
+  '/originals/$id': typeof ShellOriginalsIdRoute
+  '/play/$slug': typeof ShellPlaySlugRoute
   '/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
@@ -239,6 +260,7 @@ export interface FileRoutesByTo {
   '/fairness': typeof ShellFairnessRoute
   '/help': typeof ShellHelpRoute
   '/live': typeof ShellLiveRoute
+  '/originals': typeof ShellOriginalsRouteWithChildren
   '/privacy': typeof ShellPrivacyRoute
   '/profile': typeof ShellProfileRoute
   '/promotions': typeof ShellPromotionsRoute
@@ -251,6 +273,8 @@ export interface FileRoutesByTo {
   '/vip': typeof ShellVipRoute
   '/': typeof ShellIndexRoute
   '/games/$id': typeof ShellGamesIdRoute
+  '/originals/$id': typeof ShellOriginalsIdRoute
+  '/play/$slug': typeof ShellPlaySlugRoute
   '/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
@@ -273,6 +297,7 @@ export interface FileRoutesById {
   '/_shell/fairness': typeof ShellFairnessRoute
   '/_shell/help': typeof ShellHelpRoute
   '/_shell/live': typeof ShellLiveRoute
+  '/_shell/originals': typeof ShellOriginalsRouteWithChildren
   '/_shell/privacy': typeof ShellPrivacyRoute
   '/_shell/profile': typeof ShellProfileRoute
   '/_shell/promotions': typeof ShellPromotionsRoute
@@ -285,6 +310,8 @@ export interface FileRoutesById {
   '/_shell/vip': typeof ShellVipRoute
   '/_shell/': typeof ShellIndexRoute
   '/_shell/games/$id': typeof ShellGamesIdRoute
+  '/_shell/originals/$id': typeof ShellOriginalsIdRoute
+  '/_shell/play/$slug': typeof ShellPlaySlugRoute
   '/_shell/sports/$id': typeof ShellSportsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/operator/callback': typeof ApiOperatorCallbackRoute
@@ -308,6 +335,7 @@ export interface FileRouteTypes {
     | '/fairness'
     | '/help'
     | '/live'
+    | '/originals'
     | '/privacy'
     | '/profile'
     | '/promotions'
@@ -319,6 +347,8 @@ export interface FileRouteTypes {
     | '/vault'
     | '/vip'
     | '/games/$id'
+    | '/originals/$id'
+    | '/play/$slug'
     | '/sports/$id'
     | '/api/auth/$'
     | '/api/operator/callback'
@@ -339,6 +369,7 @@ export interface FileRouteTypes {
     | '/fairness'
     | '/help'
     | '/live'
+    | '/originals'
     | '/privacy'
     | '/profile'
     | '/promotions'
@@ -351,6 +382,8 @@ export interface FileRouteTypes {
     | '/vip'
     | '/'
     | '/games/$id'
+    | '/originals/$id'
+    | '/play/$slug'
     | '/sports/$id'
     | '/api/auth/$'
     | '/api/operator/callback'
@@ -372,6 +405,7 @@ export interface FileRouteTypes {
     | '/_shell/fairness'
     | '/_shell/help'
     | '/_shell/live'
+    | '/_shell/originals'
     | '/_shell/privacy'
     | '/_shell/profile'
     | '/_shell/promotions'
@@ -384,6 +418,8 @@ export interface FileRouteTypes {
     | '/_shell/vip'
     | '/_shell/'
     | '/_shell/games/$id'
+    | '/_shell/originals/$id'
+    | '/_shell/play/$slug'
     | '/_shell/sports/$id'
     | '/api/auth/$'
     | '/api/operator/callback'
@@ -492,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellLiveRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/originals': {
+      id: '/_shell/originals'
+      path: '/originals'
+      fullPath: '/originals'
+      preLoaderRoute: typeof ShellOriginalsRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/privacy': {
       id: '/_shell/privacy'
       path: '/privacy'
@@ -569,6 +612,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellGamesIdRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/originals/$id': {
+      id: '/_shell/originals/$id'
+      path: '/$id'
+      fullPath: '/originals/$id'
+      preLoaderRoute: typeof ShellOriginalsIdRouteImport
+      parentRoute: typeof ShellOriginalsRoute
+    }
+    '/_shell/play/$slug': {
+      id: '/_shell/play/$slug'
+      path: '/play/$slug'
+      fullPath: '/play/$slug'
+      preLoaderRoute: typeof ShellPlaySlugRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/sports/$id': {
       id: '/_shell/sports/$id'
       path: '/$id'
@@ -628,6 +685,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ShellOriginalsRouteChildren {
+  ShellOriginalsIdRoute: typeof ShellOriginalsIdRoute
+}
+
+const ShellOriginalsRouteChildren: ShellOriginalsRouteChildren = {
+  ShellOriginalsIdRoute: ShellOriginalsIdRoute,
+}
+
+const ShellOriginalsRouteWithChildren = ShellOriginalsRoute._addFileChildren(
+  ShellOriginalsRouteChildren,
+)
+
 interface ShellSportsRouteChildren {
   ShellSportsIdRoute: typeof ShellSportsIdRoute
 }
@@ -650,6 +719,7 @@ interface ShellRouteChildren {
   ShellFairnessRoute: typeof ShellFairnessRoute
   ShellHelpRoute: typeof ShellHelpRoute
   ShellLiveRoute: typeof ShellLiveRoute
+  ShellOriginalsRoute: typeof ShellOriginalsRouteWithChildren
   ShellPrivacyRoute: typeof ShellPrivacyRoute
   ShellProfileRoute: typeof ShellProfileRoute
   ShellPromotionsRoute: typeof ShellPromotionsRoute
@@ -662,6 +732,7 @@ interface ShellRouteChildren {
   ShellVipRoute: typeof ShellVipRoute
   ShellIndexRoute: typeof ShellIndexRoute
   ShellGamesIdRoute: typeof ShellGamesIdRoute
+  ShellPlaySlugRoute: typeof ShellPlaySlugRoute
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
@@ -674,6 +745,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellFairnessRoute: ShellFairnessRoute,
   ShellHelpRoute: ShellHelpRoute,
   ShellLiveRoute: ShellLiveRoute,
+  ShellOriginalsRoute: ShellOriginalsRouteWithChildren,
   ShellPrivacyRoute: ShellPrivacyRoute,
   ShellProfileRoute: ShellProfileRoute,
   ShellPromotionsRoute: ShellPromotionsRoute,
@@ -686,6 +758,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellVipRoute: ShellVipRoute,
   ShellIndexRoute: ShellIndexRoute,
   ShellGamesIdRoute: ShellGamesIdRoute,
+  ShellPlaySlugRoute: ShellPlaySlugRoute,
 }
 
 const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)

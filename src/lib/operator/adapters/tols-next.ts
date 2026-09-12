@@ -2,6 +2,7 @@ import type { AggregatorAdapter } from "@/lib/operator/adapter";
 import { operatorServer } from "@/lib/operator/env.server";
 import { casinoPlayerSession } from "@/lib/operator/sso";
 import type { RemoteGame, SeamlessRequest } from "@/lib/operator/types";
+import { getGame } from "@/lib/games-catalog";
 
 /**
  * Live tols-casino-next (Hackergut/tols-casino-next).
@@ -102,6 +103,10 @@ export const tolsNextAdapter: AggregatorAdapter = {
     }
   },
   async launch(req) {
+    const house = getGame(req.gameId);
+    if (house && house.kind !== "iframe") {
+      return { error: "Originals play on this UI" };
+    }
     const slug = req.gameId.replace(/^flexrix-/, "");
     const session = await casinoPlayerSession({ userId: req.userId, email: req.email });
     const authHeaders: Record<string, string> = session ? { cookie: `tols_session=${session}` } : {};
