@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
@@ -158,7 +158,7 @@ export default defineConfig(({ command, isPreview }) => ({
   },
   resolve: { tsconfigPaths: true },
   ssr: {
-    noExternal: ["tslib"],
+    noExternal: ["tslib", "radix-ui", /^@radix-ui\//],
   },
   plugins: [
     pgliteBootstrapPlugin(),
@@ -174,12 +174,22 @@ export default defineConfig(({ command, isPreview }) => ({
       ? [
           nitro({
             preset: "vercel",
-            // Auto-registers server/middleware/* (the PWA install page +
-            // manifest + head-tag middleware). Nitro v3 defaults serverDir to
-            // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
-            // Radix CJS helpers import tslib; without this Vercel /__server 500s.
-            externals: { inline: ["tslib"] },
+            externals: { inline: ["tslib", "radix-ui", /@radix-ui\//] },
+            hooks: {
+              compiled() {
+                const src = join(process.cwd(), "node_modules/tslib");
+                if (!existsSync(src)) return;
+                for (const root of [
+                  join(process.cwd(), ".output/server"),
+                  join(process.cwd(), ".vercel/output/functions/__server.func"),
+                ]) {
+                  if (!existsSync(root)) continue;
+                  mkdirSync(join(root, "node_modules"), { recursive: true });
+                  cpSync(src, join(root, "node_modules/tslib"), { recursive: true });
+                }
+              },
+            },
           }),
         ]
       : []),
