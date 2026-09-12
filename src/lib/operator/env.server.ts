@@ -4,7 +4,7 @@ import type { AggregatorKind } from "@/lib/operator/adapter";
 
 export function operatorServer() {
   const backend = (env("OPERATOR_BACKEND") ?? env("VITE_OPERATOR_BACKEND") ?? "local") as OperatorBackend;
-  const aggregatorKind = (env("AGGREGATOR_KIND") ?? env("VITE_AGGREGATOR_KIND") ?? "tols-next") as AggregatorKind;
+  const aggregatorKind = (env("AGGREGATOR_KIND") ?? env("VITE_AGGREGATOR_KIND") ?? "flexrix") as AggregatorKind;
   return {
     backend,
     aggregatorKind,
@@ -25,8 +25,8 @@ export function operatorServer() {
     aggregatorOperatorId: env("AGGREGATOR_OPERATOR_ID"),
     webhookSecret: env("OPERATOR_WEBHOOK_SECRET") ?? env("VENDOR_CALLBACK_SECRET"),
     legacyGameMap: env("LEGACY_GAME_MAP"),
-    /** Live tols-casino-next origin — payments, Flexrix, vendor wallet. */
-    casinoOrigin: (env("CASINO_ORIGIN") ?? env("APP_URL") ?? "https://www.tols.fun").replace(/\/$/, ""),
+    /** This skin's public origin (not tols-casino-next). */
+    casinoOrigin: (env("CASINO_ORIGIN") ?? env("APP_URL") ?? "https://tols-plum.vercel.app").replace(/\/$/, ""),
     flexrixBase: env("FLEXRIX_API_BASE") ?? "https://api.upaflex.online",
     flexrixKey: env("FLEXRIX_MERCHANT_KEY"),
     flexrixSecret: env("FLEXRIX_API_SECRET"),

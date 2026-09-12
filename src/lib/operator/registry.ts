@@ -23,7 +23,7 @@ const ADAPTERS: Record<AggregatorKind, AggregatorAdapter> = {
 };
 
 export function resolveAdapter(): AggregatorAdapter {
-  const kind = (operatorServer().aggregatorKind || "local") as AggregatorKind;
+  const kind = (operatorServer().aggregatorKind || "flexrix") as AggregatorKind;
   return ADAPTERS[kind] ?? localAdapter;
 }
 

@@ -31,7 +31,18 @@ export const launchRemoteGame = createServerFn({ method: "POST" })
   });
 
 export const operatorStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { casinoHealth } = await import("@/lib/operator/governance");
-  const casino = await casinoHealth().catch(() => ({ ok: false }));
-  return { ok: Boolean(casino.ok) };
+  const { operatorServer } = await import("@/lib/operator/env.server");
+  const { flexrixConfigured } = await import("@/lib/operator/flexrix-sign");
+  const { governanceHealth } = await import("@/lib/operator/governance");
+  const cfg = operatorServer();
+  const gov = await governanceHealth().catch(() => ({ ok: false as const }));
+  return {
+    ok: true,
+    aggregator: cfg.aggregatorKind,
+    flexrix: flexrixConfigured(),
+    governance: Boolean(gov.ok),
+    governanceUrl: cfg.governanceUrl,
+    payments: "local-wallet",
+    supabase: Boolean(cfg.databaseUrl || cfg.supabaseUrl),
+  };
 });
