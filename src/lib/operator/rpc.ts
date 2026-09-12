@@ -5,11 +5,7 @@ import type { LaunchResponse, RemoteGame } from "@/lib/operator/types";
 
 export const listRemoteGames = createServerFn({ method: "GET" }).handler(async (): Promise<RemoteGame[]> => {
   const { resolveAdapter } = await import("@/lib/operator/registry");
-  try {
-    return await resolveAdapter().listGames();
-  } catch {
-    return [];
-  }
+  return await resolveAdapter().listGames();
 });
 
 export const launchRemoteGame = createServerFn({ method: "POST" })

@@ -1,6 +1,7 @@
 import type { AggregatorAdapter } from "@/lib/operator/adapter";
 import { flexrixBase, flexrixConfigured, flexrixSign } from "@/lib/operator/flexrix-sign";
 import type { LaunchResponse, RemoteGame, SeamlessRequest } from "@/lib/operator/types";
+import { operatorServer } from "@/lib/operator/env.server";
 
 type HubGame = {
   uuid?: string;
@@ -12,16 +13,45 @@ type HubGame = {
   rtp?: number;
 };
 
+const cache = globalThis as typeof globalThis & {
+  __flexrixGames__?: { at: number; games: RemoteGame[] };
+};
+
+function hubItems(data: unknown): HubGame[] {
+  if (!data || typeof data !== "object") return [];
+  const o = data as Record<string, unknown>;
+  const raw = o.items ?? o.data ?? o.games;
+  return Array.isArray(raw) ? (raw as HubGame[]) : [];
+}
+
 async function hubJson<T>(path: string, init: RequestInit & { signParams?: Record<string, string | number> }): Promise<T> {
   const { headers: signed } = flexrixSign(init.signParams ?? {});
   const res = await fetch(`${flexrixBase()}${path}`, {
     method: init.method ?? "GET",
     headers: { ...signed, ...(init.headers as Record<string, string> | undefined) },
     body: init.body,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(12_000),
   });
-  if (!res.ok) throw new Error(`Flexrix ${res.status}`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Flexrix ${res.status}${text.slice(0, 80) ? `: ${text.slice(0, 80)}` : ""}`);
+  }
   return (await res.json()) as T;
+}
+
+function mapGame(g: HubGame): RemoteGame | null {
+  const slug = String(g.slug || g.uuid || "");
+  if (!slug) return null;
+  return {
+    id: slug,
+    slug,
+    title: String(g.name || slug),
+    provider: String(g.provider || "Flexrix"),
+    cover: g.image,
+    rtp: g.rtp,
+    live: String(g.type || "").toLowerCase().includes("live"),
+    gameType: g.type,
+  };
 }
 
 /** Flexrix hub direct — HMAC-SHA1. Does not go through tols-casino-next. */
@@ -30,33 +60,31 @@ export const flexrixAdapter: AggregatorAdapter = {
   label: "Flexrix hub",
   async listGames(): Promise<RemoteGame[]> {
     if (!flexrixConfigured()) return [];
+    const hit = cache.__flexrixGames__;
+    if (hit && Date.now() - hit.at < 10 * 60_000) return hit.games;
     const out: RemoteGame[] = [];
-    for (let page = 1; page <= 40; page++) {
-      const params = { page, per_page: 50 };
-      const qs = new URLSearchParams({ page: String(page), per_page: "50" }).toString();
-      const data = await hubJson<{ items?: HubGame[] }>(`/v1/native/games?${qs}`, { signParams: params });
-      const items = data.items ?? [];
+    const seen = new Set<string>();
+    for (let page = 1; page <= 6; page++) {
+      const params = { page, per_page: 100 };
+      const qs = new URLSearchParams({ page: String(page), per_page: "100" }).toString();
+      const data = await hubJson<unknown>(`/v1/native/games?${qs}`, { signParams: params });
+      const items = hubItems(data);
       for (const g of items) {
-        const slug = String(g.slug || g.uuid || "");
-        if (!slug) continue;
-        out.push({
-          id: slug,
-          slug,
-          title: String(g.name || slug),
-          provider: String(g.provider || "Flexrix"),
-          cover: g.image,
-          rtp: g.rtp,
-          live: String(g.type || "").toLowerCase().includes("live"),
-          gameType: g.type,
-        });
+        const mapped = mapGame(g);
+        if (!mapped || seen.has(mapped.id)) continue;
+        seen.add(mapped.id);
+        out.push(mapped);
       }
-      if (items.length < 50) break;
+      if (items.length < 100) break;
     }
+    cache.__flexrixGames__ = { at: Date.now(), games: out };
     return out;
   },
   async launch(req): Promise<LaunchResponse> {
     const slug = req.gameId.replace(/^flexrix:/, "");
     if (!slug) return { error: "Missing game slug" };
+    const origin = operatorServer().casinoOrigin;
+    const ccy = req.currency === "USDT" || req.currency === "SOL" ? "USD" : req.currency;
     if (!flexrixConfigured()) {
       const qs = new URLSearchParams({ balance: "5000", currency: "USD", lang: req.language ?? "en" });
       try {
@@ -73,10 +101,10 @@ export const flexrixAdapter: AggregatorAdapter = {
     }
     const body = {
       player_id: req.userId,
-      currency: req.currency === "USDT" ? "USD" : req.currency,
+      currency: ccy,
       language: req.language ?? "en",
       balance: 0,
-      return_url: req.returnUrl ?? "https://tols-plum.vercel.app/",
+      return_url: req.returnUrl ?? `${origin}/`,
     };
     try {
       const json = await hubJson<{ url?: string }>(`/v1/native/${encodeURIComponent(slug)}/launch`, {

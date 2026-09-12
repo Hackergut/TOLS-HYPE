@@ -30,7 +30,7 @@ export function useRemoteCatalog() {
         const next = remote.map(remoteToCatalog).filter((g): g is CatalogGame => g != null);
         setGames(next);
         try {
-          sessionStorage.setItem(KEY, JSON.stringify(next.slice(0, 400)));
+          sessionStorage.setItem(KEY, JSON.stringify(next.slice(0, 800)));
         } catch {
           /* quota */
         }

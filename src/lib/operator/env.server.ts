@@ -26,7 +26,7 @@ export function operatorServer() {
     webhookSecret: env("OPERATOR_WEBHOOK_SECRET") ?? env("VENDOR_CALLBACK_SECRET"),
     legacyGameMap: env("LEGACY_GAME_MAP"),
     /** This skin's public origin (not tols-casino-next). */
-    casinoOrigin: (env("CASINO_ORIGIN") ?? env("APP_URL") ?? "https://tols-plum.vercel.app").replace(/\/$/, ""),
+    casinoOrigin: (env("CASINO_ORIGIN") ?? env("APP_URL") ?? "https://www.tols.fun").replace(/\/$/, ""),
     flexrixBase: env("FLEXRIX_API_BASE") ?? "https://api.upaflex.online",
     flexrixKey: env("FLEXRIX_MERCHANT_KEY"),
     flexrixSecret: env("FLEXRIX_API_SECRET"),
