@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
-    "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
+    "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate && node scripts/ensure-vercel-output.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "prisma:generate": "prisma generate",
     "build:dev": "node scripts/with-app-env.mjs vite build --mode development",
