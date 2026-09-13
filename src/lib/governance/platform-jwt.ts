@@ -213,7 +213,11 @@ let jwksCache: JwksCache | null = null;
 export async function fetchGovernancePublicPem(): Promise<string | null> {
   if (jwksCache && jwksCache.until > Date.now()) return jwksCache.pem;
   const origin = getBridgeConfig().towerOrigin;
-  const urls = [`${origin}/api/platform/jwks`, `${origin}/api/.well-known/jwks.json`];
+  const urls = [
+    `${origin}/api/platform/jwks`,
+    `${origin}/api/platform/health`,
+    `${origin}/api/.well-known/jwks.json`,
+  ];
   for (const url of urls) {
     try {
       const res = await fetch(url, {
@@ -225,11 +229,13 @@ export async function fetchGovernancePublicPem(): Promise<string | null> {
       const body = (await res.json().catch(() => null)) as {
         data?: { pem?: string; pemBase64?: string };
         pem?: string;
+        jwt?: { pem?: string };
         keys?: unknown;
       } | null;
       const pem =
         normalizePem(body?.data?.pem) ||
         normalizePem(body?.pem) ||
+        normalizePem(body?.jwt?.pem) ||
         normalizePem(body?.data?.pemBase64);
       if (pem) {
         jwksCache = { pem, until: Date.now() + 10 * 60 * 1000 };
