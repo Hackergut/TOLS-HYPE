@@ -2,6 +2,7 @@ import { CURRENCIES, type Currency } from "@/lib/games-catalog";
 import { operatorServer } from "@/lib/operator/env.server";
 import { resolveAdapter } from "@/lib/operator/registry";
 import type { SeamlessRequest, SeamlessResponse } from "@/lib/operator/types";
+import { getPrisma } from "@/lib/prisma.server";
 import { credit, debit, ensureWallets, snapshotBalances } from "@/lib/wallet.server";
 
 export { listRemoteGames, launchRemoteGame, operatorStatus } from "@/lib/operator/rpc";
@@ -18,6 +19,17 @@ async function headerAuth(headers: Record<string, string>) {
   return got === cfg.webhookSecret || got === `Bearer ${cfg.webhookSecret}`;
 }
 
+/**
+ * Vendor callbacks are retried on timeouts — a repeated txnId must not move
+ * money twice. Mirrors the dedupe in flexrix-wallet.ts (ledger `note`).
+ */
+async function alreadyProcessed(userId: string, txnId: string | undefined): Promise<boolean> {
+  if (!txnId) return false;
+  const prisma = await getPrisma();
+  const row = await prisma.ledger.findFirst({ where: { userId, note: txnId } });
+  return Boolean(row);
+}
+
 export async function seamlessWallet(
   req: SeamlessRequest,
   headers: Record<string, string>,
@@ -30,6 +42,13 @@ export async function seamlessWallet(
   const txnId = req.txnId ?? `tx_${Date.now()}`;
 
   if (req.action === "balance" || req.action === "rollback") {
+    const balances = await snapshotBalances(userId);
+    return { ok: true, balance: balances[currency], txnId };
+  }
+
+  // Idempotency: replayed vendor callbacks return the current balance
+  // without writing a second ledger row.
+  if (req.txnId && (req.action === "bet" || req.action === "win") && (await alreadyProcessed(userId, req.txnId))) {
     const balances = await snapshotBalances(userId);
     return { ok: true, balance: balances[currency], txnId };
   }

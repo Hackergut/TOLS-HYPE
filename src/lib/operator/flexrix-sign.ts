@@ -61,7 +61,7 @@ export function flexrixVerify(
   if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > windowSec) {
     return { ok: false, code: "TIMESTAMP_EXPIRED" };
   }
-  const merged = {
+  const merged: Record<string, string> = {
     ...params,
     "X-Merchant-Id": merchantId,
     "X-Timestamp": timestamp,
@@ -86,5 +86,4 @@ export function flexrixVerify(
   } catch {
     return { ok: false, code: "BAD_SIGNATURE" };
   }
-  return { ok: true };
 }

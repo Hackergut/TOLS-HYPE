@@ -39,6 +39,8 @@ export type RemoteGame = {
   slug?: string;
   title: string;
   provider: string;
+  /** Provider/studio logo URL when the hub supplies one (else curated map). */
+  providerLogo?: string;
   category?: string;
   cover?: string;
   rtp?: number;

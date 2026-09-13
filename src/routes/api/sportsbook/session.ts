@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { englishSportsUrl, sportsSsoToken } from "@/lib/operator/sportsbook.server";
+import { operatorServer } from "@/lib/operator/env.server";
 import { getSessionUser } from "@/lib/auth/verify.server";
 
 export const Route = createFileRoute("/api/sportsbook/session")({
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/api/sportsbook/session")({
         return Response.json({
           url: englishSportsUrl(token),
           lang: "en",
-          callback: "https://www.tols.fun/api/sportsbook/callback",
+          callback: `${operatorServer().casinoOrigin}/api/sportsbook/callback`,
         });
       },
     },

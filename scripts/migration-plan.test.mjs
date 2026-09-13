@@ -56,9 +56,20 @@ test("non-.sql entries are dropped (readdir also yields the auth/ directory)", (
   assert.deepEqual(pendingMigrations(["auth", "README.md"], []), []);
 });
 
-test("the auth schema ships outside the globbed directory", () => {
+test("the globbed directory applies the casino schema in order (auth-on workspace)", () => {
+  // Auth-on workspace: the shipped-template "empty migrations/" state no
+  // longer applies — Better Auth + casino tables live at top level and must
+  // apply in numeric order with disciplined file names.
   const migrationsDir = join(projectRoot(), "migrations");
-  assert.deepEqual(pendingMigrations(readdirSync(migrationsDir), []), []);
+  const pending = pendingMigrations(readdirSync(migrationsDir), []);
+  const names = pending.map((p) => p.name);
+  assert.ok(names.includes("0001_auth.sql"), "expected the Better Auth schema in migrations/");
+  assert.deepEqual(names, [...names].sort(), "migrations must apply in name order");
+  assert.ok(
+    names.every((n) => /^\d{4}_.*\.sql$/.test(n)),
+    "every globbed migration must be NNNN_name.sql",
+  );
+  // The pristine auth source still ships outside the glob for reference.
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
 });
 

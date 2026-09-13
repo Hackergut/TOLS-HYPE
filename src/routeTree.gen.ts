@@ -51,6 +51,7 @@ import { Route as ApiOperatorGamesRouteImport } from './routes/api/operator/game
 import { Route as ApiOperatorLaunchRouteImport } from './routes/api/operator/launch'
 import { Route as ApiOperatorPaymentsRouteImport } from './routes/api/operator/payments'
 import { Route as ApiOperatorSkillsRouteImport } from './routes/api/operator/skills'
+import { Route as ApiOperatorStatusRouteImport } from './routes/api/operator/status'
 import { Route as ApiOperatorWalletRouteImport } from './routes/api/operator/wallet'
 import { Route as ApiPlatformHealthRouteImport } from './routes/api/platform/health'
 import { Route as ApiPlatformWhoamiRouteImport } from './routes/api/platform/whoami'
@@ -272,6 +273,11 @@ const ApiOperatorSkillsRoute = ApiOperatorSkillsRouteImport.update({
   path: '/api/operator/skills',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOperatorStatusRoute = ApiOperatorStatusRouteImport.update({
+  id: '/api/operator/status',
+  path: '/api/operator/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOperatorWalletRoute = ApiOperatorWalletRouteImport.update({
   id: '/api/operator/wallet',
   path: '/api/operator/wallet',
@@ -371,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/api/operator/launch': typeof ApiOperatorLaunchRoute
   '/api/operator/payments': typeof ApiOperatorPaymentsRoute
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
+  '/api/operator/status': typeof ApiOperatorStatusRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
   '/api/platform/health': typeof ApiPlatformHealthRoute
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
@@ -425,6 +432,7 @@ export interface FileRoutesByTo {
   '/api/operator/launch': typeof ApiOperatorLaunchRoute
   '/api/operator/payments': typeof ApiOperatorPaymentsRoute
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
+  '/api/operator/status': typeof ApiOperatorStatusRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
   '/api/platform/health': typeof ApiPlatformHealthRoute
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
@@ -481,6 +489,7 @@ export interface FileRoutesById {
   '/api/operator/launch': typeof ApiOperatorLaunchRoute
   '/api/operator/payments': typeof ApiOperatorPaymentsRoute
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
+  '/api/operator/status': typeof ApiOperatorStatusRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
   '/api/platform/health': typeof ApiPlatformHealthRoute
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
@@ -537,6 +546,7 @@ export interface FileRouteTypes {
     | '/api/operator/launch'
     | '/api/operator/payments'
     | '/api/operator/skills'
+    | '/api/operator/status'
     | '/api/operator/wallet'
     | '/api/platform/health'
     | '/api/platform/whoami'
@@ -591,6 +601,7 @@ export interface FileRouteTypes {
     | '/api/operator/launch'
     | '/api/operator/payments'
     | '/api/operator/skills'
+    | '/api/operator/status'
     | '/api/operator/wallet'
     | '/api/platform/health'
     | '/api/platform/whoami'
@@ -646,6 +657,7 @@ export interface FileRouteTypes {
     | '/api/operator/launch'
     | '/api/operator/payments'
     | '/api/operator/skills'
+    | '/api/operator/status'
     | '/api/operator/wallet'
     | '/api/platform/health'
     | '/api/platform/whoami'
@@ -677,6 +689,7 @@ export interface RootRouteChildren {
   ApiOperatorLaunchRoute: typeof ApiOperatorLaunchRoute
   ApiOperatorPaymentsRoute: typeof ApiOperatorPaymentsRoute
   ApiOperatorSkillsRoute: typeof ApiOperatorSkillsRoute
+  ApiOperatorStatusRoute: typeof ApiOperatorStatusRoute
   ApiOperatorWalletRoute: typeof ApiOperatorWalletRoute
   ApiSportsbookCallbackRoute: typeof ApiSportsbookCallbackRouteWithChildren
   ApiSportsbookEventsRoute: typeof ApiSportsbookEventsRoute
@@ -979,6 +992,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOperatorSkillsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/operator/status': {
+      id: '/api/operator/status'
+      path: '/api/operator/status'
+      fullPath: '/api/operator/status'
+      preLoaderRoute: typeof ApiOperatorStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/operator/wallet': {
       id: '/api/operator/wallet'
       path: '/api/operator/wallet'
@@ -1200,6 +1220,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOperatorLaunchRoute: ApiOperatorLaunchRoute,
   ApiOperatorPaymentsRoute: ApiOperatorPaymentsRoute,
   ApiOperatorSkillsRoute: ApiOperatorSkillsRoute,
+  ApiOperatorStatusRoute: ApiOperatorStatusRoute,
   ApiOperatorWalletRoute: ApiOperatorWalletRoute,
   ApiSportsbookCallbackRoute: ApiSportsbookCallbackRouteWithChildren,
   ApiSportsbookEventsRoute: ApiSportsbookEventsRoute,

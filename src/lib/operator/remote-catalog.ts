@@ -18,6 +18,7 @@ export function remoteToCatalog(g: RemoteGame): CatalogGame | null {
     id: g.id,
     title: g.title,
     provider: g.provider,
+    providerLogo: g.providerLogo,
     category,
     kind: "iframe",
     live,

@@ -1,8 +1,13 @@
+import { operatorServer } from "@/lib/operator/env.server";
 import { env } from "@/lib/env.server";
 
-/** Cashier is this skin's wallet (play-money until chain keys are on tols-verc). */
+/**
+ * Single source of truth for this skin's public origin.
+ * Delegates to operatorServer() — do NOT fork the default here
+ * (it previously drifted to tols-plum.vercel.app).
+ */
 export function casinoOrigin() {
-  return (env("CASINO_ORIGIN") ?? env("APP_URL") ?? "https://tols-plum.vercel.app").replace(/\/$/, "");
+  return operatorServer().casinoOrigin;
 }
 
 export async function buyCryptoWidget() {

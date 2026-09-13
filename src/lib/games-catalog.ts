@@ -43,6 +43,8 @@ export type CatalogGame = {
   id: string;
   title: string;
   provider: string;
+  /** Provider logo URL: hub passthrough or curated self-hosted file. */
+  providerLogo?: string;
   category: GameCategory;
   kind: GameKind;
   hot?: boolean;

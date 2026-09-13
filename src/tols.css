@@ -204,20 +204,25 @@
     content-visibility: auto;
     contain-intrinsic-size: 180px 320px;
     transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease,
-      transform 0.2s ease;
+      border-color 0.25s ease,
+      box-shadow 0.25s ease,
+      transform 0.25s ease;
   }
   .group:hover .tols-game-card,
   .tols-game-card:hover {
-    border-color: #904bf9;
-    box-shadow: 0 0 24px rgb(144 75 249 / 0.28);
-    transform: translateY(-2px);
+    border-color: rgb(0 255 189 / 0.65);
+    box-shadow: 0 8px 32px rgb(0 255 189 / 0.18);
+    transform: translateY(-3px);
   }
   .group:hover .tols-game-card.is-original,
   .tols-game-card.is-original:hover {
     border-color: #ea2fd4;
-    box-shadow: 0 0 28px rgb(234 47 212 / 0.32);
+    box-shadow: 0 8px 32px rgb(234 47 212 / 0.32);
+  }
+  .group:hover .tols-game-card.is-live,
+  .tols-game-card.is-live:hover {
+    border-color: rgb(225 81 78 / 0.8);
+    box-shadow: 0 8px 32px rgb(225 81 78 / 0.3);
   }
   .tols-game-card.is-live {
     border-color: #904bf9;
@@ -228,6 +233,12 @@
       transform: none;
       box-shadow: none;
     }
+    .tols-play-btn {
+      display: none;
+    }
+    .tols-card-shine {
+      display: none;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .tols-game-card {
@@ -237,13 +248,24 @@
     .tols-game-card:hover {
       transform: none;
     }
+    .tols-card-shimmer,
+    .tols-card-shine,
+    .tols-live-dot {
+      animation: none;
+    }
+    .tols-card-shine {
+      display: none;
+    }
   }
   .tols-game-card-wash {
-    background: linear-gradient(to top, rgb(20 8 40 / 0.92) 0%, rgb(144 75 249 / 0.28) 38%, transparent 62%);
+    background: linear-gradient(to top, rgb(0 0 0 / 0.88) 0%, rgb(0 0 0 / 0.45) 30%, transparent 55%);
   }
   .tols-game-card-bar {
     height: 3px;
     background: linear-gradient(90deg, #904bf9, #00ffbd);
+  }
+  .group:hover .tols-game-card-bar {
+    box-shadow: 0 0 12px rgb(0 255 189 / 0.7);
   }
   .tols-badge-original {
     background: linear-gradient(135deg, #904bf9, #00ffbd);
@@ -254,6 +276,72 @@
     background: #e1514e;
     color: #fff;
     box-shadow: 0 0 8px rgb(225 81 78 / 0.55);
+  }
+  /* Card pills: HOT / NEW / LIVE / RTP / TOLS. */
+  .tols-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  }
+  .tols-pill-live {
+    background: rgb(225 81 78 / 0.92);
+    color: #fff;
+    box-shadow: 0 0 12px rgb(225 81 78 / 0.5);
+  }
+  .tols-pill-hot {
+    background: linear-gradient(135deg, #ff7a18, #e9113c);
+    color: #fff;
+  }
+  .tols-pill-new {
+    background: rgb(0 255 189 / 0.16);
+    color: #00ffbd;
+    border: 1px solid rgb(0 255 189 / 0.45);
+  }
+  .tols-pill-rtp {
+    background: rgb(0 0 0 / 0.55);
+    color: #fff;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    font-variant-numeric: tabular-nums;
+  }
+  .tols-pill-original {
+    background: linear-gradient(135deg, #904bf9, #ea2fd4);
+    color: #fff;
+  }
+  .tols-live-dot {
+    animation: tols-blink 1.6s ease-in-out infinite;
+  }
+  @keyframes tols-blink {
+    50% {
+      opacity: 0.4;
+    }
+  }
+  /* Skeleton shimmer behind covers + loading grid. */
+  .tols-card-shimmer {
+    background: linear-gradient(110deg, #16171b 30%, #23242b 45%, #16171b 60%);
+    background-size: 200% 100%;
+    animation: tols-shimmer 1.6s linear infinite;
+  }
+  @keyframes tols-shimmer {
+    to {
+      background-position: -200% 0;
+    }
+  }
+  /* Light sweep across the cover on hover. */
+  .tols-card-shine {
+    background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.14) 50%, transparent 80%);
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  .group:hover .tols-card-shine {
+    transform: translateX(340%) skewX(-18deg);
+    transition: transform 0.9s ease;
   }
   .vip-progress {
     background: #202024;

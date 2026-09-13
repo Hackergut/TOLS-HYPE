@@ -111,7 +111,16 @@ function main(argv) {
     process.exit(2);
   }
   const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
-  const child = spawn(command, args, { stdio: "inherit", env, shell: true, cwd: projectRoot() });
+  // No shell on POSIX: with `shell: true` every arg is re-parsed by /bin/sh,
+  // so values with parens/quotes/spaces (e.g. `node -e "…"`) die with a
+  // syntax error — and user input becomes a shell-injection vector. Windows
+  // keeps the shell for .cmd/PATHEXT resolution.
+  const child = spawn(command, args, {
+    stdio: "inherit",
+    env,
+    shell: process.platform === "win32",
+    cwd: projectRoot(),
+  });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => child.kill(signal));
