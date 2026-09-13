@@ -28,14 +28,14 @@ jobs:
       - name: install
         run: npm ci --no-audit --no-fund
 
-      - name: typecheck
-        run: npm run typecheck
-
       - name: unit tests
         run: npm run test:unit
 
       - name: build
         run: npm run build
+
+      - name: typecheck
+        run: npm run typecheck
 
       - name: integration self-test (fake vendor)
         run: |
