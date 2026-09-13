@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { flexrixVerify } from "@/lib/operator/flexrix-sign";
 import { credit, debit, ensureWallets, snapshotBalances } from "@/lib/wallet.server";
+import { pushSettledBet } from "@/lib/governance/bridge";
 import { getPrisma } from "@/lib/prisma.server";
 
 const CERT_START = 1000;
@@ -112,6 +113,15 @@ export async function handleFlexrixWallet(
     }
     try {
       const balance = await debit(playerId, "USDT", amount, "bet", gameId || undefined, externalTxId || undefined);
+      void pushSettledBet({
+        userId: playerId,
+        game: gameId || "flexrix",
+        amount,
+        payout: 0,
+        multiplier: 0,
+        won: false,
+        betId: externalTxId || undefined,
+      });
       return { status: 200, json: { balance: round2(balance), transaction_id: newTxId() } };
     } catch {
       return gisErr("INSUFFICIENT_FUNDS", "Insufficient balance");
@@ -120,6 +130,17 @@ export async function handleFlexrixWallet(
 
   if (action === "win") {
     const balance = await credit(playerId, "USDT", amount, "win", gameId || undefined, externalTxId || undefined);
+    if (amount > 0) {
+      void pushSettledBet({
+        userId: playerId,
+        game: gameId || "flexrix",
+        amount: 0,
+        payout: amount,
+        multiplier: 0,
+        won: true,
+        betId: externalTxId || undefined,
+      });
+    }
     return { status: 200, json: { balance: round2(balance), transaction_id: newTxId() } };
   }
 

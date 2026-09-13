@@ -1,8 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env.server";
+import { CANONICAL_CASINO_ORIGIN, normalizePublicOrigin, resolveCasinoOrigin } from "@/lib/operator/env.server";
 
 const GOVERNANCE_ORIGIN = "https://gov.tols.fun";
-const CASINO = "https://www.tols.fun";
 
 function strip(s: string) {
   return s.replace(/\/+$/, "");
@@ -17,24 +17,14 @@ function pick(...keys: string[]): string | undefined {
 }
 
 export function canonicalCasinoOrigin(raw?: string | null): string {
-  const v = strip((raw || "").trim());
-  if (!v) return CASINO;
-  try {
-    const u = new URL(v);
-    const host = u.hostname.toLowerCase();
-    if (host === "tols.fun" || host === "www.tols.fun") return CASINO;
-    if (host === "gov.tols.fun" || host.includes("tolsgovernz")) return CASINO;
-    return `${u.protocol}//${u.host}`;
-  } catch {
-    return CASINO;
-  }
+  return normalizePublicOrigin(raw) || CANONICAL_CASINO_ORIGIN;
 }
 
 export function canonicalGovernanceOrigin(raw?: string | null): string {
   const v = strip((raw || "").trim());
   if (!v) return GOVERNANCE_ORIGIN;
   try {
-    const u = new URL(v);
+    const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
     const host = u.hostname.toLowerCase();
     if (host === "gov.tols.fun" || host.includes("tolsgovernz")) return strip(`${u.protocol}//${u.host}`);
     return GOVERNANCE_ORIGIN;
@@ -44,9 +34,10 @@ export function canonicalGovernanceOrigin(raw?: string | null): string {
 }
 
 export function getBridgeConfig() {
-  const towerOrigin = canonicalGovernanceOrigin(pick("GOVERNANCE_TOWER_URL", "TOWER_URL", "VITE_GOVERNANCE_URL"));
-  const casinoOrigin = canonicalCasinoOrigin(pick("APP_URL", "CASINO_ORIGIN", "CASINO_URL"));
-  const secret = pick("GOVERNANCE_BRIDGE_SECRET", "GOVERNANCE_WEBHOOK_SECRET") || "";
+  const towerOrigin = canonicalGovernanceOrigin(pick("GOVERNANCE_TOWER_URL", "TOWER_URL", "VITE_GOVERNANCE_URL", "GOVERNANCE_URL"));
+  const casinoOrigin = resolveCasinoOrigin(pick("CASINO_ORIGIN", "CASINO_URL"), pick("APP_URL"));
+  const secret =
+    pick("GOVERNANCE_BRIDGE_SECRET", "GOVERNANCE_WEBHOOK_SECRET", "SKIN_SSO_SECRET", "GOVERNANCE_API_KEY") || "";
   return {
     towerOrigin,
     towerApiBase: `${towerOrigin}/api`,
@@ -58,7 +49,7 @@ export function getBridgeConfig() {
 }
 
 function bridgeSecret(): string {
-  return (pick("GOVERNANCE_BRIDGE_SECRET", "GOVERNANCE_WEBHOOK_SECRET") || "").trim();
+  return (pick("GOVERNANCE_BRIDGE_SECRET", "GOVERNANCE_WEBHOOK_SECRET", "SKIN_SSO_SECRET", "GOVERNANCE_API_KEY") || "").trim();
 }
 
 export function signBridgePayload(payload: string, secretOverride?: string): string {

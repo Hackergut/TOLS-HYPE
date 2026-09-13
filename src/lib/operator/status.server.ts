@@ -1,4 +1,5 @@
 import { googleEnabled } from "@/lib/auth/google-oauth";
+import { getBridgeConfig } from "@/lib/governance/bridge";
 import { pushConfigured } from "@/lib/notifications/push.server";
 import { operatorServer } from "@/lib/operator/env.server";
 import { flexrixConfigured } from "@/lib/operator/flexrix-sign";
@@ -17,18 +18,20 @@ import { treasuryAddresses } from "@/lib/treasury.server";
  */
 export async function getOperatorStatus() {
   const cfg = operatorServer();
+  const bridge = getBridgeConfig();
   const gov = await governanceHealth().catch(() => ({ ok: false as const }));
   return {
     ok: true,
     aggregator: cfg.aggregatorKind,
     casinoOrigin: cfg.casinoOrigin,
+    sportsCallback: `${cfg.casinoOrigin}/api/sportsbook/callback`,
     db: cfg.databaseUrl ? "neon" : "pglite",
     flexrix: flexrixConfigured(),
     sports: sportsConfigured(),
     sso: ssoConfigured(),
-    governance: Boolean(gov.ok),
+    governance: Boolean(gov.ok && bridge.hasBridgeSecret),
     governanceUrl: cfg.governanceUrl,
-    bridgeSecret: Boolean(cfg.governanceKey),
+    bridgeSecret: bridge.hasBridgeSecret,
     webhookSecret: Boolean(cfg.webhookSecret),
     treasury: Boolean(treasuryAddresses().SOL),
     vapid: pushConfigured(),

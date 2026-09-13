@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env.server";
 import { credit, debit, ensureWallets, snapshotBalances } from "@/lib/wallet.server";
+import { pushSettledBet } from "@/lib/governance/bridge";
 
 function sportsSecret() {
   return env("FLEXRIX_SPORTS_SECRET") ?? env("FLEXRIX_API_SECRET") ?? "";
@@ -132,6 +133,15 @@ export async function handleSportsbookWallet(
     }
     try {
       const balance = await debit(playerId, "USDT", amount, "sport-bet", undefined, String(body.transaction_id ?? ""));
+      void pushSettledBet({
+        userId: playerId,
+        game: "sportsbook",
+        amount,
+        payout: 0,
+        multiplier: 0,
+        won: false,
+        betId: String(body.transaction_id ?? "") || undefined,
+      });
       return { status: 200, json: { balance: round2(balance), transaction_id: newTx() } };
     } catch {
       return { status: 200, json: { error_code: "INSUFFICIENT_FUNDS", error_description: "Insufficient balance" } };
@@ -139,6 +149,17 @@ export async function handleSportsbookWallet(
   }
   if (verb === "credit" || verb === "win" || verb === "deposit") {
     const balance = await credit(playerId, "USDT", amount, "sport-win", undefined, String(body.transaction_id ?? ""));
+    if (amount > 0) {
+      void pushSettledBet({
+        userId: playerId,
+        game: "sportsbook",
+        amount: 0,
+        payout: amount,
+        multiplier: 0,
+        won: true,
+        betId: String(body.transaction_id ?? "") || undefined,
+      });
+    }
     return { status: 200, json: { balance: round2(balance), transaction_id: newTx() } };
   }
   if (verb === "rollback" || verb === "refund") {
