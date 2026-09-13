@@ -26,6 +26,7 @@ import { createServer } from "node:http";
 const BASE = (process.env.BASE_URL ?? "http://127.0.0.1:8080").replace(/\/$/, "");
 const FAKE_PORT = Number(process.env.ODDS_FAKE_PORT ?? 8099);
 const EXPECTED_KEY = process.env.THE_ODDS_API_KEY ?? "selftest_odds_key";
+const WEBHOOK_SECRET = process.env.OPERATOR_WEBHOOK_SECRET ?? "";
 
 let failures = 0;
 function check(name, cond, detail = "") {
@@ -34,6 +35,11 @@ function check(name, cond, detail = "") {
     failures += 1;
     console.log(`  FAIL - ${name}${detail ? ` → ${detail}` : ""}`);
   }
+}
+
+if (!WEBHOOK_SECRET) {
+  console.error("OPERATOR_WEBHOOK_SECRET must be set (and match the server) to test the settlement guard");
+  process.exit(2);
 }
 
 try {
@@ -142,6 +148,30 @@ const SCORES = [
   },
 ];
 
+/**
+ * Completed games. Only a completed score may settle a ticket, so the fake
+ * needs finished fixtures with home and away points.
+ *   Bucs 27 - Cowboys 20  → ml home won, ml away lost, total 47 vs 44.5 over won,
+ *                           total 47 vs 47.0 push, spread Cowboys +6.5 lost
+ */
+const SETTLED = {
+  americanfootball_nfl: [
+    {
+      id: "settled_nfl_bucs_cowboys",
+      sport_key: "americanfootball_nfl",
+      commence_time: new Date(Date.now() - 5 * 3_600_000).toISOString(),
+      completed: true,
+      home_team: "Tampa Bay Buccaneers",
+      away_team: "Dallas Cowboys",
+      scores: [
+        { name: "Tampa Bay Buccaneers", score: "27" },
+        { name: "Dallas Cowboys", score: "20" },
+      ],
+      last_update: new Date().toISOString(),
+    },
+  ],
+};
+
 const state = { calls: 0, billed: 0, seen: [] };
 
 /** decimal → american, the inverse of the client's `americanToDecimal`. */
@@ -210,7 +240,7 @@ const fake = createServer((req, res) => {
     state.billed += 1;
     if (key === "always_429") return send(res, 429, { message: "rate limited" }, 0);
     if (key === "always_500") return send(res, 500, { message: "boom" }, 0);
-    return send(res, 200, key === "basketball_nba" ? SCORES : [], 1);
+    return send(res, 200, key === "basketball_nba" ? SCORES : (SETTLED[key] ?? []), 1);
   }
 
   return send(res, 404, { message: `unknown path ${path}` }, 0);
@@ -219,6 +249,22 @@ const fake = createServer((req, res) => {
 /* ------------------------------------------------------------------ *
  * App probes
  * ------------------------------------------------------------------ */
+
+async function post(path, headers, body) {
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: headers ?? {},
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const text = await res.text();
+  let json = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    /* keep null */
+  }
+  return { status: res.status, json, text };
+}
 
 async function get(path) {
   const res = await fetch(`${BASE}${path}`, { headers: { accept: "application/json" } });
@@ -317,6 +363,86 @@ async function main() {
   check("odds connector reported", status.json?.odds === true, JSON.stringify(status.json?.odds));
   check("cost per refresh reported", status.json?.oddsCostPerRefresh === 3);
   check("status never contains the key", !status.text.includes(EXPECTED_KEY));
+
+  console.log("\nSport settlement (/api/sportsbook/settle)");
+  const backlog = await get("/api/sportsbook/settle");
+  check("backlog probe is 200 (sport_bets table exists)", backlog.status === 200, `${backlog.status}`);
+  check("backlog reports an open count", typeof backlog.json?.open === "number", JSON.stringify(backlog.json));
+  const unauthorized = await post("/api/sportsbook/settle");
+  check("settle without the operator secret is 401", unauthorized.status === 401, `got ${unauthorized.status}`);
+  const wrongSecret = await post("/api/sportsbook/settle", { authorization: "Bearer not-the-secret" });
+  check("settle with a wrong secret is 401", wrongSecret.status === 401, `got ${wrongSecret.status}`);
+  const emptyRun = await post("/api/sportsbook/settle", { authorization: `Bearer ${WEBHOOK_SECRET}` });
+  check("settle with the secret is 200", emptyRun.status === 200, `${emptyRun.status}`);
+  check("empty settle scans nothing", emptyRun.json?.scanned === 0 && emptyRun.json?.paid === 0, JSON.stringify(emptyRun.json));
+
+  // ---- the money loop: open tickets, settle from the final score, no double pay
+  const auth = { "content-type": "application/json", authorization: `Bearer ${WEBHOOK_SECRET}` };
+  const nflEvent = "settled_nfl_bucs_cowboys";
+  const key = "americanfootball_nfl";
+  const seed = [
+    // won outright: 10 @ 2.00 -> 20
+    { stake: 10, price: 2, mode: "single", legs: [{ eventId: nflEvent, sportKey: key, market: "ml", selection: "home", odds: 2 }] },
+    // lost outright: money on the Cowboys, who lost
+    { stake: 10, price: 3.4, mode: "single", legs: [{ eventId: nflEvent, sportKey: key, market: "ml", selection: "away", odds: 3.4 }] },
+    // combo whose total leg pushes: the void leg drops out and the price is
+    // recalculated, so the ticket still pays 10 @ 2.00 = 20 (not 39)
+    {
+      stake: 10,
+      price: 3.9,
+      mode: "combo",
+      legs: [
+        { eventId: nflEvent, sportKey: key, market: "ml", selection: "home", odds: 2 },
+        { eventId: nflEvent, sportKey: key, market: "total", selection: "over", odds: 1.95, line: 47 },
+      ],
+    },
+    // single push -> stake back
+    { stake: 10, price: 1.95, mode: "single", legs: [{ eventId: nflEvent, sportKey: key, market: "total", selection: "over", odds: 1.95, line: 47 }] },
+    // no score for this event -> must stay pending, never guessed
+    { stake: 10, price: 2, mode: "single", legs: [{ eventId: "no_such_event", sportKey: key, market: "ml", selection: "home", odds: 2 }] },
+  ];
+  const before = await get("/api/selftest/sport-ticket");
+  check(
+    "wallet snapshot readable before settling",
+    before.status === 200 && typeof before.json?.balances?.USDT === "number",
+    before.status === 404 ? "404 — start the server with SPORT_SELFTEST=1 to run the settlement loop" : JSON.stringify(before.json?.balances),
+  );
+  const beforeUsdt = before.json?.balances?.USDT ?? 0;
+
+  const created = [];
+  for (const t of seed) {
+    const r = await post("/api/selftest/sport-ticket", auth, t);
+    if (r.status === 200 && r.json?.id) created.push(r.json.id);
+  }
+  check("tickets created through the shipping createSportTicket", created.length === seed.length, `${created.length}/${seed.length}`);
+  const open = await get("/api/sportsbook/settle");
+  check("backlog now counts the open tickets", open.json?.open === seed.length, JSON.stringify(open.json));
+
+  const run = await post("/api/sportsbook/settle", auth);
+  check("settlement pass returns 200", run.status === 200, `${run.status}`);
+  check("scanned every pending ticket", run.json?.scanned === seed.length, JSON.stringify(run.json));
+  check("settled the four decided tickets", run.json?.settled === 4, JSON.stringify(run.json));
+  check("paid the winners", run.json?.paid === 3, JSON.stringify(run.json));
+  check("left the unscored ticket pending", run.json?.stillPending === 1 && run.json?.pendingNoScore === 1, JSON.stringify(run.json));
+  check("no settlement errors", Array.isArray(run.json?.errors) && run.json.errors.length === 0, JSON.stringify(run.json?.errors));
+  check("one /scores call per distinct sport key", run.json?.sportKeys === 1, JSON.stringify(run.json));
+
+  const after = await get("/api/selftest/sport-ticket");
+  const afterUsdt = after.json?.balances?.USDT ?? 0;
+  // 20 (won) + 0 (lost) + 20 (combo, void leg dropped) + 10 (push refund) = 50
+  check("wallet credited exactly 50 (20+20+10)", Math.abs(afterUsdt - beforeUsdt - 50) < 0.005, `${beforeUsdt} -> ${afterUsdt}`);
+
+  const byId = new Map((after.json?.tickets ?? []).map((t) => [t.id, t]));
+  const statuses = created.map((id) => byId.get(id)?.status);
+  check("statuses: won, lost, won, void, pending", JSON.stringify(statuses) === JSON.stringify(["won", "lost", "won", "void", "pending"]), JSON.stringify(statuses));
+  check("payouts: 20, 0, 20, 10, 0", JSON.stringify(created.map((id) => byId.get(id)?.payout)) === JSON.stringify([20, 0, 20, 10, 0]), JSON.stringify(created.map((id) => byId.get(id)?.payout)));
+  check("detail records the per-leg verdict", typeof byId.get(created[0])?.detail === "string" && byId.get(created[0]).detail.includes("ml:home"), byId.get(created[0])?.detail);
+
+  const rerun = await post("/api/sportsbook/settle", auth);
+  check("second pass only scans what is still pending", rerun.json?.scanned === 1, JSON.stringify(rerun.json));
+  check("second pass pays nothing (no double credit)", rerun.json?.paid === 0 && rerun.json?.settled === 0, JSON.stringify(rerun.json));
+  const afterRerun = await get("/api/selftest/sport-ticket");
+  check("balance unchanged by the repeat pass", Math.abs((afterRerun.json?.balances?.USDT ?? 0) - afterUsdt) < 0.005, `${afterUsdt} -> ${afterRerun.json?.balances?.USDT}`);
 
   console.log("\nVendor contract seen by the fake");
   const oddsCall = state.seen.find((s) => s.includes("/odds"));

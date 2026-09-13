@@ -16,6 +16,9 @@ jobs:
       FLEXRIX_SPORTS_SECRET: ci-throwaway-sports-secret-02
       GOVERNANCE_BRIDGE_SECRET: ci-throwaway-bridge-secret-03
       OPERATOR_WEBHOOK_SECRET: ci-throwaway-webhook-secret-04
+      # Enables the inert-by-default /api/selftest/* scaffolding the settlement
+      # loop is verified through. Without it those routes answer 404.
+      SPORT_SELFTEST: "1"
       # The Odds API connector, pointed at the fake vendor the self-test boots.
       THE_ODDS_API_KEY: ci-throwaway-odds-key
       THE_ODDS_API_BASE: http://127.0.0.1:8099

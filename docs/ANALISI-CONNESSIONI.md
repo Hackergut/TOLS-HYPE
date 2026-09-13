@@ -194,7 +194,7 @@ Prisma (`prisma/schema.prisma`) copre **solo** `wallets` + `transactions`; tutto
 
 - **Codice**: `sports/odds-api.ts` (mapping puro, testabile), `sports/odds-api.server.ts` (env + fetch + cache + quota), `sports/use-live-events.ts` (hook client), `routes/api/sportsbook/{events,sports,scores}.ts`
 - **Host**: `https://api.the-odds-api.com` (`THE_ODDS_API_BASE`), percorsi sotto `/v4`. Spec V4 completa; i test usano i suoi esempi come fixture.
-- **Flusso**: `GET /v4/sports/upcoming/odds?regions=&markets=&oddsFormat=decimal` → best price per outcome su tutti i bookmaker (le `*_lay` degli exchange sono ignorate) → `SportEvent` → merge col book curato (il feed vince, dedupe per fixture) → `GET /api/sportsbook/events` → `useLiveEvents()` → `/sports`, `/dashboard`, tab-bar mobile. Settlement: `placeSportBet` risolve `resolveOutcome ?? resolveApiOutcome`.
+- **Flusso**: `GET /v4/sports/upcoming/odds?regions=&markets=&oddsFormat=decimal` → best price per outcome su tutti i bookmaker (le `*_lay` degli exchange sono ignorate) → `SportEvent` → merge col book curato (il feed vince, dedupe per fixture) → `GET /api/sportsbook/events` → `useLiveEvents()` → `/sports`, `/dashboard`, tab-bar mobile. Settlement: una gamba dal feed apre un ticket pending risolto dai referti `/scores` (`sports/settlement.ts`); il book curato resta RNG provably-fair e paga subito.
 - **Endpoint vendor usati**: `/v4/sports` (gratis), `/v4/sports/{s}/odds` (`mercati × regioni`), `/v4/sports/{s}/scores` (1, o 2 con `daysFrom`). `/v4/sports/{s}/events` (gratis) non ancora usato.
 - **Protezioni**: cache `globalThis` con TTL (default 5') + in-flight dedupe → **1 call per TTL indipendentemente dal traffico**; circuit breaker dopo un 429 (`THE_ODDS_API_COOLDOWN_MS`, default 60s) che serve l'ultima board buona; zero call senza chiave; quota esposta su `/api/operator/status`; chiave mai nelle risposte.
 - **Env**: `THE_ODDS_API_KEY` (unica obbligatoria), `THE_ODDS_API_BASE`, `_SPORT` (`upcoming`), `_REGIONS` (`eu`), `_MARKETS` (`h2h`), `_TTL_MS` (300000), `_SPORTS_TTL_MS`, `_SCORES_TTL_MS`, `_COOLDOWN_MS` (60000), `_MAX_EVENTS` (40), `_SCORES` (`false`), `_ODDS_FORMAT` (`decimal`), `_TIMEOUT_MS` (10000)
@@ -202,7 +202,7 @@ Prisma (`prisma/schema.prisma`) copre **solo** `wallets` + `transactions`; tutto
 - **Da fare**:
   1. Inserire `THE_ODDS_API_KEY` su Vercel e scegliere regioni/mercati in base al piano (budget crediti: `docs/RUNBOOK-ODDS-API.md` §2).
   2. Verificare in prod `/api/sportsbook/events` → `source:"odds-api"` e `/api/operator/status` → `oddsQuotaRemaining`.
-  3. Decidere la settlement reale: oggi gli esiti restano RNG provably-fair anche sulle quote vere; per soldi veri servono i referti di `/v4/sports/{s}/scores` (rotta e mapping già pronti).
+  3. ~~Decidere la settlement reale~~ **fatto**: `POST /api/sportsbook/settle` risolve i ticket dai referti `/scores`, con claim idempotente prima dell'accredito (`docs/RUNBOOK-ODDS-API.md` §8). Resta da schedularlo (cron) in produzione.
   4. Allarme quota sotto il 10% del piano.
 
 ## 4. Inventario env (checklist unica)
@@ -288,9 +288,10 @@ VITE_AUTH_ENABLED=false             # preview; in prod il deployer la mette true
 - [x] Mapping puro e testato (29 test): best price, moneyline 2/3 vie, spread, totals, in-play, formati american/decimal, costo quota, sanitizzazione parametri.
 - [x] Rotte: `/api/sportsbook/events` (board reale + fallback), `/api/sportsbook/sports` (gratis), `/api/sportsbook/scores` (punteggi, `sport` obbligatorio).
 - [x] UI collegata: `useLiveEvents()` su `/sports`, `/dashboard` e tab-bar mobile; il book curato resta il pavimento.
-- [x] Settlement: `placeSportBet` risolve anche gli eventi del feed (`resolveApiOutcome`), mai una quota inventata.
+- [x] Settlement: `placeSportBet` apre ticket **pending** sulle gambe del feed (stake addebitato, pagamento al fischio finale); le gambe curate restano RNG istantaneo; ticket misto rifiutato.
+- [x] Settlement reale: `sport_bets` (migration `0006`), motore puro `sports/settlement.ts` (16 test: ml/spread/totals/btts/dc, void, push, ricalcolo multipliche), `settleSportBets` con claim condizionale prima del `credit`, rotta `POST /api/sportsbook/settle` protetta da `OPERATOR_WEBHOOK_SECRET`, backlog su `GET`.
 - [x] Readiness: `odds`, `oddsQuotaRemaining`, `oddsCostPerRefresh` su `/api/operator/status`.
-- [x] Harness `npm run test:odds` (38 check contro un finto vendor) + wiring CI.
+- [x] Harness `npm run test:odds` (67 check contro un finto vendor, ciclo settlement incluso) + wiring CI.
 - [x] Runbook `docs/RUNBOOK-ODDS-API.md` (config, budget crediti, verifica, troubleshooting).
 
 **Fase 1 — Lobby reale (P0)**
@@ -325,7 +326,7 @@ VITE_AUTH_ENABLED=false             # preview; in prod il deployer la mette true
 6. **Callback aperti in GET** per health-check: ok, ma i POST devono restare firmati (Flexrix HMAC, Tower HMAC+timestamp, operator secret) — mai abbassare a `*` senza firma.
 7. **Chiave VAPID legacy in source** (pubblica) con privata storicamente esposta → rotazione obbligatoria prima del go-live.
 8. **Quota The Odds API**: il costo è `mercati × regioni` per refresh. Alzare `THE_ODDS_API_MARKETS`/`_REGIONS` o abbassare `_TTL_MS` moltiplica la spesa: con i default (1 credito / 5') il tetto è 12 crediti/ora, con 3 mercati × 3 regioni e TTL 30s sarebbero 1080/ora. Monitorare `oddsQuotaRemaining`.
-9. **Quote reali + esiti simulati**: le scommesse sportive pagano con RNG provably-fair anche quando le quote arrivano da bookmaker veri. Coerente finché il wallet è play-money, **inaccettabile con soldi veri**: la settlement deve passare dai referti `/scores` (§3.14, punto 3).
+9. ~~**Quote reali + esiti simulati**~~ **risolto**: le scommesse sul feed reale pagano solo dal punteggio finale del vendor (`/scores`), con claim idempotente che impedisce il doppio accredito. Il RNG provably-fair resta soltanto sul book curato, che non espone quote di bookmaker. **Resta aperto**: `settleSportBets` va schedulato (cron/operatore) — senza uno scheduler i ticket restano pending anche a partita finita, e un `credit` fallito finisce in `summary.errors` e va gestito a mano (nessun retry automatico, per non rischiare doppi accrediti).
 
 ## 7. Verifiche misurate oggi (2026-09-13, HEAD `a352d0b`)
 

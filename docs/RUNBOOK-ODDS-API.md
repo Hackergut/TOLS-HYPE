@@ -133,9 +133,11 @@ Punti che contano in produzione:
 - **Eventi non renderizzabili vengono scartati**, non mostrati mezzi rotti:
   senza moneyline, senza id, con `home == away`, sport non mappato o mercato
   `outrights` → la fixture non entra in board.
-- **Settlement**: una scommessa su un evento del feed reale viene risolta dal
-  feed (`resolveApiOutcome`); se l'evento non è né nel book curato né nella
-  cache del feed resta `Market closed`. Mai una quota inventata.
+- **Settlement**: una gamba piazzata su un evento del feed reale apre un
+  **ticket pending** (stake addebitato subito, pagamento al fischio finale) e
+  viene risolta solo dal referto `/scores`. Le gambe sul book curato restano
+  RNG provably-fair e pagano all'istante. Le due modalità non si mescolano: un
+  ticket misto viene rifiutato. Mai una quota inventata.
 
 ## 6. Troubleshooting
 
@@ -151,23 +153,92 @@ Punti che contano in produzione:
 ## 7. Test di regressione
 
 ```bash
-npm run test:unit      # include src/lib/sports/odds-api.test.ts (29 test)
-npm run test:odds      # 38 check end-to-end contro un finto vendor
+npm run test:unit      # include odds-api.test.ts (29 test) e settlement.test.ts (16 test)
+npm run test:odds      # 67 check end-to-end contro un finto vendor
 ```
 
 `test:odds` richiede un dev server avviato con il connettore puntato al fake:
 
 ```bash
+SPORT_SELFTEST=1 \
 THE_ODDS_API_KEY=selftest_odds_key \
 THE_ODDS_API_BASE=http://127.0.0.1:8099 \
 THE_ODDS_API_SPORT=upcoming THE_ODDS_API_REGIONS=us \
 THE_ODDS_API_MARKETS=h2h,spreads,totals THE_ODDS_API_SCORES=true \
+OPERATOR_WEBHOOK_SECRET=selftest_secret \
 npm run dev
 
-THE_ODDS_API_KEY=selftest_odds_key BASE_URL=http://127.0.0.1:8080 npm run test:odds
+THE_ODDS_API_KEY=selftest_odds_key OPERATOR_WEBHOOK_SECRET=selftest_secret \
+BASE_URL=http://127.0.0.1:8080 npm run test:odds
 ```
 
 Cosa copre: mapping (best price, moneyline 2/3 vie, spread, totals, in-play),
 passthrough quota, cache (3 page load = 0 call extra), rotta sports, rotta
 scores + validazione 400, errori vendor (500/429), circuit breaker, assenza di
-leak della chiave nelle risposte, e il contratto query visto dal vendor.
+leak della chiave nelle risposte, il contratto query visto dal vendor, e il
+**ciclo di settlement completo** (§8).
+
+Due variabili sono obbligatorie per la parte settlement:
+
+- `OPERATOR_WEBHOOK_SECRET` — la rotta `/api/sportsbook/settle` risponde 401
+  senza; l'harness verifica sia il rifiuto sia il passaggio.
+- `SPORT_SELFTEST=1` — abilita `/api/selftest/sport-ticket`, che apre ticket
+  chiamando la stessa `createSportTicket` usata in produzione. Senza il flag la
+  rotta risponde 404, quindi in produzione non esiste modo di mintare ticket da
+  quella via.
+
+## 8. Settlement reale dai referti
+
+Da quando le quote sono vere, l'esito non può più essere simulato: lo decide il
+punteggio finale del vendor.
+
+```
+POST /api/sportsbook/settle            (Authorization: Bearer $OPERATOR_WEBHOOK_SECRET)
+  └─▶ settleSportBets()
+        ├─ select … from sport_bets where status = 'pending'
+        ├─ GET /v4/sports/{sport_key}/scores   (1 credito per chiave distinta, cache 60s)
+        ├─ settleTicket(legs, scores, stake)   ← puro, src/lib/sports/settlement.ts
+        ├─ update … set status = won|lost|void where id = X and status = 'pending'
+        └─ credit()  solo se l'update ha cambiato una riga
+```
+
+Regole (tutte coperte da test):
+
+| Caso                                              | Esito                                              |
+| ------------------------------------------------- | -------------------------------------------------- |
+| `ml` home/draw/away                               | dal confronto dei due punteggi                     |
+| `spread`, margine = punti selezione + `line` − avversario | > 0 won · < 0 lost · **= 0 void**          |
+| `total` over/under                                | push sul pari linea → **void**                     |
+| `btts`, `dc`                                       | sì/no e 1x/12/x2 dai punteggi                      |
+| mercato o selezione sconosciuti, linea mancante   | `null` → ticket **pending**                        |
+| evento non concluso o senza punteggio             | ticket **pending** (mai un pagamento indovinato)   |
+| multipla con una gamba persa                      | ticket perso                                       |
+| multipla con una gamba void                       | gamba tolta, **prezzo ricalcolato**, ticket pagato |
+| tutte le gambe void                               | rimborso dello stake                               |
+
+Invarianti operative:
+
+- **Idempotenza**: il ticket viene "claimed" con `where … and status =
+  'pending' returning id` **prima** di accreditare. Due pass concorrenti non
+  pagano due volte (verificato: il secondo passaggio scansiona solo ciò che è
+  ancora pending e non accredita nulla).
+- **Il payout non è mai un'ipotesi**: qualunque dato mancante o non mappabile
+  lascia il ticket aperto, e il backlog è leggibile con `GET
+  /api/sportsbook/settle` (`open`, `stakeAtRisk`, `oldestPlacedAt`).
+- **Costo**: una sola chiamata `/scores` per `sport_key` distinto fra i ticket
+  aperti, non per ticket.
+- **Se l'accredito fallisce** il ticket resta marcato settled e l'errore finisce
+  in `summary.errors`: niente retry automatico, perché un secondo tentativo
+  rischierebbe un doppio accredito. Va gestito a mano.
+- **Schedulazione**: è un'azione operatore (o un cron), non un effetto collaterale
+  dell'apertura di `/sports`, perché muove denaro e spende crediti.
+
+```bash
+# backlog
+curl -s https://www.tols.fun/api/sportsbook/settle
+# settlement
+curl -s -X POST https://www.tols.fun/api/sportsbook/settle \
+  -H "Authorization: Bearer $OPERATOR_WEBHOOK_SECRET"
+# → {"ok":true,"scanned":5,"settled":4,"paid":3,"stillPending":1,"pendingNoScore":1,"sportKeys":1,"errors":[]}
+```
+

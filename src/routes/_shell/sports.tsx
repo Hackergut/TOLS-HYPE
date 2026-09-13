@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   RiBasketballLine,
@@ -16,6 +16,7 @@ import { type SlipMode } from "@/components/sports/bet-slip";
 import { SlipDock } from "@/components/sports/slip-dock";
 import { EventCard } from "@/components/sports/event-card";
 import { placeSportBet } from "@/lib/casino-api";
+import { listMySportTickets } from "@/lib/sports/tickets-api";
 import { cn } from "cn";
 import { formatMoney } from "@/lib/format";
 import { ODDS_FORMATS, type OddsFormat } from "@/lib/odds";
@@ -65,6 +66,18 @@ function SportsBook() {
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<SlipMode>("single");
   const [format, setFormat] = useState<OddsFormat>("decimal");
+  type Ticket = Awaited<ReturnType<typeof listMySportTickets>>[number];
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+
+  // Open tickets are why a stake left the wallet with no payout yet, so they
+  // are loaded with the board and refreshed after every placement.
+  const refreshTickets = useCallback(() => {
+    void listMySportTickets()
+      .then(setTickets)
+      .catch(() => undefined);
+  }, []);
+  useEffect(refreshTickets, [refreshTickets]);
+  const open = useMemo(() => tickets.filter((t) => t.status === "pending"), [tickets]);
 
   // Real bookmaker odds (The Odds API v4) when the operator configured a key,
   // the curated book otherwise — see /api/sportsbook/events.
@@ -98,7 +111,14 @@ function SportsBook() {
         },
       });
       applyBalances(res.balances);
-      if (res.payout > 0) toast.success(`Won ${formatMoney(res.payout, currency)} ${currency}`);
+      if (res.status === "pending") {
+        toast.success(
+          res.mode === "combo"
+            ? "Accumulator placed · settles at full time"
+            : `${res.tickets.length} ticket${res.tickets.length > 1 ? "s" : ""} placed · settle at full time`,
+        );
+        refreshTickets();
+      } else if (res.payout > 0) toast.success(`Won ${formatMoney(res.payout, currency)} ${currency}`);
       else toast.message("Ticket settled · no hit");
       setPicks([]);
     } catch (err) {
@@ -159,6 +179,25 @@ function SportsBook() {
           );
         })}
       </div>
+
+      {open.length > 0 && (
+        <section className="sb-card grid gap-1.5 p-3">
+          <h2 className="font-sub text-[0.65rem] tracking-[0.14em] text-muted-foreground uppercase">
+            Open tickets · settled from the final score
+          </h2>
+          {open.slice(0, 6).map((t) => (
+            <div key={t.id} className="flex items-center justify-between gap-3 text-sm">
+              <span className="truncate text-muted-foreground">
+                {t.mode === "combo" ? `Accumulator · ${t.legs.length} legs` : (t.legs[0]?.fixture ?? t.legs[0]?.selection)}
+              </span>
+              <span className="font-mono text-xs whitespace-nowrap">
+                {formatMoney(t.stake, currency)} @ {t.price.toFixed(2)}
+              </span>
+            </div>
+          ))}
+          {open.length > 6 && <p className="text-xs text-muted-foreground">+{open.length - 6} more</p>}
+        </section>
+      )}
 
       {sport === "all" ? (
         <section className="grid gap-2 md:grid-cols-2">

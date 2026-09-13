@@ -296,6 +296,15 @@ function sportKeyOf(ev: SportEvent): string | undefined {
   return sportKeys.get(ev.id);
 }
 
+/**
+ * The vendor `sport_key` behind a feed event id. Persisted on each bet leg at
+ * placement time, so settlement can still fetch `/scores` after a restart
+ * (this map is process-local and repopulates on the next feed refresh).
+ */
+export function sportKeyForEvent(eventId: string): string | undefined {
+  return sportKeys.get(eventId);
+}
+
 /** Record `sport_key` → event id so `/scores` can be merged later. */
 export function rememberSportKeys(rows: unknown) {
   if (!Array.isArray(rows)) return;
