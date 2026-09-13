@@ -211,6 +211,15 @@ VITE_AUTH_ENABLED=false             # preview; rimuovere in prod per login reale
 - [x] Nuovo export `sportsConfigured()`; nuovi test `config.test.ts` + `vapid.test.ts` (17/17 verdi nel blocco toccato; typecheck + build verdi).
 - [x] Pre-esistenti NON toccati e ancora rossi: 13 test `scripts/*.mjs` (PWA share-card, app-env) + 2 file test `src/` (app-data, gate-identity).
 
+**Grado 2 — Test-harness + readiness HTTP ✅ COMPLETATO 2026-09-13**
+- [x] `scripts/with-app-env.mjs`: rimosso `shell:true` su POSIX (era un bug reale — args con parentesi morivano in `/bin/sh`, + rischio injection). Windows invariato. 4 test tornati verdi, `build`/`dev` riverificati.
+- [x] `scripts/migration-plan.test.mjs`: test obsoleto "empty migrations/" riscritto per la realtà auth-on (ordine, naming `NNNN_*.sql`, sorgente auth fuori dal glob).
+- [x] Test `src/`: 72/72 verdi (i 2 file rossi erano solo `node_modules` mancante — `jose`).
+- [x] Restano rossi (scelta deliberata): 8 test `grok-pwa-plugin` — drift branding piattaforma (`og:title` TOLS vs fixture), file di piattaforma da non toccare, valore zero per le integrazioni.
+- [x] Nuova route `GET /api/operator/status` (stesso payload della serverFn, logica condivisa in `lib/operator/status.server.ts`) — monitoraggio ops via curl anche in prod.
+- [x] Hardening: callback sportsbook ora esige firma HMAC quando il secret è configurato (parità col GIS casino; in dev senza secret resta aperto).
+- [x] Nuovo `scripts/integration-selftest.mjs` (`npm run test:integration`): finto vendor che prova via HTTP balance/bet/win/refund/rollback, idempotenza replay, seed `test_player`→1000, firme errate/mancanti, timestamp stale, bonus Tower, probe ops. **30/30 verdi** contro dev server con secret usa-e-getta (solo env sandbox, mai committati).
+
 **Fase 1 — Lobby reale (P0)**
 - [ ] Flexrix: chiavi → callback registrato → cert `test_player` → `GET /api/operator/games` verde.
 - [ ] Sportsbook: secret+JWT → callback → sessione SSO → eventi reali (o switch UI tols/flexrix).

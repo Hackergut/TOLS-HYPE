@@ -106,6 +106,12 @@ export async function handleSportsbookWallet(
   headers: Record<string, string>,
 ) {
   const flat = flatten(body);
+  // Parity with the casino GIS: once the shared secret exists, unsigned
+  // calls are rejected — the vendor always signs. Unconfigured (local dev)
+  // stays open so the callback can be probed without secrets.
+  if (sportsSecret() && !headers["x-sign"]) {
+    return { status: 401, json: { error_code: "INTERNAL_ERROR", error_description: "Internal error" } };
+  }
   if (headers["x-sign"] && !verifySportsHmac(flat, headers)) {
     return { status: 401, json: { error_code: "INTERNAL_ERROR", error_description: "Internal error" } };
   }
