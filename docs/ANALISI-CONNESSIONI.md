@@ -220,6 +220,16 @@ VITE_AUTH_ENABLED=false             # preview; rimuovere in prod per login reale
 - [x] Hardening: callback sportsbook ora esige firma HMAC quando il secret è configurato (parità col GIS casino; in dev senza secret resta aperto).
 - [x] Nuovo `scripts/integration-selftest.mjs` (`npm run test:integration`): finto vendor che prova via HTTP balance/bet/win/refund/rollback, idempotenza replay, seed `test_player`→1000, firme errate/mancanti, timestamp stale, bonus Tower, probe ops. **30/30 verdi** contro dev server con secret usa-e-getta (solo env sandbox, mai committati).
 
+**Grado 3 — Audit auth, harness esteso, CI ✅ COMPLETATO 2026-09-13**
+- [x] **SECURITY — login-CSRF Google chiuso**: `handleGoogleCallback` scambiava il code anche con state invalida ("exchanging code anyway"). Ora rifiuta con `?google=error&reason=bad_state`; `diag.bypassState:false`.
+- [x] Robustezza: `/api/operator/{wallet,callback,launch}` ritornano 400 su JSON invalido (non più 500) e **401** su `Unauthorized` (prima tutto 400).
+- [x] Harness esteso a **47 check**: +wallet generico (adapter path, auth 401, JSON/garbage fail-closed), +launch (fake game, validazione, 401), +launch-demo, +superficie `/api/auth/*`. **47/47 verdi**.
+- [x] CI GitHub Actions (`.github/workflows/ci.yml`): install → typecheck → `test:unit` → build → self-test con secret usa-e-getta contro dev server. Nuovo script `test:unit` (220 verdi: 148 scripts + 72 src).
+- [x] Coppia VAPID fresca generata per la prod (consegnata in chat, da mettere su Vercel come `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`).
+- [x] `docs/RUNBOOK-FLEXRIX.md`: procedura di attivazione con chiavi reali (endpoint, cert `test_player`, checklist go-live, rollback, troubleshooting).
+- [x] Causa radice 8 test grok-pwa: l'injector legge il vero `src/lib/og/site.json` (TOLS) mentre le fixture assumono workspace senza site config — drift di isolamento, file piattaforma non toccabili, impatto zero.
+- [x] Nota operativa: mai più edit multipli allo stesso file nello stesso batch (race: l'ultimo vince, gli altri si perdono in silenzio).
+
 **Fase 1 — Lobby reale (P0)**
 - [ ] Flexrix: chiavi → callback registrato → cert `test_player` → `GET /api/operator/games` verde.
 - [ ] Sportsbook: secret+JWT → callback → sessione SSO → eventi reali (o switch UI tols/flexrix).

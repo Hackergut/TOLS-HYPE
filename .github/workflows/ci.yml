@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Throwaway self-test secrets (CI-only, never production).
+      FLEXRIX_MERCHANT_KEY: FXC_ci_throwaway_only
+      FLEXRIX_API_SECRET: ci-throwaway-flexrix-secret-01
+      FLEXRIX_SPORTS_SECRET: ci-throwaway-sports-secret-02
+      GOVERNANCE_BRIDGE_SECRET: ci-throwaway-bridge-secret-03
+      OPERATOR_WEBHOOK_SECRET: ci-throwaway-webhook-secret-04
+      BASE_URL: http://127.0.0.1:8080
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: install
+        run: npm ci --no-audit --no-fund
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: unit tests
+        run: npm run test:unit
+
+      - name: build
+        run: npm run build
+
+      - name: integration self-test (fake vendor)
+        run: |
+          npm run dev > /tmp/tols-dev.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://127.0.0.1:8080/api/health; then break; fi
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8080/api/health > /dev/null || (cat /tmp/tols-dev.log; exit 1)
+          npm run test:integration
+          STATUS=$?
+          kill $SERVER_PID
+          exit $STATUS

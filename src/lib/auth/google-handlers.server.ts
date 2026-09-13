@@ -48,7 +48,7 @@ export async function handleGoogleDiag(): Promise<Response> {
     ok: true,
     v: "g3",
     googleEnabled: googleEnabled(),
-    bypassState: true,
+    bypassState: false,
     dest: "/",
   });
 }
@@ -103,7 +103,10 @@ export async function handleGoogleCallback(request: Request): Promise<Response> 
     return redirect303(`${origin}/?google=error&reason=missing_code`, failCookies);
   }
   if (!signed && !cookieOk) {
-    console.warn("[google-oauth] state_hmac_bypass — exchanging code anyway");
+    // SECURITY: never exchange without a valid state — the old bypass
+    // allowed login-CSRF (victim logged into the attacker's account).
+    console.warn("[google-oauth] bad_state — refusing code exchange");
+    return redirect303(`${origin}/?google=error&reason=bad_state`, failCookies);
   }
 
   let profile;

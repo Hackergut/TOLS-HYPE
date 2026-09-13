@@ -6,7 +6,9 @@
  *   1. Flexrix casino GIS   POST /api/flexrix/callback      (HMAC-SHA1)
  *   2. Flexrix sportsbook    POST /api/sportsbook/callback  (HMAC-SHA1)
  *   3. Governance Tower      POST /api/bridge/webhook       (HMAC-SHA256)
- *   4. Ops probes            GET  /api/operator/status|games
+ *   4. Generic operator      POST /api/operator/*           (webhook secret)
+ *   5. Google auth surface   GET  /api/auth/*               (no secrets)
+ *   6. Ops probes            GET  /api/operator/status|games
  *
  * The harness signs with the SAME env the server verifies with, so start
  * the server with throwaway test secrets (sandbox-only, never commit):
@@ -15,6 +17,7 @@
  *   FLEXRIX_API_SECRET=selftest-flexrix-secret-01 \
  *   FLEXRIX_SPORTS_SECRET=selftest-sports-secret-02 \
  *   GOVERNANCE_BRIDGE_SECRET=selftest-bridge-secret-03 \
+ *   OPERATOR_WEBHOOK_SECRET=selftest-webhook-secret-04 \
  *   npm run dev
  *
  *   BASE_URL=http://127.0.0.1:8080 npm run test:integration
@@ -29,6 +32,8 @@ const MERCHANT = process.env.FLEXRIX_MERCHANT_KEY ?? "";
 const CASINO_SECRET = process.env.FLEXRIX_API_SECRET ?? process.env.FLEXRIX_CASINO_SECRET ?? "";
 const SPORTS_SECRET = process.env.FLEXRIX_SPORTS_SECRET ?? CASINO_SECRET;
 const BRIDGE_SECRET = process.env.GOVERNANCE_BRIDGE_SECRET ?? "";
+const WEBHOOK = process.env.OPERATOR_WEBHOOK_SECRET ?? process.env.VENDOR_CALLBACK_SECRET ?? "";
+const authH = { authorization: `Bearer ${WEBHOOK}` };
 
 function fail(reason) {
   console.error(`\nSELFTEST ABORT: ${reason}`);
@@ -47,6 +52,7 @@ try {
 if (!MERCHANT || !CASINO_SECRET) fail("FLEXRIX_MERCHANT_KEY + FLEXRIX_API_SECRET must be set (and match the server)");
 if (!SPORTS_SECRET) fail("FLEXRIX_SPORTS_SECRET (or FLEXRIX_API_SECRET fallback) must be set");
 if (BRIDGE_SECRET.length < 16) fail("GOVERNANCE_BRIDGE_SECRET (>=16 chars) must be set and match the server");
+if (!WEBHOOK) fail("OPERATOR_WEBHOOK_SECRET must be set and match the server");
 
 const RUN = `${Date.now().toString(36)}${randomBytes(3).toString("hex")}`;
 const pid = (tag) => `selftest_${tag}_${RUN}`;
@@ -328,12 +334,113 @@ async function suiteBridge() {
   check("unknown event type is 400", unknown.status === 400, unknown.text);
 }
 
+async function suiteOperator() {
+  console.log("Generic operator wallet/launch (/api/operator/*)");
+  const player = pid("operator");
+
+  const bal = await call("POST", "/api/operator/wallet", {
+    headers: authH,
+    body: { action: "balance", player_id: player, currency: "USDT" },
+  });
+  check("wallet balance (adapter path) + auth", bal.status === 200 && typeof bal.json?.balance === "number", bal.text);
+
+  const noAuth = await call("POST", "/api/operator/wallet", {
+    body: { action: "balance", player_id: player },
+  });
+  check("wallet without secret is 401", noAuth.status === 401, noAuth.text);
+
+  const badJson = await call("POST", "/api/operator/wallet", { headers: authH, body: "{oops" });
+  check("wallet invalid JSON is 400", badJson.status === 400, badJson.text);
+
+  const garbage = await call("POST", "/api/operator/wallet", { headers: authH, body: { ping: 1 } });
+  check("wallet garbage payload fails closed", garbage.status === 400 && garbage.json?.ok === false, garbage.text);
+
+  const fund = await call("POST", "/api/operator/callback", {
+    headers: authH,
+    body: { action: "win", player_id: player, currency: "USDT", amount: 50, transaction_id: txid("ofund") },
+  });
+  check("callback win funds 50", fund.status === 200 && Number(fund.json?.balance) === 50, fund.text);
+
+  const bet = await call("POST", "/api/operator/callback", {
+    headers: authH,
+    body: { action: "bet", player_id: player, currency: "USDT", amount: 5, transaction_id: txid("obet") },
+  });
+  check("callback bet debits 5", bet.status === 200 && Number(bet.json?.balance) === 45, bet.text);
+
+  const cbNoAuth = await call("POST", "/api/operator/callback", {
+    body: { action: "balance", player_id: player },
+  });
+  check("callback without secret is 401", cbNoAuth.status === 401, cbNoAuth.text);
+
+  const cbBadJson = await call("POST", "/api/operator/callback", { headers: authH, body: "[broken" });
+  check("callback invalid JSON is 400", cbBadJson.status === 400, cbBadJson.text);
+
+  const launch = await call("POST", "/api/operator/launch", {
+    headers: authH,
+    body: { gameId: "selftest-no-such-game", userId: player },
+  });
+  check(
+    "launch fake game fails with error (no crash)",
+    launch.status === 400 && typeof launch.json?.error === "string",
+    launch.text,
+  );
+
+  const launchBad = await call("POST", "/api/operator/launch", { headers: authH, body: { gameId: "x" } });
+  check("launch missing userId is 400", launchBad.status === 400, launchBad.text);
+
+  const launchNoAuth = await call("POST", "/api/operator/launch", {
+    body: { gameId: "x", userId: player },
+  });
+  check("launch without secret is 401", launchNoAuth.status === 401, launchNoAuth.text);
+
+  const demoNoSlug = await call("GET", "/api/flexrix/launch-demo");
+  check("launch-demo without slug is 400", demoNoSlug.status === 400, demoNoSlug.text);
+
+  const demoFake = await call("GET", "/api/flexrix/launch-demo?slug=selftest-no-such-game-xyz");
+  check(
+    "launch-demo fake slug fails with error (no crash)",
+    (demoFake.status === 400 || demoFake.status === 502) && typeof demoFake.json?.error === "string",
+    demoFake.text,
+  );
+}
+
+async function suiteGoogle() {
+  console.log("Google auth surface (/api/auth/*)");
+  const diag = await call("GET", "/api/auth/google/diag");
+  check(
+    "diag reports disabled, no state bypass",
+    diag.status === 200 && diag.json?.googleEnabled === false && diag.json?.bypassState === false,
+    diag.text,
+  );
+
+  const me = await call("GET", "/api/auth/me");
+  check("me without session is null user", me.status === 200 && me.json?.user === null, me.text);
+
+  const cb = await fetch(`${BASE}/api/auth/google/callback`, { redirect: "manual" });
+  const loc = cb.headers.get("location") ?? "";
+  // Order of checks: googleEnabled first — in this sandbox (no Google creds)
+  // every callback short-circuits to not_configured before code/state checks.
+  check(
+    "callback short-circuits not_configured when google disabled",
+    cb.status === 303 && loc.includes("not_configured"),
+    `${cb.status} ${loc.slice(0, 200)}`,
+  );
+
+  const cb2 = await fetch(`${BASE}/api/auth/google/callback?code=fake-code-123`, { redirect: "manual" });
+  const loc2 = cb2.headers.get("location") ?? "";
+  check(
+    "callback with google disabled redirects not_configured",
+    cb2.status === 303 && loc2.includes("not_configured"),
+    `${cb2.status} ${loc2.slice(0, 200)}`,
+  );
+}
+
 async function suiteOps() {
   console.log("Ops probes");
   const status = await call("GET", "/api/operator/status");
   const s = status.json ?? {};
   check("operator/status reflects test secrets", status.status === 200 && s.flexrix === true && s.sports === true, status.text);
-  check("bridge secret visible, webhook secret absent", s.bridgeSecret === true && s.webhookSecret === false, status.text);
+  check("bridge secret + webhook secret visible", s.bridgeSecret === true && s.webhookSecret === true, status.text);
   check("db reports pglite in sandbox", s.db === "pglite", status.text);
 
   const games = await call("GET", "/api/operator/games");
@@ -349,7 +456,7 @@ async function suiteOps() {
   );
 }
 
-const suites = [suiteFlexrix, suiteSportsbook, suiteBridge, suiteOps];
+const suites = [suiteFlexrix, suiteSportsbook, suiteBridge, suiteOperator, suiteGoogle, suiteOps];
 for (const suite of suites) {
   try {
     await suite();

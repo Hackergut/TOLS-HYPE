@@ -9,9 +9,16 @@ export const Route = createFileRoute("/api/operator/callback")({
         request.headers.forEach((v, k) => {
           headers[k.toLowerCase()] = v;
         });
-        const body: unknown = await request.json();
+        let body: unknown;
+        try {
+          body = await request.json();
+        } catch {
+          return Response.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+        }
         const result = await inboundWallet(body, headers);
-        return Response.json(result, { status: result.ok ? 200 : 400 });
+        return Response.json(result, {
+          status: result.ok ? 200 : result.error === "Unauthorized" ? 401 : 400,
+        });
       },
     },
   },

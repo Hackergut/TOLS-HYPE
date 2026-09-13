@@ -13,7 +13,12 @@ export const Route = createFileRoute("/api/operator/launch")({
             return Response.json({ error: "Unauthorized" }, { status: 401 });
           }
         }
-        const body = (await request.json()) as { gameId?: string; userId?: string; currency?: string };
+        let body: { gameId?: string; userId?: string; currency?: string };
+        try {
+          body = (await request.json()) as { gameId?: string; userId?: string; currency?: string };
+        } catch {
+          return Response.json({ error: "Invalid JSON" }, { status: 400 });
+        }
         if (!body.gameId || !body.userId) {
           return Response.json({ error: "gameId and userId required" }, { status: 400 });
         }
