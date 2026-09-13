@@ -7,7 +7,7 @@ export function providerSlug(name: string): string {
     .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return ALIAS[slug] ?? slug || "studio";
+  return ALIAS[slug] ?? (slug || "studio");
 }
 
 const ALIAS: Record<string, string> = {
