@@ -252,6 +252,11 @@ VITE_AUTH_ENABLED=false             # preview; rimuovere in prod per login reale
 - [ ] ⏳ **BLOCCATO — round-trip vendor**: il sandbox non ha rete outbound (TLS verso `api.upaflex.online` fallisce; verificato anche verso google.com). Lista giochi/launch reali verificabili solo da Vercel. Nessuna doc pubblica Flexrix trovata (API B2B privata) — schema HMAC da confermare col primo 200 reale o con l'account manager.
 - [ ] Prossimo passo: impostare le env su Vercel (vedi RUNBOOK §1) e verificare `/api/operator/status` + `/api/operator/games` in prod/preview.
 
+**Sezioni provider + loghi originali (2026-09-13)**
+- Lobby data-driven: `/casino` raggruppa il catalogo remoto per `provider` (scaffali orizzontali + strip filtro + `?provider=`), home con strip provider; nessun elenco hardcodato, nuovi studi appaiono da soli.
+- Catena logo: `providerLogo` hub (passthrough negli adapter) → mappa curata `src/lib/providers.ts` → monogramma deterministico. 18 loghi originali self-hosted in `public/brand/providers/` (verificati visivamente, ~390KB), tile chiara/scura per lockup, fallback se il file manca.
+- Nuovo provider senza logo: appare comunque col monogramma. Per aggiungere un logo: file in `public/brand/providers/<slug>.<png|jpg>` + riga in `CURATED` (slug = `providerSlug()` del nome hub, es. `PlayNGO`→`playngo`).
+
 ## 6. Rischi principali
 
 1. **Doppio percorso Flexrix** (`flexrix` diretto vs `tols-next` via Next) con mapping valute diverso (`USD` vs `USDT`) → riconciliare prima della prod o i saldi divergeranno.

@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Hero } from "@/components/home/hero";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { GameGrid } from "@/components/games/game-grid";
+import { ProviderStrip } from "@/components/games/provider-strip";
 import { Button } from "@/components/ui/button";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import { CATEGORIES, GAMES, gamesByCategory, type GameCategory } from "@/lib/games-catalog";
+import { groupByProvider } from "@/lib/providers";
 import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
 const TITLE = "TOLS — Originals casino | Crash, Dice, Roulette, Blackjack";
@@ -36,7 +38,9 @@ export const Route = createFileRoute("/_shell/")({
 
 function Home() {
   const [cat, setCat] = useState<GameCategory | "all">("all");
+  const navigate = useNavigate();
   const { games: studio, ready, flexrix } = useRemoteCatalog();
+  const providers = useMemo(() => groupByProvider(studio), [studio]);
   const originals = GAMES.filter((g) => g.original);
   const local = cat === "all" ? originals : gamesByCategory(cat);
   const remote =
@@ -83,6 +87,20 @@ function Home() {
         ))}
       </div>
       <PromoBanner />
+      {providers.length > 0 ? (
+        <section>
+          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
+            Providers
+          </BluescreenTitle>
+          <ProviderStrip
+            providers={providers}
+            selected={null}
+            onSelect={(slug) => {
+              if (slug) navigate({ to: "/casino", search: { provider: slug } });
+            }}
+          />
+        </section>
+      ) : null}
       {cat !== "slots" && cat !== "live" ? (
         <section>
           <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">

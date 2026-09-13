@@ -12,6 +12,17 @@ type HubGame = {
   image?: string;
   type?: string;
   rtp?: number;
+  // Provider logo candidates — hubs name this inconsistently; mapGame
+  // passes through whichever is present (see providerLogoFor()).
+  provider_logo?: string;
+  providerLogo?: string;
+  studio_logo?: string;
+  studioLogo?: string;
+  vendor_logo?: string;
+  vendorLogo?: string;
+  provider_image?: string;
+  providerImage?: string;
+  logo?: string;
 };
 
 const cache = globalThis as typeof globalThis & {
@@ -52,6 +63,16 @@ function mapGame(g: HubGame): RemoteGame | null {
     slug,
     title: String(g.name || slug),
     provider: String(g.provider || "Flexrix"),
+    providerLogo:
+      g.providerLogo ??
+      g.provider_logo ??
+      g.studioLogo ??
+      g.studio_logo ??
+      g.vendorLogo ??
+      g.vendor_logo ??
+      g.providerImage ??
+      g.provider_image ??
+      g.logo,
     cover: g.image,
     rtp: g.rtp,
     live,

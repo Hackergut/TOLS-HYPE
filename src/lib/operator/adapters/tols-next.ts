@@ -60,6 +60,10 @@ function mapGame(g: Record<string, unknown>): RemoteGame | null {
     provider,
     category,
     cover: cover != null ? String(cover) : undefined,
+    providerLogo:
+      String(
+        g.providerLogo ?? g.provider_logo ?? g.studioLogo ?? g.studio_logo ?? g.vendorLogo ?? g.vendor_logo ?? g.logo ?? "",
+      ) || undefined,
     rtp: g.rtp != null ? Number(g.rtp) : undefined,
     live,
     featured: Boolean(g.featured),
