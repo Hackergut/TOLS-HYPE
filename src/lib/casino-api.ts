@@ -22,7 +22,8 @@ import {
 } from "@/lib/wallet.server";
 import { pushSettledBet } from "@/lib/governance/bridge";
 import { comboOdds, vigPrice } from "@/lib/odds";
-import { resolveOutcome, type MarketKind } from "@/lib/sports-book";
+import { resolveOutcome, type MarketKind, type Outcome } from "@/lib/sports-book";
+import { resolveApiOutcome } from "@/lib/sports/odds-api.server";
 import {
   crashElapsedFor,
   crashMultiplierAt,
@@ -243,11 +244,17 @@ export const placeSportBet = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     assertBet(data.currency, data.amount);
     await ensureWallets(context.userId);
-    const resolved = data.legs.map((leg) => {
-      const o = resolveOutcome(leg.eventId, leg.market as MarketKind, leg.selection);
+    // Legs resolve against the curated book first, then the live Odds API
+    // feed (whose events are not in SPORT_EVENTS). An event in neither stays
+    // "Market closed" — never a guessed price.
+    const resolved: Outcome[] = [];
+    for (const leg of data.legs) {
+      const o =
+        resolveOutcome(leg.eventId, leg.market as MarketKind, leg.selection) ??
+        resolveApiOutcome(leg.eventId, leg.market, leg.selection);
       if (!o) throw new Error("Market closed");
-      return o;
-    });
+      resolved.push(o);
+    }
     const fair = await takeFair(context.userId, data.mode === "combo" ? 1 : resolved.length);
 
     if (data.mode === "combo") {

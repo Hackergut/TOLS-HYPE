@@ -5,6 +5,7 @@ import { flexrixConfigured } from "@/lib/operator/flexrix-sign";
 import { governanceHealth } from "@/lib/operator/governance";
 import { ssoConfigured } from "@/lib/operator/sso";
 import { sportsConfigured } from "@/lib/operator/sportsbook.server";
+import { oddsApiStatus } from "@/lib/sports/odds-api.server";
 import { treasuryAddresses } from "@/lib/treasury.server";
 
 /**
@@ -18,6 +19,7 @@ import { treasuryAddresses } from "@/lib/treasury.server";
 export async function getOperatorStatus() {
   const cfg = operatorServer();
   const gov = await governanceHealth().catch(() => ({ ok: false as const }));
+  const odds = oddsApiStatus();
   return {
     ok: true,
     aggregator: cfg.aggregatorKind,
@@ -33,6 +35,10 @@ export async function getOperatorStatus() {
     treasury: Boolean(treasuryAddresses().SOL),
     vapid: pushConfigured(),
     google: googleEnabled(),
+    /** The Odds API v4 (real sportsboard odds). Counters, never the key. */
+    odds: odds.configured,
+    oddsQuotaRemaining: odds.remaining,
+    oddsCostPerRefresh: odds.costPerRefresh,
     payments: "local-wallet",
     supabase: Boolean(cfg.databaseUrl || cfg.supabaseUrl),
   };

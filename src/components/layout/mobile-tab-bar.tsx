@@ -8,7 +8,7 @@ import {
   RiUser3Line,
 } from "@remixicon/react";
 import { GAMES } from "@/lib/games-catalog";
-import { SPORT_EVENTS } from "@/lib/sports-book";
+import { useLiveEvents } from "@/lib/sports/use-live-events";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
@@ -33,18 +33,20 @@ export function MobileTabBar() {
   const [q, setQ] = useState("");
   const navigate = useNavigate();
 
+  // Same feed the markets page uses, so search finds real fixtures too.
+  const { events: sportEvents } = useLiveEvents("all");
   const sportHits = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const list = needle
-      ? SPORT_EVENTS.filter(
+      ? sportEvents.filter(
           (e) =>
             e.home.toLowerCase().includes(needle) ||
             e.away.toLowerCase().includes(needle) ||
             e.league.toLowerCase().includes(needle),
         )
-      : SPORT_EVENTS.filter((e) => e.live);
+      : sportEvents.filter((e) => e.live);
     return list.slice(0, 6);
-  }, [q]);
+  }, [q, sportEvents]);
 
   const hits = useMemo(() => {
     const needle = q.trim().toLowerCase();

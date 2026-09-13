@@ -19,14 +19,8 @@ import { placeSportBet } from "@/lib/casino-api";
 import { cn } from "cn";
 import { formatMoney } from "@/lib/format";
 import { ODDS_FORMATS, type OddsFormat } from "@/lib/odds";
-import {
-  SPORT_META,
-  featuredEvents,
-  groupedByLeague,
-  eventsBySport,
-  type SlipPick,
-  type SportKind,
-} from "@/lib/sports-book";
+import { SPORT_META, groupedByLeague, type SlipPick, type SportKind } from "@/lib/sports-book";
+import { useLiveEvents } from "@/lib/sports/use-live-events";
 import { useWallet } from "@/lib/wallet-context";
 
 const SPORTS: Array<SportKind | "all"> = ["all", "football", "basketball", "tennis", "mma", "esports"];
@@ -72,9 +66,11 @@ function SportsBook() {
   const [mode, setMode] = useState<SlipMode>("single");
   const [format, setFormat] = useState<OddsFormat>("decimal");
 
-  const events = useMemo(() => eventsBySport(sport), [sport]);
+  // Real bookmaker odds (The Odds API v4) when the operator configured a key,
+  // the curated book otherwise — see /api/sportsbook/events.
+  const { events, source, fetchedAt } = useLiveEvents(sport);
+  const { events: featured } = useLiveEvents("all", { liveOnly: true, limit: 4 });
   const groups = useMemo(() => groupedByLeague(events), [events]);
-  const featured = useMemo(() => featuredEvents(), []);
   const selected = useMemo(() => new Set(picks.map((p) => p.id)), [picks]);
 
   function setSport(next: SportKind | "all") {
@@ -121,7 +117,11 @@ function SportsBook() {
           <BluescreenTitle as="h1" className="text-3xl font-bold md:text-4xl">
             Markets
           </BluescreenTitle>
-          <p className="font-sub mt-1 text-sm text-muted-foreground">Live book in English. Wallet callbacks on TOLS.</p>
+          <p className="font-sub mt-1 text-sm text-muted-foreground">
+            {source === "odds-api"
+              ? `Live bookmaker odds · updated ${fetchedAt ? new Date(fetchedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "just now"}`
+              : "Live book in English. Wallet callbacks on TOLS."}
+          </p>
         </div>
         <div className="flex rounded-lg bg-muted p-0.5">
           {ODDS_FORMATS.map((f) => (

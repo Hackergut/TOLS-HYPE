@@ -89,7 +89,7 @@ Prisma (`prisma/schema.prisma`) copre **solo** `wallets` + `transactions`; tutto
 - **Da fare**:
   1. Ottenere origin + secret sport reali da Flexrix.
   2. Registrare callback `POST {origin}/api/sportsbook/callback[/$action]`.
-  3. **Eventi reali**: `/api/sportsbook/events` ritorna sempre `SPORT_EVENTS` locali (`events.ts:27`) con il payload Flexrix solo in `flexrix:` di debug, **e nessun componente lo consuma** — l'UI legge `SPORT_EVENTS` staticamente. Servono: fetch lato route/serverFn + switch `source==flexrix`, oppure si resta su listato fittizio anche con le chiavi.
+  3. ~~Eventi reali~~ → **risolto 2026-09-13**: la board arriva da The Odds API v4 (§3.14) e `/api/sportsbook/events` è ora consumato dalla UI (`useLiveEvents` su `/sports`, `/dashboard`, tab-bar mobile). Il probe Flexrix resta ma è opt-in (`?probe=flexrix`): costa una call a monte e non ha consumer.
   4. `flexrix-frame.tsx:4` parte con `src` hardcoded `https://sports.flexrix.com/en/sports` (ignora `FLEXRIX_SPORTS_ORIGIN`) e fa `.replace("/tr/","/en/")` sull'URL ricevuto: da allineare a `sportsbookOrigin()`.
   5. Test SSO: `GET /api/sportsbook/session` deve dare `url` con token del player reale (oggi `sub:"guest"` se non loggato — verificato, §7).
 
@@ -190,6 +190,21 @@ Prisma (`prisma/schema.prisma`) copre **solo** `wallets` + `transactions`; tutto
 - **Codice**: `lib/app-data/*`
 - **Stato**: infrastruttura per leggere dati viewer (calendar/mail/file) via gate quando l'app gira dentro Grok; irrilevante per il casinò prod.
 
+### 3.14 THE ODDS API v4 — odds sportivi reali (priorità P0) 🟢 **INTEGRATO 2026-09-13**
+
+- **Codice**: `sports/odds-api.ts` (mapping puro, testabile), `sports/odds-api.server.ts` (env + fetch + cache + quota), `sports/use-live-events.ts` (hook client), `routes/api/sportsbook/{events,sports,scores}.ts`
+- **Host**: `https://api.the-odds-api.com` (`THE_ODDS_API_BASE`), percorsi sotto `/v4`. Spec V4 completa; i test usano i suoi esempi come fixture.
+- **Flusso**: `GET /v4/sports/upcoming/odds?regions=&markets=&oddsFormat=decimal` → best price per outcome su tutti i bookmaker (le `*_lay` degli exchange sono ignorate) → `SportEvent` → merge col book curato (il feed vince, dedupe per fixture) → `GET /api/sportsbook/events` → `useLiveEvents()` → `/sports`, `/dashboard`, tab-bar mobile. Settlement: `placeSportBet` risolve `resolveOutcome ?? resolveApiOutcome`.
+- **Endpoint vendor usati**: `/v4/sports` (gratis), `/v4/sports/{s}/odds` (`mercati × regioni`), `/v4/sports/{s}/scores` (1, o 2 con `daysFrom`). `/v4/sports/{s}/events` (gratis) non ancora usato.
+- **Protezioni**: cache `globalThis` con TTL (default 5') + in-flight dedupe → **1 call per TTL indipendentemente dal traffico**; circuit breaker dopo un 429 (`THE_ODDS_API_COOLDOWN_MS`, default 60s) che serve l'ultima board buona; zero call senza chiave; quota esposta su `/api/operator/status`; chiave mai nelle risposte.
+- **Env**: `THE_ODDS_API_KEY` (unica obbligatoria), `THE_ODDS_API_BASE`, `_SPORT` (`upcoming`), `_REGIONS` (`eu`), `_MARKETS` (`h2h`), `_TTL_MS` (300000), `_SPORTS_TTL_MS`, `_SCORES_TTL_MS`, `_COOLDOWN_MS` (60000), `_MAX_EVENTS` (40), `_SCORES` (`false`), `_ODDS_FORMAT` (`decimal`), `_TIMEOUT_MS` (10000)
+- **Stato verificato**: senza chiave → `source:"tols"` (book curato, 14 eventi) e `/scores` 503 con messaggio esplicito; con chiave → `source:"odds-api"`, feed in testa, dedupe (`Arsenal vs Liverpool` compare una volta sola), quota passthrough. Harness: 38 check (§7).
+- **Da fare**:
+  1. Inserire `THE_ODDS_API_KEY` su Vercel e scegliere regioni/mercati in base al piano (budget crediti: `docs/RUNBOOK-ODDS-API.md` §2).
+  2. Verificare in prod `/api/sportsbook/events` → `source:"odds-api"` e `/api/operator/status` → `oddsQuotaRemaining`.
+  3. Decidere la settlement reale: oggi gli esiti restano RNG provably-fair anche sulle quote vere; per soldi veri servono i referti di `/v4/sports/{s}/scores` (rotta e mapping già pronti).
+  4. Allarme quota sotto il 10% del piano.
+
 ## 4. Inventario env (checklist unica)
 
 ```
@@ -215,6 +230,12 @@ SKIN_SSO_SECRET=...                 # alias GOVERNANCE_BRIDGE_SECRET
 GOVERNANCE_TOWER_URL=https://gov.tols.fun  # alias GOVERNANCE_URL / TOWER_URL
 GOVERNANCE_BRIDGE_SECRET=...        # alias GOVERNANCE_WEBHOOK_SECRET / GOVERNANCE_API_KEY
 PLATFORM_JWT_PUBLIC_KEY=... PLATFORM_JWT_ISSUER=tols-governance PLATFORM_JWT_AUDIENCE=tols-casino
+
+# The Odds API v4 (odds sportivi reali — solo la chiave è obbligatoria)
+THE_ODDS_API_KEY=...
+THE_ODDS_API_SPORT=upcoming   THE_ODDS_API_REGIONS=eu   THE_ODDS_API_MARKETS=h2h
+THE_ODDS_API_TTL_MS=300000    THE_ODDS_API_MAX_EVENTS=40  THE_ODDS_API_SCORES=false
+THE_ODDS_API_COOLDOWN_MS=60000  THE_ODDS_API_ODDS_FORMAT=decimal  THE_ODDS_API_BASE=
 
 # EuroVirtuals
 EV_API_BASE=https://api.staging.betkraft.co.uk  EV_API_KEY=...  EV_APP_KEY=  # ← letta, mai usata
@@ -255,17 +276,27 @@ VITE_AUTH_ENABLED=false             # preview; in prod il deployer la mette true
 **Nuovo in questa revisione — da fare (codice)**
 
 - [ ] **Coerenza errori vendor**: scegliere una convenzione tra `HTTP 200 + error_code` (GIS casino) e `HTTP 401` (sportsbook) e applicarla a entrambi dopo conferma Flexrix.
-- [ ] **Eventi sport reali**: collegare `/api/sportsbook/events` all'UI (oggi nessun consumer) con switch `source`.
 - [ ] **`flexrix-frame.tsx`**: usare `sportsbookOrigin()` invece dell'URL hardcoded iniziale.
 - [ ] **`isRemoteGamesEnabled()`** (`env.server.ts:40`): mai chiamata, e comunque sempre `true` perché `governanceUrl`/`casinoOrigin` hanno default non vuoti → rimuoverla o darle una condizione vera.
 - [ ] **Webhook governance non monetari**: implementare effetti o rispondere `not_implemented` invece di `accepted:true`.
 - [ ] **`EV_APP_KEY`**: usarlo (firma) o eliminarlo dall'inventario.
 - [ ] **Email/password**: decisione esplicita (UI dedicata + rate limit, oppure `false`).
 
+**Integrazione The Odds API v4 ✅ 2026-09-13** (branch `arena/01a09894-tols-hype`)
+
+- [x] Connettore server con cache TTL + in-flight dedupe + circuit breaker 429 + contabilità quota.
+- [x] Mapping puro e testato (29 test): best price, moneyline 2/3 vie, spread, totals, in-play, formati american/decimal, costo quota, sanitizzazione parametri.
+- [x] Rotte: `/api/sportsbook/events` (board reale + fallback), `/api/sportsbook/sports` (gratis), `/api/sportsbook/scores` (punteggi, `sport` obbligatorio).
+- [x] UI collegata: `useLiveEvents()` su `/sports`, `/dashboard` e tab-bar mobile; il book curato resta il pavimento.
+- [x] Settlement: `placeSportBet` risolve anche gli eventi del feed (`resolveApiOutcome`), mai una quota inventata.
+- [x] Readiness: `odds`, `oddsQuotaRemaining`, `oddsCostPerRefresh` su `/api/operator/status`.
+- [x] Harness `npm run test:odds` (38 check contro un finto vendor) + wiring CI.
+- [x] Runbook `docs/RUNBOOK-ODDS-API.md` (config, budget crediti, verifica, troubleshooting).
+
 **Fase 1 — Lobby reale (P0)**
 
 - [ ] Flexrix: chiavi → callback registrato → cert `test_player` → `GET /api/operator/games` verde.
-- [ ] Sportsbook: secret+JWT → callback → sessione SSO → eventi reali.
+- [ ] Sportsbook Flexrix: secret+JWT → callback → sessione SSO. (Eventi reali già coperti da The Odds API, §3.14.)
 - [ ] SSO skin↔Next: segreto condiviso → launch autenticato E2E.
 
 **Fase 2 — Soldi veri (P1)**
@@ -293,6 +324,8 @@ VITE_AUTH_ENABLED=false             # preview; in prod il deployer la mette true
 5. **Convenzioni HTTP divergenti sugli errori vendor** (200+error_code vs 401) → un vendor che ritenta su 4xx/5xx può comportarsi diversamente tra casino e sport.
 6. **Callback aperti in GET** per health-check: ok, ma i POST devono restare firmati (Flexrix HMAC, Tower HMAC+timestamp, operator secret) — mai abbassare a `*` senza firma.
 7. **Chiave VAPID legacy in source** (pubblica) con privata storicamente esposta → rotazione obbligatoria prima del go-live.
+8. **Quota The Odds API**: il costo è `mercati × regioni` per refresh. Alzare `THE_ODDS_API_MARKETS`/`_REGIONS` o abbassare `_TTL_MS` moltiplica la spesa: con i default (1 credito / 5') il tetto è 12 crediti/ora, con 3 mercati × 3 regioni e TTL 30s sarebbero 1080/ora. Monitorare `oddsQuotaRemaining`.
+9. **Quote reali + esiti simulati**: le scommesse sportive pagano con RNG provably-fair anche quando le quote arrivano da bookmaker veri. Coerente finché il wallet è play-money, **inaccettabile con soldi veri**: la settlement deve passare dai referti `/scores` (§3.14, punto 3).
 
 ## 7. Verifiche misurate oggi (2026-09-13, HEAD `a352d0b`)
 
@@ -301,10 +334,11 @@ VITE_AUTH_ENABLED=false             # preview; in prod il deployer la mette true
 | Comando                                                             | Esito                                                                         |
 | ------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `npm run typecheck` (`tsc --noEmit`)                                | exit 0, nessun errore                                                         |
-| `node --test scripts/*.test.mjs` (escluso `grok-pwa-plugin`)        | **148 test, 148 pass, 0 fail**                                                |
-| `node --experimental-strip-types --test <10 file src>`              | **76 test, 76 pass, 18 suite**                                                |
+| `npm run test:unit`                                                 | **253 pass / 0 fail** (148 scripts + 105 src, di cui 29 sul mapping Odds API) |
+| `npm run test:odds` (fake The Odds API v4)                          | **38 check, tutti verdi**                                                     |
 | `node --test scripts/grok-pwa-plugin.test.mjs`                      | 47 test, **39 pass / 8 fail** (drift branding piattaforma, noto e deliberato) |
 | `npm run test:integration` contro dev server con secret usa-e-getta | **`selftest: 47 passed, 0 failed`**                                           |
+| `npm run build`                                                     | exit 0 (vite build + db:migrate + ensure-vercel-output)                       |
 
 Il self-test copre via HTTP: GIS Flexrix (balance/bet/win/refund/rollback, idempotenza replay, `INSUFFICIENT_FUNDS`, seed `test_player`→1000, firma errata), sportsbook (balance/credit/debit, firma errata → 401, firma mancante → 401), bridge Tower (ping→pong, `bonus_credit` firmato, firma errata → 401, timestamp stale → 401, tipo sconosciuto → 400), operator generico (wallet/launch/callback con e senza secret, JSON invalido → 400, garbage → fail-closed), superficie `/api/auth/*`, probe ops.
 
@@ -349,3 +383,57 @@ GET /api/auth/google/diag
 | `POST /api/flexrix/callback`                              | **HTTP 200** `{"error_code":"INTERNAL_ERROR"}`                       |
 | `POST /api/sportsbook/callback`                           | **HTTP 401** `{"error_code":"INTERNAL_ERROR"}`                       |
 | `POST /api/bridge/webhook` (tipo non-`ping`, non firmato) | **HTTP 401** `{"success":false,"error":"Invalid bridge signature…"}` |
+
+### 7.4 The Odds API v4 — evidenze (harness `npm run test:odds`, 38 check)
+
+Dev server con `THE_ODDS_API_BASE` puntato a un finto `api.the-odds-api.com` in
+`127.0.0.1:8099`; ogni asserzione passa dalle rotte reali, non da una
+reimplementazione.
+
+```
+Sportsboard feed (/api/sportsbook/events)
+  ok - source is the live feed              ok - best moneyline, home first ([1.36,3.4])
+  ok - spread mapped from points            ok - totals mapped
+  ok - three-way moneyline [home,draw,away] ([2.2,3.4,1.75])
+  ok - in-play detected + elapsed minute    ok - curated book still merged underneath
+  ok - live feed listed ahead of curated
+Quota accounting
+  ok - quota passthrough                    ok - remaining credits surfaced
+  ok - cost per refresh = markets x regions (3)
+Caching
+  ok - 3 extra page loads cost 0 extra vendor calls
+Sport list / Scores
+  ok - bucket per sport_key                 ok - unmapped sport has no bucket
+  ok - missing sport is 400                 ok - malformed sport is 400
+  ok - scores keyed home/away regardless of payload order
+  ok - no key is leaked in the response
+Upstream failures
+  ok - vendor 500 degrades to empty list    ok - vendor 429 degrades to empty list
+  ok - rate limit arms the circuit breaker  ok - board still renders during cooldown
+  ok - no vendor call during cooldown
+Ops probe
+  ok - odds connector reported              ok - status never contains the key
+Vendor contract
+  ok - regions / markets / oddsFormat=decimal come da specifica
+```
+
+Stato **senza chiave** (dev server privo di `THE_ODDS_API_KEY`), misurato:
+
+```
+GET /api/sportsbook/events
+  source:"tols"  count:14  error:null  oddsApi.configured:false  costPerRefresh:1
+GET /api/sportsbook/scores?sport=basketball_nba
+  HTTP 503  {"ok":false,"error":"THE_ODDS_API_KEY not set","scores":[]}
+GET /api/operator/status
+  {"odds":false,"oddsQuotaRemaining":null,"oddsCostPerRefresh":1}
+```
+
+Stato **con chiave** (verso il fake), misurato:
+
+```
+GET /api/sportsbook/events
+  source:"odds-api"  count:15  error:null
+  primi 4: Arsenal vs Liverpool (live) · Tampa Bay Buccaneers vs Dallas Cowboys
+           · AC Milan vs Sporting CP (curato) · Manchester City vs Chelsea (curato)
+  → il dedupe per fixture funziona: "Arsenal vs Liverpool" del book curato non duplica
+```

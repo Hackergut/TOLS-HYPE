@@ -57,7 +57,9 @@ import { Route as ApiPlatformHealthRouteImport } from './routes/api/platform/hea
 import { Route as ApiPlatformWhoamiRouteImport } from './routes/api/platform/whoami'
 import { Route as ApiSportsbookCallbackRouteImport } from './routes/api/sportsbook/callback'
 import { Route as ApiSportsbookEventsRouteImport } from './routes/api/sportsbook/events'
+import { Route as ApiSportsbookScoresRouteImport } from './routes/api/sportsbook/scores'
 import { Route as ApiSportsbookSessionRouteImport } from './routes/api/sportsbook/session'
+import { Route as ApiSportsbookSportsRouteImport } from './routes/api/sportsbook/sports'
 import { Route as ShellSportsClubSlugRouteImport } from './routes/_shell/sports.club.$slug'
 import { Route as ShellSportsPlayerSlugRouteImport } from './routes/_shell/sports.player.$slug'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth/google.callback'
@@ -303,9 +305,19 @@ const ApiSportsbookEventsRoute = ApiSportsbookEventsRouteImport.update({
   path: '/api/sportsbook/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSportsbookScoresRoute = ApiSportsbookScoresRouteImport.update({
+  id: '/api/sportsbook/scores',
+  path: '/api/sportsbook/scores',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSportsbookSessionRoute = ApiSportsbookSessionRouteImport.update({
   id: '/api/sportsbook/session',
   path: '/api/sportsbook/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSportsbookSportsRoute = ApiSportsbookSportsRouteImport.update({
+  id: '/api/sportsbook/sports',
+  path: '/api/sportsbook/sports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShellSportsClubSlugRoute = ShellSportsClubSlugRouteImport.update({
@@ -383,7 +395,9 @@ export interface FileRoutesByFullPath {
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
+  '/api/sportsbook/scores': typeof ApiSportsbookScoresRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/sportsbook/sports': typeof ApiSportsbookSportsRoute
   '/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -438,7 +452,9 @@ export interface FileRoutesByTo {
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
+  '/api/sportsbook/scores': typeof ApiSportsbookScoresRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/sportsbook/sports': typeof ApiSportsbookSportsRoute
   '/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -495,7 +511,9 @@ export interface FileRoutesById {
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
+  '/api/sportsbook/scores': typeof ApiSportsbookScoresRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/sportsbook/sports': typeof ApiSportsbookSportsRoute
   '/_shell/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/_shell/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -552,7 +570,9 @@ export interface FileRouteTypes {
     | '/api/platform/whoami'
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
+    | '/api/sportsbook/scores'
     | '/api/sportsbook/session'
+    | '/api/sportsbook/sports'
     | '/sports/club/$slug'
     | '/sports/player/$slug'
     | '/api/auth/google/callback'
@@ -607,7 +627,9 @@ export interface FileRouteTypes {
     | '/api/platform/whoami'
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
+    | '/api/sportsbook/scores'
     | '/api/sportsbook/session'
+    | '/api/sportsbook/sports'
     | '/sports/club/$slug'
     | '/sports/player/$slug'
     | '/api/auth/google/callback'
@@ -663,7 +685,9 @@ export interface FileRouteTypes {
     | '/api/platform/whoami'
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
+    | '/api/sportsbook/scores'
     | '/api/sportsbook/session'
+    | '/api/sportsbook/sports'
     | '/_shell/sports/club/$slug'
     | '/_shell/sports/player/$slug'
     | '/api/auth/google/callback'
@@ -693,7 +717,9 @@ export interface RootRouteChildren {
   ApiOperatorWalletRoute: typeof ApiOperatorWalletRoute
   ApiSportsbookCallbackRoute: typeof ApiSportsbookCallbackRouteWithChildren
   ApiSportsbookEventsRoute: typeof ApiSportsbookEventsRoute
+  ApiSportsbookScoresRoute: typeof ApiSportsbookScoresRoute
   ApiSportsbookSessionRoute: typeof ApiSportsbookSessionRoute
+  ApiSportsbookSportsRoute: typeof ApiSportsbookSportsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1034,11 +1060,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSportsbookEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/sportsbook/scores': {
+      id: '/api/sportsbook/scores'
+      path: '/api/sportsbook/scores'
+      fullPath: '/api/sportsbook/scores'
+      preLoaderRoute: typeof ApiSportsbookScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/sportsbook/session': {
       id: '/api/sportsbook/session'
       path: '/api/sportsbook/session'
       fullPath: '/api/sportsbook/session'
       preLoaderRoute: typeof ApiSportsbookSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sportsbook/sports': {
+      id: '/api/sportsbook/sports'
+      path: '/api/sportsbook/sports'
+      fullPath: '/api/sportsbook/sports'
+      preLoaderRoute: typeof ApiSportsbookSportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_shell/sports/club/$slug': {
@@ -1224,7 +1264,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOperatorWalletRoute: ApiOperatorWalletRoute,
   ApiSportsbookCallbackRoute: ApiSportsbookCallbackRouteWithChildren,
   ApiSportsbookEventsRoute: ApiSportsbookEventsRoute,
+  ApiSportsbookScoresRoute: ApiSportsbookScoresRoute,
   ApiSportsbookSessionRoute: ApiSportsbookSessionRoute,
+  ApiSportsbookSportsRoute: ApiSportsbookSportsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -23,7 +23,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useBetHistory } from "@/lib/bet-history";
 import { CURRENCIES, CURRENCY_META, type Currency } from "@/lib/games-catalog";
 import { formatMoney } from "@/lib/format";
-import { featuredEvents } from "@/lib/sports-book";
+import { useLiveEvents } from "@/lib/sports/use-live-events";
 import { useWallet } from "@/lib/wallet-context";
 
 export const Route = createFileRoute("/_shell/dashboard")({ component: DashboardPage });
@@ -54,7 +54,7 @@ function DashboardPage() {
   const { user } = useCurrentUserState();
   const { balances, wagered, currency, transactions, loading, refresh } = useWallet();
   const bets = useBetHistory();
-  const live = featuredEvents();
+  const { events: live } = useLiveEvents("all", { liveOnly: true, limit: 4 });
   const vip = vipFor(wagered);
   const recent = bets.slice(0, 8);
   const tx = transactions.slice(0, 6);
