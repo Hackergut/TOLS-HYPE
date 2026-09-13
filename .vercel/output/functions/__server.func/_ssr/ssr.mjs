@@ -1,32 +1,23 @@
-import { r as __exportAll$1 } from "../_runtime.mjs";
+import { r as __exportAll } from "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
-import { A as _getRenderedMatches, B as isNotFound, D as getStylesheetHref, E as getScriptPreloadAttrs, F as isRedirect, I as isResolvedRedirect, L as parseRedirect, M as invariant, O as resolveManifestAssetLink, a as isSsrResponse, c as stripSsrResponseBody, f as RouterProvider, i as disposeSsrResponseDetached, j as executeRewriteInput, k as resolveManifestCssLink, n as bindSsrResponseToRequest, o as normalizeSsrResponse, r as defineHandlerCallback, s as replaceSsrResponse, t as renderRouterToStream, z as rootRouteId } from "../_libs/@tanstack/react-router+[...].mjs";
+import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
+import { t as __exportAll$1 } from "./rolldown-runtime-D7D4PA-g.mjs";
+import { A as _getRenderedMatches, B as rootRouteId, D as getStylesheetHref, E as getScriptPreloadAttrs, F as isRedirect, I as isResolvedRedirect, L as parseRedirect, M as invariant, O as resolveManifestAssetLink, V as isNotFound, a as isSsrResponse, c as stripSsrResponseBody, f as RouterProvider, i as disposeSsrResponseDetached, j as executeRewriteInput, k as resolveManifestCssLink, n as bindSsrResponseToRequest, o as normalizeSsrResponse, r as defineHandlerCallback, s as replaceSsrResponse, t as renderRouterToStream } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as createMemoryHistory } from "../_libs/tanstack__history.mjs";
 import { a as getOrigin, c as createSerializationAdapter, d as toCrossJSONAsync, f as toCrossJSONStream, i as getNormalizedURL, l as makeSerovalPlugin, n as mergeHeaders, o as defaultSerovalPlugins, r as attachRouterServerSsrUtils, s as createRawStreamRPCPlugin, t as waitForRequest, u as fromJSON } from "../_libs/@tanstack/router-core+[...].mjs";
-import { n as setCookie, r as toResponse, t as H3Event } from "../_libs/h3-v2+rou3.mjs";
+import { i as toResponse, n as parseCookies, r as setCookie, t as H3Event } from "../_libs/h3-v2+rou3.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
-//#region node_modules/.nitro/vite/services/ssr/assets/rolldown-runtime-D7D4PA-g.js
-var __defProp = Object.defineProperty;
-var __exportAll = (all, no_symbols) => {
-	let target = {};
-	for (var name in all) __defProp(target, name, {
-		get: all[name],
-		enumerable: true
-	});
-	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
-	return target;
-};
-//#endregion
 //#region node_modules/.nitro/vite/services/ssr/index.js
-var ssr_exports = /* @__PURE__ */ __exportAll$1({
+var ssr_exports = /* @__PURE__ */ __exportAll({
 	a: () => getServerFnById,
+	c: () => setCookie$1,
 	createServerEntry: () => createServerEntry,
 	default: () => server_default,
 	i: () => TSS_SERVER_FUNCTION,
 	n: () => createMiddleware,
-	o: () => getRequest,
+	o: () => getCookie,
 	r: () => createServerFn,
+	s: () => getRequest,
 	t: () => server_exports
 });
 require_react();
@@ -94,6 +85,30 @@ function getRequest() {
 	return getH3Event().req;
 }
 /**
+* Parse the request to get HTTP Cookie header string and return an object of all cookie name-value pairs.
+* @returns Object of cookie name-value pairs
+* ```ts
+* const cookies = getCookies()
+* ```
+*/
+function getCookies() {
+	const cookies = parseCookies(getH3Event());
+	const definedCookies = Object.create(null);
+	for (const [name, value] of Object.entries(cookies)) if (value !== void 0) definedCookies[name] = value;
+	return definedCookies;
+}
+/**
+* Get a cookie value by name.
+* @param name Name of the cookie to get
+* @returns {*} Value of the cookie (String or undefined)
+* ```ts
+* const authorization = getCookie('Authorization')
+* ```
+*/
+function getCookie(name) {
+	return getCookies()[name];
+}
+/**
 * Set a cookie value by name.
 * @param name Name of the cookie to set
 * @param value Value of the cookie to set
@@ -119,7 +134,7 @@ var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 * the dev styles URL for route-scoped CSS collection.
 */
 async function getStartManifest(matchedRoutes) {
-	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-BI60Zivt.mjs");
+	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-BY7ML0v8.mjs");
 	const startManifest = tsrStartManifest();
 	let routes = startManifest.routes;
 	routes[rootRouteId];
@@ -141,63 +156,155 @@ async function getStartManifest(matchedRoutes) {
 var manifest = {
 	"10d3709ddbe0846f809aa5f4c3f29de518d245935f37dbff1a297b21b5535791": {
 		functionName: "playKeno_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"12c79250690ed43e43a559d8276b7f955eafb8039543e37d171563b3cbe1daf2": {
+		functionName: "listRemoteGames_createServerFn_handler",
+		importer: () => import("./rpc-Cau-mMGv.mjs")
+	},
+	"12e09fe4ad1943b73978dcc25048eb6e3c6028740328fd92c8cec85c1bdf1be9": {
+		functionName: "getNotificationPrefs_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
 	},
 	"1504078ce54c1d717a1029fd8a375985efa2b3618fc3978b5d9a388b22c8065e": {
 		functionName: "startCrash_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"187fb150fc919f1920292d75f2061d82e5ce3cfc449be4dd088cf0708ff2b294": {
+		functionName: "getFairState_createServerFn_handler",
+		importer: () => import("./fair-api-bHguUHGc.mjs")
+	},
+	"275dd32d5a739b6d4d541c054891789ce4cbb53545933a63386a5865cc1dd499": {
+		functionName: "markNotificationsRead_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
 	},
 	"4201008c36c3d839411dceb4863018a797c6adf0c4a186053710ca7501372c41": {
 		functionName: "blackjackAction_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"4af9804cb66f9b183c94a5bb16851123ba3dd2540c556d312c6fa34cd22c51f3": {
+		functionName: "listNotifications_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
+	},
+	"5c4a2ff2f86e3f693c732376558eca216c8215bd92a70046315430409efab06a": {
+		functionName: "saveNotificationPrefs_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
+	},
+	"5d78c6b3a9668395a755836807b34f4b6e419c825b7acb19075333175ff6d842": {
+		functionName: "operatorStatus_createServerFn_handler",
+		importer: () => import("./rpc-Cau-mMGv.mjs")
+	},
+	"60fc10e23f91a7461d67d0406765fdc5928c1c62f6967054272957db8c1aa819": {
+		functionName: "saveBetRound_createServerFn_handler",
+		importer: () => import("./bet-history-api-D8ceckTM.mjs")
+	},
+	"61d4f5d20fa35e16797dfe1fe3f821fe4929b92ff7f71429412a15736b4eb32b": {
+		functionName: "cashOutHilo_createServerFn_handler",
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"67054fdc3f1bddcd4dc6c5fa002f05a06522326bd68683dc9c9da8bf7a845d72": {
+		functionName: "launchRemoteGame_createServerFn_handler",
+		importer: () => import("./rpc-Cau-mMGv.mjs")
+	},
+	"69ab778e2b67f94631d4b827a8b6dac8c95c68c10f78b7696bcc95b2bf173a16": {
+		functionName: "sendTestNotification_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
+	},
+	"6ed541eebb10719b2bd58d90509df5a04d030a8c2358ad3774a7a5788968a30b": {
+		functionName: "startTower_createServerFn_handler",
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"75e56d5af3994a7d4d1f5d3c7338a245dc841ce84e1551b6d8540f5c6a1eaec6": {
 		functionName: "startHilo_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"7f8ab8547a01de32cc3e3507a6d36e4e0ac29d355637f672e716aa9a8f793a92": {
+		functionName: "pickTower_createServerFn_handler",
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"7fe5686bc74c228cdeac1ffad49c096b8b43466a520942f02302400d35fa9c30": {
+		functionName: "seedWelcomeNotification_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
+	},
+	"8f179a61f8afad4404a4e011498b64b9aa01a82ef3f1e36219e67d46d043d597": {
+		functionName: "savePushSubscription_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
 	},
 	"93e3a52548e5d8428a36bc2c7e061a63bf2af542df1c6e23634800531e04d885": {
 		functionName: "cashier_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"976553eab12d5bdd698a9c3f4fc1f36a872c8dc2f3d37cd96c717ea4e3ab5e63": {
 		functionName: "playHilo_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"9a71d3ebeda9d01fe68123d22413cc35c6d64b6acb712bf4d425bff5d360d7e2": {
 		functionName: "revealMine_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"9adc6a2c8ef29adcb31886830f7a9aa9fe77ac5c7ce48ea08387dcd166fc9cee": {
+		functionName: "setClientSeed_createServerFn_handler",
+		importer: () => import("./fair-api-bHguUHGc.mjs")
 	},
 	"9d47c4f3eaba3984dbd497fee465e1f0e2a064c7e11e1b140a45fc0872cd85de": {
 		functionName: "playInstant_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"c7be0a6d740a409207a2efd1559b8c4bdf27db530fdfa244fc726e0158bddcd7": {
 		functionName: "cashOutMines_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"ca51cf478f03db9c49032bafe31be930e6576575c2f21f5fb4b9a27dcd517233": {
 		functionName: "placeSportBet_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"da3919ee0dfbefce4ae8a58b49155dc92ab3b0043bc37cbd23180e163989822c": {
+		functionName: "playPool_createServerFn_handler",
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"dd28cfe795d1dbefb28f361d43d3a93d1841bbe513d4afba8eb4354ffa6034fe": {
 		functionName: "getWallet_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"df55947c78642a56fd011a5d62b399f03ec332905f91c84906979f11879096e1": {
 		functionName: "cashOutCrash_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"e67f5492070308bb0500ec21772b7448065a207ec3307c4255d44b4fba6b886d": {
+		functionName: "getPushPublicKey_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
+	},
+	"ebf65e790bc9531aafc06acf508a4c4bd2897e8e24e2f8ff4a3f961125bcce37": {
+		functionName: "dropPushSubscription_createServerFn_handler",
+		importer: () => import("./server-DgLBaCPh.mjs")
+	},
+	"eff32ad6bea51dbd7bc3442e4ff75571d3302f284597b1ad70c36c58ece8a6a4": {
+		functionName: "cashTower_createServerFn_handler",
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"f003d90249ea32be14549486bd4074408d14cce36e53b63cea2ecc0d3734a363": {
+		functionName: "rotateServerSeed_createServerFn_handler",
+		importer: () => import("./fair-api-bHguUHGc.mjs")
 	},
 	"f1649fd2349f64636824abb3ad298c9bc2bd70dc3378067bd3922e8fb88ae8cd": {
 		functionName: "dealBlackjack_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"f538bd39ccc717af2cdbf46a345cfcff3745550f5429b95198b6b39e5f50aa43": {
+		functionName: "listBetRounds_createServerFn_handler",
+		importer: () => import("./bet-history-api-D8ceckTM.mjs")
 	},
 	"f71d555fa0d442092cda5cc44942511c5f677f6ec581470d49dbddcb1aeed965": {
 		functionName: "startMines_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
+	},
+	"f98dfc5ea5a7c8591369dceacb852385f483297d9377c325bab76709b9eb369d": {
+		functionName: "listGameWins_createServerFn_handler",
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	},
 	"faee627521a3bc42526668ee48da04eb79d9d7143781ed9d67318bb914556fa7": {
 		functionName: "peekCrash_createServerFn_handler",
-		importer: () => import("./casino-api-_hJlYFkN.mjs")
+		importer: () => import("./casino-api-C4hfhvet.mjs")
 	}
 };
 async function getServerFnById(id, access) {
@@ -1467,7 +1574,7 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
 	const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-		import("./router-BdGeUTok.mjs").then((n) => n.t),
+		import("./router-D3DlzDgb.mjs").then((n) => n.t),
 		import("./start-5Z2QO8AU.mjs"),
 		import("./empty-plugin-adapters-D9UWiqvJ.mjs")
 	]);
@@ -1905,7 +2012,7 @@ async function handleServerRoutes({ getRouter, request, url, executeRouter, cont
 	}
 	return normalizeSsrResponse(response);
 }
-var server_exports = /* @__PURE__ */ __exportAll({ setCookie: () => setCookie$1 });
+var server_exports = /* @__PURE__ */ __exportAll$1({ setCookie: () => setCookie$1 });
 var fetch = createStartHandler(defaultStreamHandler);
 function createServerEntry(entry) {
 	return { async fetch(...args) {
@@ -1914,4 +2021,4 @@ function createServerEntry(entry) {
 }
 var server_default = createServerEntry({ fetch });
 //#endregion
-export { getServerFnById as a, __exportAll as c, createServerEntry, server_default as default, TSS_SERVER_FUNCTION as i, createMiddleware as n, getRequest as o, createServerFn as r, ssr_exports as s, server_exports as t };
+export { getServerFnById as a, setCookie$1 as c, createServerEntry, server_default as default, TSS_SERVER_FUNCTION as i, ssr_exports as l, createMiddleware as n, getCookie as o, createServerFn as r, getRequest as s, server_exports as t };

@@ -1,5 +1,5 @@
 import { r as __exportAll } from "../_runtime.mjs";
-import { Gt as createAdapterFactory, ln as logger } from "./@better-auth/core+[...].mjs";
+import { Kt as createAdapterFactory, un as logger } from "./@better-auth/core+[...].mjs";
 //#region node_modules/@better-auth/memory-adapter/dist/index.mjs
 var dist_exports = /* @__PURE__ */ __exportAll({ memoryAdapter: () => memoryAdapter });
 /**

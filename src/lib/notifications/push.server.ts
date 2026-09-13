@@ -3,13 +3,17 @@ import { getSql } from "@/lib/db";
 import { env } from "@/lib/env.server";
 import { VAPID_PUBLIC_KEY, VAPID_SUBJECT } from "@/lib/notifications/vapid";
 
-const VAPID_PRIVATE_KEY =
-  env("VAPID_PRIVATE_KEY") ?? "3LzyeOhTECXor0PNTyiQ4bJgMBjn0j4hUqJmk-iLiwA";
+/** True when push can actually send (private key from env only — never baked in). */
+export function pushConfigured(): boolean {
+  return Boolean(env("VAPID_PRIVATE_KEY"));
+}
 
 let configured = false;
 function ensureVapid() {
   if (configured) return;
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  const privateKey = env("VAPID_PRIVATE_KEY");
+  if (!privateKey) throw new Error("VAPID_PRIVATE_KEY is not configured");
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, privateKey);
   configured = true;
 }
 
@@ -22,6 +26,9 @@ export type PushPayload = {
 };
 
 export async function sendPushToUser(userId: string, payload: PushPayload) {
+  // Push is best-effort: silently skip when the server has no VAPID key
+  // instead of throwing inside wallet/notify flows.
+  if (!pushConfigured()) return;
   ensureVapid();
   const sql = await getSql();
   const rows = await sql<{ endpoint: string; p256dh: string; auth: string }>`

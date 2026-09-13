@@ -4,6 +4,8 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "@prisma/client": "7.10.0",
+    "@prisma/client-runtime-utils": "7.10.0",
     "tslib": "2.8.1"
   }
 }

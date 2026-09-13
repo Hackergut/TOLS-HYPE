@@ -18,7 +18,12 @@ export const OPERATOR_BACKENDS: OperatorBackend[] = [
 ];
 
 function vite(key: string): string | undefined {
-  const env = import.meta.env as Record<string, string | undefined>;
+  // Guarded: import.meta.env is undefined under plain node (unit tests) and
+  // must never crash module evaluation.
+  const env = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}) as Record<
+    string,
+    string | undefined
+  >;
   const v = env[key]?.trim();
   return v || undefined;
 }
@@ -43,7 +48,9 @@ export function backendLabel(kind: OperatorBackend) {
     case "prisma":
       return "Prisma";
     case "supabase":
-      return "Supabase";
+      // Honest label: SUPABASE_URL/KEY are only used as a generic REST
+      // fallback inside aggregatorFetch() — there is no Supabase client.
+      return "Supabase (REST fallback only)";
     case "governance":
       return "Governance API";
     case "aggregator":

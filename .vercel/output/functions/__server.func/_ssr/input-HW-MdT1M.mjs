@@ -1,6 +1,6 @@
 import "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { t as cn } from "../_libs/cn.mjs";
 require_react();
 var import_jsx_runtime = require_jsx_runtime();

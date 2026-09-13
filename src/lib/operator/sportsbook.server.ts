@@ -10,6 +10,11 @@ function sportsJwtSecret() {
   return env("FLEXRIX_SPORTS_JWT_SECRET") ?? sportsSecret();
 }
 
+/** True when the sportsbook wallet callback + SSO can verify/sign. */
+export function sportsConfigured(): boolean {
+  return Boolean(sportsSecret());
+}
+
 export function sportsbookOrigin() {
   return (env("FLEXRIX_SPORTS_ORIGIN") ?? "https://sports.flexrix.com").replace(/\/$/, "");
 }
