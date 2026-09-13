@@ -1,4 +1,4 @@
-import { CURRENCIES, GAMES, type Currency } from "@/lib/games-catalog";
+import { CURRENCIES, CATEGORIES, GAMES, PROMOS, type Currency } from "@/lib/games-catalog";
 import { getPrisma } from "@/lib/prisma.server";
 import { credit, debit, ensureWallets, snapshotBalances } from "@/lib/wallet.server";
 import { pushBridgeEvent } from "@/lib/governance/bridge";
@@ -682,3 +682,154 @@ export async function liveMap() {
     return empty;
   }
 }
+
+export async function listBets(opts: { gameId?: string | null; userId?: string | null; result?: string | null; limit?: number } = {}) {
+  const prisma = await getPrisma();
+  const limit = Math.min(Math.max(opts.limit ?? 100, 1), 400);
+  const rows = await prisma.ledger.findMany({
+    where: {
+      type: { in: ["bet", "win"] },
+      ...(opts.gameId ? { gameId: opts.gameId } : {}),
+      ...(opts.userId ? { userId: opts.userId } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+  const resultFilter = (opts.result ?? "").toLowerCase();
+  return rows
+    .filter((r) => {
+      if (!resultFilter) return true;
+      if (resultFilter === "win" || resultFilter === "won") return r.type === "win";
+      if (resultFilter === "loss" || resultFilter === "lost" || resultFilter === "bet") return r.type === "bet";
+      return true;
+    })
+    .map((r) => ({
+      id: `bet_${r.id}`,
+      userId: r.userId,
+      gameId: r.gameId,
+      type: r.type,
+      result: r.type === "win" ? "win" : "bet",
+      amount: num(r.amount),
+      currency: r.currency,
+      status: r.status,
+      createdAt: r.createdAt.toISOString(),
+    }));
+}
+
+export async function getRtp() {
+  const { getSql } = await import("@/lib/db");
+  const sql = await getSql();
+  const rows = await sql<{ key: string; value: string }>`
+    select key, value from gov_flags where key like ${"rtp:%"}
+  `.catch(() => []);
+  const games: Record<string, number> = {};
+  let bias = 1;
+  for (const row of rows) {
+    const id = row.key.replace(/^rtp:/, "");
+    const n = Number(row.value);
+    if (!Number.isFinite(n)) continue;
+    if (id === "global" || id === "bias") bias = n;
+    else games[id] = n;
+  }
+  return { bias, games, fair: bias === 1, source: "casino" };
+}
+
+export async function setRtp(body: Record<string, unknown>) {
+  const action = String(body.action ?? "").toLowerCase();
+  const { getSql } = await import("@/lib/db");
+  const sql = await getSql();
+  if (action === "reset") {
+    await sql`delete from gov_flags where key like ${"rtp:%"}`.catch(() => undefined);
+    return getRtp();
+  }
+  const key = String(body.gameId ?? body.game_id ?? body.key ?? "global");
+  const raw = body.rtp ?? body.bias ?? body.value;
+  const n = raw == null ? 1 : Number(raw);
+  const clamped = Math.min(2, Math.max(0, Number.isFinite(n) ? n : 1));
+  await sql`
+    insert into gov_flags (key, value, updated_at)
+    values (${`rtp:${key}`}, ${String(clamped)}, now())
+    on conflict (key) do update set value = excluded.value, updated_at = now()
+  `;
+  return getRtp();
+}
+
+export async function getPromotions() {
+  const { getSql } = await import("@/lib/db");
+  const sql = await getSql();
+  const flags = await sql<{ key: string; value: string }>`
+    select key, value from gov_flags where key like ${"promo:%"}
+  `.catch(() => []);
+  const overrides = new Map(flags.map((f) => [f.key.replace(/^promo:/, ""), f.value]));
+  return PROMOS.map((p) => ({
+    id: p.id,
+    entity: "promo",
+    title: p.title,
+    kicker: p.kicker,
+    tag: p.tag,
+    badge: p.badge,
+    body: p.body,
+    cta: p.cta,
+    to: p.to,
+    image: p.image,
+    enabled: overrides.get(p.id) !== "off",
+    override: overrides.get(p.id) ?? null,
+  }));
+}
+
+export async function setPromotion(body: Record<string, unknown>) {
+  const key = String(body.key ?? body.id ?? body.entityKey ?? "");
+  if (!key) throw new Error("key required");
+  const enabled = body.enabled === false || body.value === "off" || body.action === "disable" ? "off" : "on";
+  const { getSql } = await import("@/lib/db");
+  const sql = await getSql();
+  await sql`
+    insert into gov_flags (key, value, updated_at)
+    values (${`promo:${key}`}, ${enabled}, now())
+    on conflict (key) do update set value = excluded.value, updated_at = now()
+  `;
+  return getPromotions();
+}
+
+export async function listAffiliates() {
+  return { affiliates: [] as unknown[], source: "casino" };
+}
+
+export function platformGames() {
+  return GAMES.map((g) => ({
+    id: g.id,
+    title: g.title,
+    provider: g.provider,
+    category: g.category,
+    kind: g.kind,
+    rtp: g.rtp,
+    edge: g.edge,
+    live: Boolean(g.live),
+    original: Boolean(g.original),
+    cover: g.cover,
+    players: g.players ?? 0,
+  }));
+}
+
+export function platformCategories() {
+  return CATEGORIES;
+}
+
+export function platformLobby() {
+  return { games: platformGames(), categories: CATEGORIES, source: "casino" };
+}
+
+export async function patchCatalog(kind: "games" | "lobby" | "categories", body: Record<string, unknown>) {
+  const key = String(body.key ?? body.id ?? kind);
+  const { getSql } = await import("@/lib/db");
+  const sql = await getSql();
+  await sql`
+    insert into gov_flags (key, value, updated_at)
+    values (${`cms:${kind}:${key}`}, ${JSON.stringify(body)}, now())
+    on conflict (key) do update set value = excluded.value, updated_at = now()
+  `;
+  if (kind === "categories") return platformCategories();
+  if (kind === "lobby") return platformLobby();
+  return platformGames();
+}
+

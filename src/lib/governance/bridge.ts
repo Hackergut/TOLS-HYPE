@@ -84,14 +84,45 @@ export function signatureFromHeaders(headers: Headers): string | null {
   );
 }
 
+export function restCanonical(method: string, path: string, timestamp: string): string {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${timestamp}\n${method.toUpperCase()}\n${p}`;
+}
+
+/** REST HMAC for Governance → Casino platform reads (JWT fallback). */
+export function verifyRestHmac(request: Request, secretOverride?: string): boolean {
+  const ts = request.headers.get("x-bridge-timestamp");
+  if (!verifyBridgeTimestamp(ts)) return false;
+  const sig = signatureFromHeaders(request.headers);
+  if (!sig) return false;
+  const url = new URL(request.url);
+  const path = `${url.pathname}${url.search}`;
+  const canonical = restCanonical(request.method, path, String(ts));
+  if (verifyBridgeSignature(canonical, sig, secretOverride)) return true;
+  if (request.method.toUpperCase() === "GET" && verifyBridgeSignature("", sig, secretOverride)) return true;
+  return false;
+}
+
+export function hmacStatus(rawBody: string, request: Request): "verified" | "invalid" | "unsigned" {
+  const sig = signatureFromHeaders(request.headers);
+  if (!sig) return "unsigned";
+  return verifyBridgeSignature(rawBody, sig) ? "verified" : "invalid";
+}
+
+
 export type BridgeEventType =
   | "casino.bet"
   | "casino.win"
+  | "casino.deposit_pending"
   | "casino.deposit_confirmed"
   | "casino.withdrawal_pending"
   | "casino.withdrawal_settled"
   | "casino.session_start"
   | "casino.session_end"
+  | "casino.player_connected"
+  | "casino.bonus_released"
+  | "casino.support_message"
+  | "casino.support_ticket"
   | "casino.health"
   | "solana_ledger"
   | "bridge.sync_request";
@@ -114,15 +145,18 @@ export async function bridgeFetch(opts: {
   };
   if (raw !== undefined) headers["Content-Type"] = "application/json";
   const secret = bridgeSecret();
-  if (secret && raw !== undefined) {
-    headers["X-Bridge-Signature"] = `sha256=${signBridgePayload(raw, secret)}`;
-    headers["X-Bridge-Timestamp"] = String(Math.floor(Date.now() / 1000));
+  const method = opts.method || (raw !== undefined ? "POST" : "GET");
+  if (secret) {
+    const ts = String(Math.floor(Date.now() / 1000));
+    headers["X-Bridge-Timestamp"] = ts;
+    const toSign = raw !== undefined ? raw : restCanonical(method, path, ts);
+    headers["X-Bridge-Signature"] = `sha256=${signBridgePayload(toSign, secret)}`;
   }
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), opts.timeoutMs ?? 8000);
   try {
     return await fetch(`${base}${path}`, {
-      method: opts.method || (raw !== undefined ? "POST" : "GET"),
+      method,
       headers,
       body: raw,
       cache: "no-store",
@@ -210,6 +244,8 @@ export const KNOWN_INBOUND = [
   "governance.session_invalidate",
   "governance.wallet_adjust",
   "governance.player_block",
+  "governance.player_unblock",
+  "governance.kyc_update",
   "governance.support_reply",
   "governance.support_close",
   "governance.bonus_credit",

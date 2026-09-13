@@ -3,6 +3,7 @@ import { credit, debit, ensureWallets, snapshotBalances } from "@/lib/wallet.ser
 import {
   KNOWN_INBOUND,
   getBridgeConfig,
+  hmacStatus,
   signatureFromHeaders,
   verifyBridgeSignature,
   verifyBridgeTimestamp,
@@ -28,14 +29,18 @@ export async function handleBridgeWebhook(request: Request): Promise<Response> {
   }
 
   const type = String(body.type || body.event || "ping");
+  const hmac = hmacStatus(raw, request);
 
-  if (type === "ping") {
+  if (type === "ping" || type.toLowerCase() === "ping") {
     return Response.json({
       success: true,
       ok: true,
       type: "pong",
+      hmac,
+      hmacVerified: hmac === "verified",
       ts: new Date().toISOString(),
-      note: "Casino bridge is live",
+      origin: getBridgeConfig().casinoOrigin,
+      note: hmac === "verified" ? "Casino bridge is live — HMAC PONG" : "Casino bridge is live",
     });
   }
 

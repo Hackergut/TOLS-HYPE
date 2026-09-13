@@ -33,7 +33,6 @@ import { Route as ShellTokenRouteImport } from './routes/_shell/token'
 import { Route as ShellVaultRouteImport } from './routes/_shell/vault'
 import { Route as ShellVipRouteImport } from './routes/_shell/vip'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
-import { Route as ApiPlatformRouteImport } from './routes/api/platform'
 import { Route as ApiTreasuryRouteImport } from './routes/api/treasury'
 import { Route as ShellGamesIdRouteImport } from './routes/_shell/games.$id'
 import { Route as ShellOriginalsIdRouteImport } from './routes/_shell/originals.$id'
@@ -53,8 +52,28 @@ import { Route as ApiOperatorPaymentsRouteImport } from './routes/api/operator/p
 import { Route as ApiOperatorSkillsRouteImport } from './routes/api/operator/skills'
 import { Route as ApiOperatorStatusRouteImport } from './routes/api/operator/status'
 import { Route as ApiOperatorWalletRouteImport } from './routes/api/operator/wallet'
+import { Route as ApiPlatformIndexRouteImport } from './routes/api/platform/index'
+import { Route as ApiPlatformAffiliatesRouteImport } from './routes/api/platform/affiliates'
+import { Route as ApiPlatformBetsRouteImport } from './routes/api/platform/bets'
+import { Route as ApiPlatformCashflowRouteImport } from './routes/api/platform/cashflow'
+import { Route as ApiPlatformCategoriesRouteImport } from './routes/api/platform/categories'
+import { Route as ApiPlatformCommandRouteImport } from './routes/api/platform/command'
+import { Route as ApiPlatformDepositsRouteImport } from './routes/api/platform/deposits'
+import { Route as ApiPlatformGamesRouteImport } from './routes/api/platform/games'
 import { Route as ApiPlatformHealthRouteImport } from './routes/api/platform/health'
+import { Route as ApiPlatformLiveMapRouteImport } from './routes/api/platform/live-map'
+import { Route as ApiPlatformLobbyRouteImport } from './routes/api/platform/lobby'
+import { Route as ApiPlatformOverviewRouteImport } from './routes/api/platform/overview'
+import { Route as ApiPlatformPaymentsRouteImport } from './routes/api/platform/payments'
+import { Route as ApiPlatformPlayersRouteImport } from './routes/api/platform/players'
+import { Route as ApiPlatformPromotionsRouteImport } from './routes/api/platform/promotions'
+import { Route as ApiPlatformRtpRouteImport } from './routes/api/platform/rtp'
+import { Route as ApiPlatformSnapshotRouteImport } from './routes/api/platform/snapshot'
+import { Route as ApiPlatformStatsRouteImport } from './routes/api/platform/stats'
+import { Route as ApiPlatformUsersRouteImport } from './routes/api/platform/users'
+import { Route as ApiPlatformWalletsRouteImport } from './routes/api/platform/wallets'
 import { Route as ApiPlatformWhoamiRouteImport } from './routes/api/platform/whoami'
+import { Route as ApiPlatformWithdrawalsRouteImport } from './routes/api/platform/withdrawals'
 import { Route as ApiSportsbookCallbackRouteImport } from './routes/api/sportsbook/callback'
 import { Route as ApiSportsbookEventsRouteImport } from './routes/api/sportsbook/events'
 import { Route as ApiSportsbookSessionRouteImport } from './routes/api/sportsbook/session'
@@ -62,7 +81,12 @@ import { Route as ShellSportsClubSlugRouteImport } from './routes/_shell/sports.
 import { Route as ShellSportsPlayerSlugRouteImport } from './routes/_shell/sports.player.$slug'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth/google.callback'
 import { Route as ApiAuthGoogleDiagRouteImport } from './routes/api/auth/google.diag'
+import { Route as ApiPlatformUsersIdRouteImport } from './routes/api/platform/users.$id'
+import { Route as ApiPlatformWalletsAdjustRouteImport } from './routes/api/platform/wallets.adjust'
+import { Route as ApiPlatformWalletsBonusRouteImport } from './routes/api/platform/wallets.bonus'
 import { Route as ApiSportsbookCallbackActionRouteImport } from './routes/api/sportsbook/callback.$action'
+import { Route as ApiPlatformWithdrawalsIdApproveRouteImport } from './routes/api/platform/withdrawals.$id.approve'
+import { Route as ApiPlatformWithdrawalsIdRejectRouteImport } from './routes/api/platform/withdrawals.$id.reject'
 
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
@@ -183,11 +207,6 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPlatformRoute = ApiPlatformRouteImport.update({
-  id: '/api/platform',
-  path: '/api/platform',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiTreasuryRoute = ApiTreasuryRouteImport.update({
   id: '/api/treasury',
   path: '/api/treasury',
@@ -283,15 +302,115 @@ const ApiOperatorWalletRoute = ApiOperatorWalletRouteImport.update({
   path: '/api/operator/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPlatformIndexRoute = ApiPlatformIndexRouteImport.update({
+  id: '/api/platform/',
+  path: '/api/platform/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformAffiliatesRoute = ApiPlatformAffiliatesRouteImport.update({
+  id: '/api/platform/affiliates',
+  path: '/api/platform/affiliates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformBetsRoute = ApiPlatformBetsRouteImport.update({
+  id: '/api/platform/bets',
+  path: '/api/platform/bets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformCashflowRoute = ApiPlatformCashflowRouteImport.update({
+  id: '/api/platform/cashflow',
+  path: '/api/platform/cashflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformCategoriesRoute = ApiPlatformCategoriesRouteImport.update({
+  id: '/api/platform/categories',
+  path: '/api/platform/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformCommandRoute = ApiPlatformCommandRouteImport.update({
+  id: '/api/platform/command',
+  path: '/api/platform/command',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformDepositsRoute = ApiPlatformDepositsRouteImport.update({
+  id: '/api/platform/deposits',
+  path: '/api/platform/deposits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformGamesRoute = ApiPlatformGamesRouteImport.update({
+  id: '/api/platform/games',
+  path: '/api/platform/games',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPlatformHealthRoute = ApiPlatformHealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => ApiPlatformRoute,
+  id: '/api/platform/health',
+  path: '/api/platform/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformLiveMapRoute = ApiPlatformLiveMapRouteImport.update({
+  id: '/api/platform/live-map',
+  path: '/api/platform/live-map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformLobbyRoute = ApiPlatformLobbyRouteImport.update({
+  id: '/api/platform/lobby',
+  path: '/api/platform/lobby',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformOverviewRoute = ApiPlatformOverviewRouteImport.update({
+  id: '/api/platform/overview',
+  path: '/api/platform/overview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformPaymentsRoute = ApiPlatformPaymentsRouteImport.update({
+  id: '/api/platform/payments',
+  path: '/api/platform/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformPlayersRoute = ApiPlatformPlayersRouteImport.update({
+  id: '/api/platform/players',
+  path: '/api/platform/players',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformPromotionsRoute = ApiPlatformPromotionsRouteImport.update({
+  id: '/api/platform/promotions',
+  path: '/api/platform/promotions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformRtpRoute = ApiPlatformRtpRouteImport.update({
+  id: '/api/platform/rtp',
+  path: '/api/platform/rtp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformSnapshotRoute = ApiPlatformSnapshotRouteImport.update({
+  id: '/api/platform/snapshot',
+  path: '/api/platform/snapshot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformStatsRoute = ApiPlatformStatsRouteImport.update({
+  id: '/api/platform/stats',
+  path: '/api/platform/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformUsersRoute = ApiPlatformUsersRouteImport.update({
+  id: '/api/platform/users',
+  path: '/api/platform/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformWalletsRoute = ApiPlatformWalletsRouteImport.update({
+  id: '/api/platform/wallets',
+  path: '/api/platform/wallets',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPlatformWhoamiRoute = ApiPlatformWhoamiRouteImport.update({
-  id: '/whoami',
-  path: '/whoami',
-  getParentRoute: () => ApiPlatformRoute,
+  id: '/api/platform/whoami',
+  path: '/api/platform/whoami',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlatformWithdrawalsRoute = ApiPlatformWithdrawalsRouteImport.update({
+  id: '/api/platform/withdrawals',
+  path: '/api/platform/withdrawals',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSportsbookCallbackRoute = ApiSportsbookCallbackRouteImport.update({
   id: '/api/sportsbook/callback',
@@ -328,11 +447,39 @@ const ApiAuthGoogleDiagRoute = ApiAuthGoogleDiagRouteImport.update({
   path: '/diag',
   getParentRoute: () => ApiAuthGoogleRoute,
 } as any)
+const ApiPlatformUsersIdRoute = ApiPlatformUsersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiPlatformUsersRoute,
+} as any)
+const ApiPlatformWalletsAdjustRoute =
+  ApiPlatformWalletsAdjustRouteImport.update({
+    id: '/adjust',
+    path: '/adjust',
+    getParentRoute: () => ApiPlatformWalletsRoute,
+  } as any)
+const ApiPlatformWalletsBonusRoute = ApiPlatformWalletsBonusRouteImport.update({
+  id: '/bonus',
+  path: '/bonus',
+  getParentRoute: () => ApiPlatformWalletsRoute,
+} as any)
 const ApiSportsbookCallbackActionRoute =
   ApiSportsbookCallbackActionRouteImport.update({
     id: '/$action',
     path: '/$action',
     getParentRoute: () => ApiSportsbookCallbackRoute,
+  } as any)
+const ApiPlatformWithdrawalsIdApproveRoute =
+  ApiPlatformWithdrawalsIdApproveRouteImport.update({
+    id: '/$id/approve',
+    path: '/$id/approve',
+    getParentRoute: () => ApiPlatformWithdrawalsRoute,
+  } as any)
+const ApiPlatformWithdrawalsIdRejectRoute =
+  ApiPlatformWithdrawalsIdRejectRouteImport.update({
+    id: '/$id/reject',
+    path: '/$id/reject',
+    getParentRoute: () => ApiPlatformWithdrawalsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -359,7 +506,6 @@ export interface FileRoutesByFullPath {
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
   '/api/health': typeof ApiHealthRoute
-  '/api/platform': typeof ApiPlatformRouteWithChildren
   '/api/treasury': typeof ApiTreasuryRoute
   '/games/$id': typeof ShellGamesIdRoute
   '/originals/$id': typeof ShellOriginalsIdRoute
@@ -379,16 +525,41 @@ export interface FileRoutesByFullPath {
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
   '/api/operator/status': typeof ApiOperatorStatusRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
+  '/api/platform/affiliates': typeof ApiPlatformAffiliatesRoute
+  '/api/platform/bets': typeof ApiPlatformBetsRoute
+  '/api/platform/cashflow': typeof ApiPlatformCashflowRoute
+  '/api/platform/categories': typeof ApiPlatformCategoriesRoute
+  '/api/platform/command': typeof ApiPlatformCommandRoute
+  '/api/platform/deposits': typeof ApiPlatformDepositsRoute
+  '/api/platform/games': typeof ApiPlatformGamesRoute
   '/api/platform/health': typeof ApiPlatformHealthRoute
+  '/api/platform/live-map': typeof ApiPlatformLiveMapRoute
+  '/api/platform/lobby': typeof ApiPlatformLobbyRoute
+  '/api/platform/overview': typeof ApiPlatformOverviewRoute
+  '/api/platform/payments': typeof ApiPlatformPaymentsRoute
+  '/api/platform/players': typeof ApiPlatformPlayersRoute
+  '/api/platform/promotions': typeof ApiPlatformPromotionsRoute
+  '/api/platform/rtp': typeof ApiPlatformRtpRoute
+  '/api/platform/snapshot': typeof ApiPlatformSnapshotRoute
+  '/api/platform/stats': typeof ApiPlatformStatsRoute
+  '/api/platform/users': typeof ApiPlatformUsersRouteWithChildren
+  '/api/platform/wallets': typeof ApiPlatformWalletsRouteWithChildren
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
+  '/api/platform/withdrawals': typeof ApiPlatformWithdrawalsRouteWithChildren
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/platform/': typeof ApiPlatformIndexRoute
   '/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/diag': typeof ApiAuthGoogleDiagRoute
+  '/api/platform/users/$id': typeof ApiPlatformUsersIdRoute
+  '/api/platform/wallets/adjust': typeof ApiPlatformWalletsAdjustRoute
+  '/api/platform/wallets/bonus': typeof ApiPlatformWalletsBonusRoute
   '/api/sportsbook/callback/$action': typeof ApiSportsbookCallbackActionRoute
+  '/api/platform/withdrawals/$id/approve': typeof ApiPlatformWithdrawalsIdApproveRoute
+  '/api/platform/withdrawals/$id/reject': typeof ApiPlatformWithdrawalsIdRejectRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -413,7 +584,6 @@ export interface FileRoutesByTo {
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
   '/api/health': typeof ApiHealthRoute
-  '/api/platform': typeof ApiPlatformRouteWithChildren
   '/api/treasury': typeof ApiTreasuryRoute
   '/': typeof ShellIndexRoute
   '/games/$id': typeof ShellGamesIdRoute
@@ -434,16 +604,41 @@ export interface FileRoutesByTo {
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
   '/api/operator/status': typeof ApiOperatorStatusRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
+  '/api/platform/affiliates': typeof ApiPlatformAffiliatesRoute
+  '/api/platform/bets': typeof ApiPlatformBetsRoute
+  '/api/platform/cashflow': typeof ApiPlatformCashflowRoute
+  '/api/platform/categories': typeof ApiPlatformCategoriesRoute
+  '/api/platform/command': typeof ApiPlatformCommandRoute
+  '/api/platform/deposits': typeof ApiPlatformDepositsRoute
+  '/api/platform/games': typeof ApiPlatformGamesRoute
   '/api/platform/health': typeof ApiPlatformHealthRoute
+  '/api/platform/live-map': typeof ApiPlatformLiveMapRoute
+  '/api/platform/lobby': typeof ApiPlatformLobbyRoute
+  '/api/platform/overview': typeof ApiPlatformOverviewRoute
+  '/api/platform/payments': typeof ApiPlatformPaymentsRoute
+  '/api/platform/players': typeof ApiPlatformPlayersRoute
+  '/api/platform/promotions': typeof ApiPlatformPromotionsRoute
+  '/api/platform/rtp': typeof ApiPlatformRtpRoute
+  '/api/platform/snapshot': typeof ApiPlatformSnapshotRoute
+  '/api/platform/stats': typeof ApiPlatformStatsRoute
+  '/api/platform/users': typeof ApiPlatformUsersRouteWithChildren
+  '/api/platform/wallets': typeof ApiPlatformWalletsRouteWithChildren
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
+  '/api/platform/withdrawals': typeof ApiPlatformWithdrawalsRouteWithChildren
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/platform': typeof ApiPlatformIndexRoute
   '/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/diag': typeof ApiAuthGoogleDiagRoute
+  '/api/platform/users/$id': typeof ApiPlatformUsersIdRoute
+  '/api/platform/wallets/adjust': typeof ApiPlatformWalletsAdjustRoute
+  '/api/platform/wallets/bonus': typeof ApiPlatformWalletsBonusRoute
   '/api/sportsbook/callback/$action': typeof ApiSportsbookCallbackActionRoute
+  '/api/platform/withdrawals/$id/approve': typeof ApiPlatformWithdrawalsIdApproveRoute
+  '/api/platform/withdrawals/$id/reject': typeof ApiPlatformWithdrawalsIdRejectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -470,7 +665,6 @@ export interface FileRoutesById {
   '/_shell/vault': typeof ShellVaultRoute
   '/_shell/vip': typeof ShellVipRoute
   '/api/health': typeof ApiHealthRoute
-  '/api/platform': typeof ApiPlatformRouteWithChildren
   '/api/treasury': typeof ApiTreasuryRoute
   '/_shell/': typeof ShellIndexRoute
   '/_shell/games/$id': typeof ShellGamesIdRoute
@@ -491,16 +685,41 @@ export interface FileRoutesById {
   '/api/operator/skills': typeof ApiOperatorSkillsRoute
   '/api/operator/status': typeof ApiOperatorStatusRoute
   '/api/operator/wallet': typeof ApiOperatorWalletRoute
+  '/api/platform/affiliates': typeof ApiPlatformAffiliatesRoute
+  '/api/platform/bets': typeof ApiPlatformBetsRoute
+  '/api/platform/cashflow': typeof ApiPlatformCashflowRoute
+  '/api/platform/categories': typeof ApiPlatformCategoriesRoute
+  '/api/platform/command': typeof ApiPlatformCommandRoute
+  '/api/platform/deposits': typeof ApiPlatformDepositsRoute
+  '/api/platform/games': typeof ApiPlatformGamesRoute
   '/api/platform/health': typeof ApiPlatformHealthRoute
+  '/api/platform/live-map': typeof ApiPlatformLiveMapRoute
+  '/api/platform/lobby': typeof ApiPlatformLobbyRoute
+  '/api/platform/overview': typeof ApiPlatformOverviewRoute
+  '/api/platform/payments': typeof ApiPlatformPaymentsRoute
+  '/api/platform/players': typeof ApiPlatformPlayersRoute
+  '/api/platform/promotions': typeof ApiPlatformPromotionsRoute
+  '/api/platform/rtp': typeof ApiPlatformRtpRoute
+  '/api/platform/snapshot': typeof ApiPlatformSnapshotRoute
+  '/api/platform/stats': typeof ApiPlatformStatsRoute
+  '/api/platform/users': typeof ApiPlatformUsersRouteWithChildren
+  '/api/platform/wallets': typeof ApiPlatformWalletsRouteWithChildren
   '/api/platform/whoami': typeof ApiPlatformWhoamiRoute
+  '/api/platform/withdrawals': typeof ApiPlatformWithdrawalsRouteWithChildren
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/platform/': typeof ApiPlatformIndexRoute
   '/_shell/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/_shell/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/diag': typeof ApiAuthGoogleDiagRoute
+  '/api/platform/users/$id': typeof ApiPlatformUsersIdRoute
+  '/api/platform/wallets/adjust': typeof ApiPlatformWalletsAdjustRoute
+  '/api/platform/wallets/bonus': typeof ApiPlatformWalletsBonusRoute
   '/api/sportsbook/callback/$action': typeof ApiSportsbookCallbackActionRoute
+  '/api/platform/withdrawals/$id/approve': typeof ApiPlatformWithdrawalsIdApproveRoute
+  '/api/platform/withdrawals/$id/reject': typeof ApiPlatformWithdrawalsIdRejectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -528,7 +747,6 @@ export interface FileRouteTypes {
     | '/vault'
     | '/vip'
     | '/api/health'
-    | '/api/platform'
     | '/api/treasury'
     | '/games/$id'
     | '/originals/$id'
@@ -548,16 +766,41 @@ export interface FileRouteTypes {
     | '/api/operator/skills'
     | '/api/operator/status'
     | '/api/operator/wallet'
+    | '/api/platform/affiliates'
+    | '/api/platform/bets'
+    | '/api/platform/cashflow'
+    | '/api/platform/categories'
+    | '/api/platform/command'
+    | '/api/platform/deposits'
+    | '/api/platform/games'
     | '/api/platform/health'
+    | '/api/platform/live-map'
+    | '/api/platform/lobby'
+    | '/api/platform/overview'
+    | '/api/platform/payments'
+    | '/api/platform/players'
+    | '/api/platform/promotions'
+    | '/api/platform/rtp'
+    | '/api/platform/snapshot'
+    | '/api/platform/stats'
+    | '/api/platform/users'
+    | '/api/platform/wallets'
     | '/api/platform/whoami'
+    | '/api/platform/withdrawals'
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
     | '/api/sportsbook/session'
+    | '/api/platform/'
     | '/sports/club/$slug'
     | '/sports/player/$slug'
     | '/api/auth/google/callback'
     | '/api/auth/google/diag'
+    | '/api/platform/users/$id'
+    | '/api/platform/wallets/adjust'
+    | '/api/platform/wallets/bonus'
     | '/api/sportsbook/callback/$action'
+    | '/api/platform/withdrawals/$id/approve'
+    | '/api/platform/withdrawals/$id/reject'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -582,7 +825,6 @@ export interface FileRouteTypes {
     | '/vault'
     | '/vip'
     | '/api/health'
-    | '/api/platform'
     | '/api/treasury'
     | '/'
     | '/games/$id'
@@ -603,16 +845,41 @@ export interface FileRouteTypes {
     | '/api/operator/skills'
     | '/api/operator/status'
     | '/api/operator/wallet'
+    | '/api/platform/affiliates'
+    | '/api/platform/bets'
+    | '/api/platform/cashflow'
+    | '/api/platform/categories'
+    | '/api/platform/command'
+    | '/api/platform/deposits'
+    | '/api/platform/games'
     | '/api/platform/health'
+    | '/api/platform/live-map'
+    | '/api/platform/lobby'
+    | '/api/platform/overview'
+    | '/api/platform/payments'
+    | '/api/platform/players'
+    | '/api/platform/promotions'
+    | '/api/platform/rtp'
+    | '/api/platform/snapshot'
+    | '/api/platform/stats'
+    | '/api/platform/users'
+    | '/api/platform/wallets'
     | '/api/platform/whoami'
+    | '/api/platform/withdrawals'
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
     | '/api/sportsbook/session'
+    | '/api/platform'
     | '/sports/club/$slug'
     | '/sports/player/$slug'
     | '/api/auth/google/callback'
     | '/api/auth/google/diag'
+    | '/api/platform/users/$id'
+    | '/api/platform/wallets/adjust'
+    | '/api/platform/wallets/bonus'
     | '/api/sportsbook/callback/$action'
+    | '/api/platform/withdrawals/$id/approve'
+    | '/api/platform/withdrawals/$id/reject'
   id:
     | '__root__'
     | '/_shell'
@@ -638,7 +905,6 @@ export interface FileRouteTypes {
     | '/_shell/vault'
     | '/_shell/vip'
     | '/api/health'
-    | '/api/platform'
     | '/api/treasury'
     | '/_shell/'
     | '/_shell/games/$id'
@@ -659,23 +925,47 @@ export interface FileRouteTypes {
     | '/api/operator/skills'
     | '/api/operator/status'
     | '/api/operator/wallet'
+    | '/api/platform/affiliates'
+    | '/api/platform/bets'
+    | '/api/platform/cashflow'
+    | '/api/platform/categories'
+    | '/api/platform/command'
+    | '/api/platform/deposits'
+    | '/api/platform/games'
     | '/api/platform/health'
+    | '/api/platform/live-map'
+    | '/api/platform/lobby'
+    | '/api/platform/overview'
+    | '/api/platform/payments'
+    | '/api/platform/players'
+    | '/api/platform/promotions'
+    | '/api/platform/rtp'
+    | '/api/platform/snapshot'
+    | '/api/platform/stats'
+    | '/api/platform/users'
+    | '/api/platform/wallets'
     | '/api/platform/whoami'
+    | '/api/platform/withdrawals'
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
     | '/api/sportsbook/session'
+    | '/api/platform/'
     | '/_shell/sports/club/$slug'
     | '/_shell/sports/player/$slug'
     | '/api/auth/google/callback'
     | '/api/auth/google/diag'
+    | '/api/platform/users/$id'
+    | '/api/platform/wallets/adjust'
+    | '/api/platform/wallets/bonus'
     | '/api/sportsbook/callback/$action'
+    | '/api/platform/withdrawals/$id/approve'
+    | '/api/platform/withdrawals/$id/reject'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiHealthRoute: typeof ApiHealthRoute
-  ApiPlatformRoute: typeof ApiPlatformRouteWithChildren
   ApiTreasuryRoute: typeof ApiTreasuryRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAuthGoogleRoute: typeof ApiAuthGoogleRouteWithChildren
@@ -691,9 +981,31 @@ export interface RootRouteChildren {
   ApiOperatorSkillsRoute: typeof ApiOperatorSkillsRoute
   ApiOperatorStatusRoute: typeof ApiOperatorStatusRoute
   ApiOperatorWalletRoute: typeof ApiOperatorWalletRoute
+  ApiPlatformAffiliatesRoute: typeof ApiPlatformAffiliatesRoute
+  ApiPlatformBetsRoute: typeof ApiPlatformBetsRoute
+  ApiPlatformCashflowRoute: typeof ApiPlatformCashflowRoute
+  ApiPlatformCategoriesRoute: typeof ApiPlatformCategoriesRoute
+  ApiPlatformCommandRoute: typeof ApiPlatformCommandRoute
+  ApiPlatformDepositsRoute: typeof ApiPlatformDepositsRoute
+  ApiPlatformGamesRoute: typeof ApiPlatformGamesRoute
+  ApiPlatformHealthRoute: typeof ApiPlatformHealthRoute
+  ApiPlatformLiveMapRoute: typeof ApiPlatformLiveMapRoute
+  ApiPlatformLobbyRoute: typeof ApiPlatformLobbyRoute
+  ApiPlatformOverviewRoute: typeof ApiPlatformOverviewRoute
+  ApiPlatformPaymentsRoute: typeof ApiPlatformPaymentsRoute
+  ApiPlatformPlayersRoute: typeof ApiPlatformPlayersRoute
+  ApiPlatformPromotionsRoute: typeof ApiPlatformPromotionsRoute
+  ApiPlatformRtpRoute: typeof ApiPlatformRtpRoute
+  ApiPlatformSnapshotRoute: typeof ApiPlatformSnapshotRoute
+  ApiPlatformStatsRoute: typeof ApiPlatformStatsRoute
+  ApiPlatformUsersRoute: typeof ApiPlatformUsersRouteWithChildren
+  ApiPlatformWalletsRoute: typeof ApiPlatformWalletsRouteWithChildren
+  ApiPlatformWhoamiRoute: typeof ApiPlatformWhoamiRoute
+  ApiPlatformWithdrawalsRoute: typeof ApiPlatformWithdrawalsRouteWithChildren
   ApiSportsbookCallbackRoute: typeof ApiSportsbookCallbackRouteWithChildren
   ApiSportsbookEventsRoute: typeof ApiSportsbookEventsRoute
   ApiSportsbookSessionRoute: typeof ApiSportsbookSessionRoute
+  ApiPlatformIndexRoute: typeof ApiPlatformIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -866,13 +1178,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/platform': {
-      id: '/api/platform'
-      path: '/api/platform'
-      fullPath: '/api/platform'
-      preLoaderRoute: typeof ApiPlatformRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/treasury': {
       id: '/api/treasury'
       path: '/api/treasury'
@@ -1006,19 +1311,159 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOperatorWalletRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/platform/': {
+      id: '/api/platform/'
+      path: '/api/platform'
+      fullPath: '/api/platform/'
+      preLoaderRoute: typeof ApiPlatformIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/affiliates': {
+      id: '/api/platform/affiliates'
+      path: '/api/platform/affiliates'
+      fullPath: '/api/platform/affiliates'
+      preLoaderRoute: typeof ApiPlatformAffiliatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/bets': {
+      id: '/api/platform/bets'
+      path: '/api/platform/bets'
+      fullPath: '/api/platform/bets'
+      preLoaderRoute: typeof ApiPlatformBetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/cashflow': {
+      id: '/api/platform/cashflow'
+      path: '/api/platform/cashflow'
+      fullPath: '/api/platform/cashflow'
+      preLoaderRoute: typeof ApiPlatformCashflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/categories': {
+      id: '/api/platform/categories'
+      path: '/api/platform/categories'
+      fullPath: '/api/platform/categories'
+      preLoaderRoute: typeof ApiPlatformCategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/command': {
+      id: '/api/platform/command'
+      path: '/api/platform/command'
+      fullPath: '/api/platform/command'
+      preLoaderRoute: typeof ApiPlatformCommandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/deposits': {
+      id: '/api/platform/deposits'
+      path: '/api/platform/deposits'
+      fullPath: '/api/platform/deposits'
+      preLoaderRoute: typeof ApiPlatformDepositsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/games': {
+      id: '/api/platform/games'
+      path: '/api/platform/games'
+      fullPath: '/api/platform/games'
+      preLoaderRoute: typeof ApiPlatformGamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/platform/health': {
       id: '/api/platform/health'
-      path: '/health'
+      path: '/api/platform/health'
       fullPath: '/api/platform/health'
       preLoaderRoute: typeof ApiPlatformHealthRouteImport
-      parentRoute: typeof ApiPlatformRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/live-map': {
+      id: '/api/platform/live-map'
+      path: '/api/platform/live-map'
+      fullPath: '/api/platform/live-map'
+      preLoaderRoute: typeof ApiPlatformLiveMapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/lobby': {
+      id: '/api/platform/lobby'
+      path: '/api/platform/lobby'
+      fullPath: '/api/platform/lobby'
+      preLoaderRoute: typeof ApiPlatformLobbyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/overview': {
+      id: '/api/platform/overview'
+      path: '/api/platform/overview'
+      fullPath: '/api/platform/overview'
+      preLoaderRoute: typeof ApiPlatformOverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/payments': {
+      id: '/api/platform/payments'
+      path: '/api/platform/payments'
+      fullPath: '/api/platform/payments'
+      preLoaderRoute: typeof ApiPlatformPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/players': {
+      id: '/api/platform/players'
+      path: '/api/platform/players'
+      fullPath: '/api/platform/players'
+      preLoaderRoute: typeof ApiPlatformPlayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/promotions': {
+      id: '/api/platform/promotions'
+      path: '/api/platform/promotions'
+      fullPath: '/api/platform/promotions'
+      preLoaderRoute: typeof ApiPlatformPromotionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/rtp': {
+      id: '/api/platform/rtp'
+      path: '/api/platform/rtp'
+      fullPath: '/api/platform/rtp'
+      preLoaderRoute: typeof ApiPlatformRtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/snapshot': {
+      id: '/api/platform/snapshot'
+      path: '/api/platform/snapshot'
+      fullPath: '/api/platform/snapshot'
+      preLoaderRoute: typeof ApiPlatformSnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/stats': {
+      id: '/api/platform/stats'
+      path: '/api/platform/stats'
+      fullPath: '/api/platform/stats'
+      preLoaderRoute: typeof ApiPlatformStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/users': {
+      id: '/api/platform/users'
+      path: '/api/platform/users'
+      fullPath: '/api/platform/users'
+      preLoaderRoute: typeof ApiPlatformUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/wallets': {
+      id: '/api/platform/wallets'
+      path: '/api/platform/wallets'
+      fullPath: '/api/platform/wallets'
+      preLoaderRoute: typeof ApiPlatformWalletsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/platform/whoami': {
       id: '/api/platform/whoami'
-      path: '/whoami'
+      path: '/api/platform/whoami'
       fullPath: '/api/platform/whoami'
       preLoaderRoute: typeof ApiPlatformWhoamiRouteImport
-      parentRoute: typeof ApiPlatformRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/platform/withdrawals': {
+      id: '/api/platform/withdrawals'
+      path: '/api/platform/withdrawals'
+      fullPath: '/api/platform/withdrawals'
+      preLoaderRoute: typeof ApiPlatformWithdrawalsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/sportsbook/callback': {
       id: '/api/sportsbook/callback'
@@ -1069,12 +1514,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthGoogleDiagRouteImport
       parentRoute: typeof ApiAuthGoogleRoute
     }
+    '/api/platform/users/$id': {
+      id: '/api/platform/users/$id'
+      path: '/$id'
+      fullPath: '/api/platform/users/$id'
+      preLoaderRoute: typeof ApiPlatformUsersIdRouteImport
+      parentRoute: typeof ApiPlatformUsersRoute
+    }
+    '/api/platform/wallets/adjust': {
+      id: '/api/platform/wallets/adjust'
+      path: '/adjust'
+      fullPath: '/api/platform/wallets/adjust'
+      preLoaderRoute: typeof ApiPlatformWalletsAdjustRouteImport
+      parentRoute: typeof ApiPlatformWalletsRoute
+    }
+    '/api/platform/wallets/bonus': {
+      id: '/api/platform/wallets/bonus'
+      path: '/bonus'
+      fullPath: '/api/platform/wallets/bonus'
+      preLoaderRoute: typeof ApiPlatformWalletsBonusRouteImport
+      parentRoute: typeof ApiPlatformWalletsRoute
+    }
     '/api/sportsbook/callback/$action': {
       id: '/api/sportsbook/callback/$action'
       path: '/$action'
       fullPath: '/api/sportsbook/callback/$action'
       preLoaderRoute: typeof ApiSportsbookCallbackActionRouteImport
       parentRoute: typeof ApiSportsbookCallbackRoute
+    }
+    '/api/platform/withdrawals/$id/approve': {
+      id: '/api/platform/withdrawals/$id/approve'
+      path: '/$id/approve'
+      fullPath: '/api/platform/withdrawals/$id/approve'
+      preLoaderRoute: typeof ApiPlatformWithdrawalsIdApproveRouteImport
+      parentRoute: typeof ApiPlatformWithdrawalsRoute
+    }
+    '/api/platform/withdrawals/$id/reject': {
+      id: '/api/platform/withdrawals/$id/reject'
+      path: '/$id/reject'
+      fullPath: '/api/platform/withdrawals/$id/reject'
+      preLoaderRoute: typeof ApiPlatformWithdrawalsIdRejectRouteImport
+      parentRoute: typeof ApiPlatformWithdrawalsRoute
     }
   }
 }
@@ -1161,20 +1641,6 @@ const ShellRouteChildren: ShellRouteChildren = {
 
 const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
 
-interface ApiPlatformRouteChildren {
-  ApiPlatformHealthRoute: typeof ApiPlatformHealthRoute
-  ApiPlatformWhoamiRoute: typeof ApiPlatformWhoamiRoute
-}
-
-const ApiPlatformRouteChildren: ApiPlatformRouteChildren = {
-  ApiPlatformHealthRoute: ApiPlatformHealthRoute,
-  ApiPlatformWhoamiRoute: ApiPlatformWhoamiRoute,
-}
-
-const ApiPlatformRouteWithChildren = ApiPlatformRoute._addFileChildren(
-  ApiPlatformRouteChildren,
-)
-
 interface ApiAuthGoogleRouteChildren {
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
   ApiAuthGoogleDiagRoute: typeof ApiAuthGoogleDiagRoute
@@ -1188,6 +1654,46 @@ const ApiAuthGoogleRouteChildren: ApiAuthGoogleRouteChildren = {
 const ApiAuthGoogleRouteWithChildren = ApiAuthGoogleRoute._addFileChildren(
   ApiAuthGoogleRouteChildren,
 )
+
+interface ApiPlatformUsersRouteChildren {
+  ApiPlatformUsersIdRoute: typeof ApiPlatformUsersIdRoute
+}
+
+const ApiPlatformUsersRouteChildren: ApiPlatformUsersRouteChildren = {
+  ApiPlatformUsersIdRoute: ApiPlatformUsersIdRoute,
+}
+
+const ApiPlatformUsersRouteWithChildren =
+  ApiPlatformUsersRoute._addFileChildren(ApiPlatformUsersRouteChildren)
+
+interface ApiPlatformWalletsRouteChildren {
+  ApiPlatformWalletsAdjustRoute: typeof ApiPlatformWalletsAdjustRoute
+  ApiPlatformWalletsBonusRoute: typeof ApiPlatformWalletsBonusRoute
+}
+
+const ApiPlatformWalletsRouteChildren: ApiPlatformWalletsRouteChildren = {
+  ApiPlatformWalletsAdjustRoute: ApiPlatformWalletsAdjustRoute,
+  ApiPlatformWalletsBonusRoute: ApiPlatformWalletsBonusRoute,
+}
+
+const ApiPlatformWalletsRouteWithChildren =
+  ApiPlatformWalletsRoute._addFileChildren(ApiPlatformWalletsRouteChildren)
+
+interface ApiPlatformWithdrawalsRouteChildren {
+  ApiPlatformWithdrawalsIdApproveRoute: typeof ApiPlatformWithdrawalsIdApproveRoute
+  ApiPlatformWithdrawalsIdRejectRoute: typeof ApiPlatformWithdrawalsIdRejectRoute
+}
+
+const ApiPlatformWithdrawalsRouteChildren: ApiPlatformWithdrawalsRouteChildren =
+  {
+    ApiPlatformWithdrawalsIdApproveRoute: ApiPlatformWithdrawalsIdApproveRoute,
+    ApiPlatformWithdrawalsIdRejectRoute: ApiPlatformWithdrawalsIdRejectRoute,
+  }
+
+const ApiPlatformWithdrawalsRouteWithChildren =
+  ApiPlatformWithdrawalsRoute._addFileChildren(
+    ApiPlatformWithdrawalsRouteChildren,
+  )
 
 interface ApiSportsbookCallbackRouteChildren {
   ApiSportsbookCallbackActionRoute: typeof ApiSportsbookCallbackActionRoute
@@ -1206,7 +1712,6 @@ const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiHealthRoute: ApiHealthRoute,
-  ApiPlatformRoute: ApiPlatformRouteWithChildren,
   ApiTreasuryRoute: ApiTreasuryRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAuthGoogleRoute: ApiAuthGoogleRouteWithChildren,
@@ -1222,9 +1727,31 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOperatorSkillsRoute: ApiOperatorSkillsRoute,
   ApiOperatorStatusRoute: ApiOperatorStatusRoute,
   ApiOperatorWalletRoute: ApiOperatorWalletRoute,
+  ApiPlatformAffiliatesRoute: ApiPlatformAffiliatesRoute,
+  ApiPlatformBetsRoute: ApiPlatformBetsRoute,
+  ApiPlatformCashflowRoute: ApiPlatformCashflowRoute,
+  ApiPlatformCategoriesRoute: ApiPlatformCategoriesRoute,
+  ApiPlatformCommandRoute: ApiPlatformCommandRoute,
+  ApiPlatformDepositsRoute: ApiPlatformDepositsRoute,
+  ApiPlatformGamesRoute: ApiPlatformGamesRoute,
+  ApiPlatformHealthRoute: ApiPlatformHealthRoute,
+  ApiPlatformLiveMapRoute: ApiPlatformLiveMapRoute,
+  ApiPlatformLobbyRoute: ApiPlatformLobbyRoute,
+  ApiPlatformOverviewRoute: ApiPlatformOverviewRoute,
+  ApiPlatformPaymentsRoute: ApiPlatformPaymentsRoute,
+  ApiPlatformPlayersRoute: ApiPlatformPlayersRoute,
+  ApiPlatformPromotionsRoute: ApiPlatformPromotionsRoute,
+  ApiPlatformRtpRoute: ApiPlatformRtpRoute,
+  ApiPlatformSnapshotRoute: ApiPlatformSnapshotRoute,
+  ApiPlatformStatsRoute: ApiPlatformStatsRoute,
+  ApiPlatformUsersRoute: ApiPlatformUsersRouteWithChildren,
+  ApiPlatformWalletsRoute: ApiPlatformWalletsRouteWithChildren,
+  ApiPlatformWhoamiRoute: ApiPlatformWhoamiRoute,
+  ApiPlatformWithdrawalsRoute: ApiPlatformWithdrawalsRouteWithChildren,
   ApiSportsbookCallbackRoute: ApiSportsbookCallbackRouteWithChildren,
   ApiSportsbookEventsRoute: ApiSportsbookEventsRoute,
   ApiSportsbookSessionRoute: ApiSportsbookSessionRoute,
+  ApiPlatformIndexRoute: ApiPlatformIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

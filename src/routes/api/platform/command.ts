@@ -7,7 +7,8 @@ import { credit, debit, ensureWallets, snapshotBalances } from "@/lib/wallet.ser
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Allow-Headers":
+    "Authorization, Content-Type, X-Bridge-Signature, X-Bridge-Timestamp, X-Bridge-Source, X-Casino-Origin",
   "Cache-Control": "no-store",
 };
 
@@ -37,21 +38,37 @@ export const Route = createFileRoute("/api/platform/command")({
             const userId = String(payload.userId ?? payload.user_id ?? "");
             const amount = Number(payload.amount);
             if (!userId || !Number.isFinite(amount) || amount === 0) {
-              return Response.json({ success: false, error: "userId and non-zero amount required" }, { status: 400, headers: CORS });
+              return Response.json(
+                { success: false, error: "userId and non-zero amount required" },
+                { status: 400, headers: CORS },
+              );
             }
             const currency = parseCurrency(payload.currency);
             await ensureWallets(userId);
             if (amount > 0) {
-              await credit(userId, currency, amount, type === "governance.bonus_credit" ? "bonus" : "adjust", undefined, String(payload.reason ?? type));
+              await credit(
+                userId,
+                currency,
+                amount,
+                type === "governance.bonus_credit" ? "bonus" : "adjust",
+                undefined,
+                String(payload.reason ?? type),
+              );
             } else {
               await debit(userId, currency, Math.abs(amount), "adjust", undefined, String(payload.reason ?? type));
             }
-            return Response.json({ success: true, ok: true, type, balances: await snapshotBalances(userId) }, { headers: CORS });
+            return Response.json(
+              { success: true, ok: true, type, balances: await snapshotBalances(userId) },
+              { headers: CORS },
+            );
           }
           const applied = await applyGovCommand(type, payload);
           return Response.json({ success: true, type, ...applied }, { headers: CORS });
         } catch (e) {
-          return Response.json({ success: false, error: e instanceof Error ? e.message : "command failed" }, { status: 400, headers: CORS });
+          return Response.json(
+            { success: false, error: e instanceof Error ? e.message : "command failed" },
+            { status: 400, headers: CORS },
+          );
         }
       },
     },
