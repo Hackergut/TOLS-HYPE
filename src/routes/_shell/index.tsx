@@ -76,10 +76,10 @@ function Home() {
       <Hero />
       <PromoBanner />
 
-      <LobbySection title="Live Show" href="/casino?cat=live" games={live} loading={loading} limit={12} />
-      <LobbySection title="Originals" href="/casino?cat=originals" games={originals} limit={14} />
-      <LobbySection title="Most Played" href="/casino" games={mostPlayed} loading={loading} limit={14} />
-      <LobbySection title="New" href="/casino" games={news} loading={loading} limit={14} />
+      <LobbySection title="Live Show" cat="live" games={live} loading={loading} limit={12} />
+      <LobbySection title="Originals" cat="originals" games={originals} limit={14} />
+      <LobbySection title="Most Played" games={mostPlayed} loading={loading} limit={14} />
+      <LobbySection title="New" games={news} loading={loading} limit={14} />
 
       <section aria-label="Providers" className="flex flex-col gap-4">
         <div className="flex items-end gap-3">
@@ -107,7 +107,7 @@ function Home() {
         ))}
       </section>
 
-      <LobbySection title="Table Games" href="/casino?cat=table" games={tables} loading={loading} limit={12} />
+      <LobbySection title="Table Games" cat="table" games={tables} loading={loading} limit={12} />
     </main>
   );
 }
