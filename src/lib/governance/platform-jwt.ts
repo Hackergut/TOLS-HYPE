@@ -25,10 +25,49 @@ export type PlatformJwtClaims = {
   exp: number;
   jti?: string;
   role?: string;
-  scope?: string[];
+  scope?: string | string[];
 };
 
 export type VerifyResult = { valid: boolean; claims?: PlatformJwtClaims; error?: string };
+
+export const PLATFORM_CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS,HEAD",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Cache-Control": "no-store",
+};
+
+export function scopesOf(claims: PlatformJwtClaims): string[] {
+  const raw = claims.scope;
+  if (raw == null) return ["*"];
+  if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
+  return String(raw)
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function scopeHas(claims: PlatformJwtClaims, needed: string): boolean {
+  const scopes = scopesOf(claims);
+  if (scopes.length === 0 || scopes.includes("*")) return true;
+  return scopes.includes(needed);
+}
+
+const seenJti = new Map<string, number>();
+
+function rememberJti(jti: string | undefined, exp: number): string | null {
+  if (!jti) return null;
+  const now = Math.floor(Date.now() / 1000);
+  const prev = seenJti.get(jti) ?? 0;
+  if (prev > now) return "replay detected";
+  seenJti.set(jti, Math.max(exp, now + 60));
+  if (seenJti.size > 4000) {
+    for (const [key, until] of seenJti) {
+      if (until <= now) seenJti.delete(key);
+    }
+  }
+  return null;
+}
 
 export function verifyPlatformJwt(token: string | null | undefined): VerifyResult {
   if (!token) return { valid: false, error: "Missing Authorization Bearer token" };
@@ -69,6 +108,8 @@ export function verifyPlatformJwt(token: string | null | undefined): VerifyResul
   if (payload.iss !== iss) return { valid: false, error: `Invalid iss expected ${iss}` };
   const aud = (env("PLATFORM_JWT_AUDIENCE") || "tols-casino").trim();
   if (payload.aud !== aud) return { valid: false, error: `Invalid aud expected ${aud}` };
+  const replay = rememberJti(payload.jti, payload.exp);
+  if (replay) return { valid: false, error: replay };
   return { valid: true, claims: payload };
 }
 
@@ -89,12 +130,29 @@ export function requirePlatformAuth(req: Request): { claims: PlatformJwtClaims }
           success: false,
           error: result.error || "Unauthorized",
           hint: isMissingKey
-            ? "Set PLATFORM_JWT_PUBLIC_KEY on tols-verc/tols"
+            ? "Set PLATFORM_JWT_PUBLIC_KEY on the casino (governance public key)"
             : "Send Authorization: Bearer <RS256 JWT iss=tols-governance aud=tols-casino>",
         },
-        { status: isMissingKey ? 503 : 401, headers: { "Cache-Control": "no-store" } },
+        { status: isMissingKey ? 503 : 401, headers: PLATFORM_CORS },
       ),
     };
   }
   return { claims: result.claims };
+}
+
+export function requirePlatformScope(
+  req: Request,
+  needed: string,
+): { claims: PlatformJwtClaims } | { response: Response } {
+  const auth = requirePlatformAuth(req);
+  if ("response" in auth) return auth;
+  if (!scopeHas(auth.claims, needed)) {
+    return {
+      response: Response.json(
+        { success: false, error: `Missing scope: ${needed}` },
+        { status: 403, headers: PLATFORM_CORS },
+      ),
+    };
+  }
+  return auth;
 }
