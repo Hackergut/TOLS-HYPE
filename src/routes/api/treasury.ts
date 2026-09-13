@@ -8,11 +8,13 @@ export const Route = createFileRoute("/api/treasury")({
       GET: async () => {
         const book = await pushSolanaLedger();
         return Response.json({
-          ok: true,
+          ok: book.sol != null,
           chain: "solana",
           addresses: treasuryAddresses(),
           sol: book.sol,
-          ready: Boolean(book.addresses.SOL),
+          lamports: book.solLamports,
+          rpc: book.rpc,
+          ready: Boolean(book.addresses.SOL) && book.sol != null,
         });
       },
     },

@@ -24,7 +24,23 @@ export function treasuryAddresses(): Partial<Record<Currency, string>> {
 }
 
 export function solRpc() {
-  return trim("SOL_RPC_URL") ?? "https://api.mainnet-beta.solana.com";
+  return trim("SOL_RPC_URL") ?? "https://solana-rpc.publicnode.com";
+}
+
+async function rpcBalance(rpc: string, pubkey: string): Promise<number | null> {
+  const res = await fetch(rpc, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBalance",
+      params: [pubkey],
+    }),
+    signal: AbortSignal.timeout(8_000),
+  });
+  const json = (await res.json()) as { result?: { value?: number } };
+  return json.result?.value ?? null;
 }
 
 export async function readSolTreasury(): Promise<TreasuryBook> {
@@ -34,28 +50,24 @@ export async function readSolTreasury(): Promise<TreasuryBook> {
   if (!pubkey) {
     return { chain: "solana", addresses, solLamports: null, sol: null, rpc };
   }
-  try {
-    const res = await fetch(rpc, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "getBalance",
-        params: [pubkey],
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    const json = (await res.json()) as { result?: { value?: number } };
-    const lamports = json.result?.value ?? null;
-    return {
-      chain: "solana",
-      addresses,
-      solLamports: lamports,
-      sol: lamports == null ? null : lamports / 1_000_000_000,
-      rpc,
-    };
-  } catch {
-    return { chain: "solana", addresses, solLamports: null, sol: null, rpc };
+  const fallbacks = [rpc, "https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"];
+  const seen = new Set<string>();
+  for (const endpoint of fallbacks) {
+    if (seen.has(endpoint)) continue;
+    seen.add(endpoint);
+    try {
+      const lamports = await rpcBalance(endpoint, pubkey);
+      if (lamports == null) continue;
+      return {
+        chain: "solana",
+        addresses,
+        solLamports: lamports,
+        sol: lamports / 1_000_000_000,
+        rpc: endpoint,
+      };
+    } catch {
+      continue;
+    }
   }
+  return { chain: "solana", addresses, solLamports: null, sol: null, rpc };
 }
