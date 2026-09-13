@@ -89,17 +89,44 @@ export function restCanonical(method: string, path: string, timestamp: string): 
   return `${timestamp}\n${method.toUpperCase()}\n${p}`;
 }
 
+function pathCandidates(request: Request): string[] {
+  const out: string[] = [];
+  const add = (p: string | null | undefined) => {
+    if (!p) return;
+    let v = p.trim();
+    if (!v) return;
+    if (!v.startsWith("/")) v = `/${v}`;
+    if (!out.includes(v)) out.push(v);
+    const noSlash = v.replace(/\/+$/, "") || "/";
+    if (!out.includes(noSlash)) out.push(noSlash);
+    const noQuery = v.split("?")[0] || v;
+    if (!out.includes(noQuery)) out.push(noQuery);
+  };
+
+  add(request.headers.get("x-bridge-path"));
+  try {
+    const url = new URL(request.url);
+    add(`${url.pathname}${url.search}`);
+    add(url.pathname);
+    const api = url.pathname.match(/(\/api\/(?:platform|bridge)\/[^\s]*)/);
+    if (api) add(api[1]);
+  } catch {
+    /* ignore */
+  }
+  return out;
+}
+
 /** REST HMAC for Governance → Casino platform reads (JWT fallback). */
 export function verifyRestHmac(request: Request, secretOverride?: string): boolean {
   const ts = request.headers.get("x-bridge-timestamp");
   if (!verifyBridgeTimestamp(ts)) return false;
   const sig = signatureFromHeaders(request.headers);
   if (!sig) return false;
-  const url = new URL(request.url);
-  const path = `${url.pathname}${url.search}`;
-  const canonical = restCanonical(request.method, path, String(ts));
-  if (verifyBridgeSignature(canonical, sig, secretOverride)) return true;
-  if (request.method.toUpperCase() === "GET" && verifyBridgeSignature("", sig, secretOverride)) return true;
+  const method = request.method;
+  for (const path of pathCandidates(request)) {
+    if (verifyBridgeSignature(restCanonical(method, path, String(ts)), sig, secretOverride)) return true;
+  }
+  if (method.toUpperCase() === "GET" && verifyBridgeSignature("", sig, secretOverride)) return true;
   return false;
 }
 

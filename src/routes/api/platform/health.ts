@@ -22,10 +22,11 @@ export const Route = createFileRoute("/api/platform/health")({
             timestamp: new Date().toISOString(),
             latencyMs: Date.now() - started,
             casino: { origin: cfg.casinoOrigin },
-            governance: { origin: cfg.towerOrigin },
+            governance: { origin: cfg.towerOrigin, jwks: `${cfg.towerOrigin}/api/platform/jwks` },
             db: dbState,
             bridge: {
               jwtConfigured: cfg.jwtReady,
+              hmacConfigured: cfg.hasBridgeSecret,
               env: {
                 PLATFORM_JWT_PUBLIC_KEY: cfg.jwtReady,
                 PLATFORM_JWT_ISSUER: process.env.PLATFORM_JWT_ISSUER || "tols-governance",

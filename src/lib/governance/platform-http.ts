@@ -22,7 +22,7 @@ export async function withPlatformAuth(
   scope: string | null,
   fn: (claims: PlatformJwtClaims) => Promise<unknown>,
 ): Promise<Response> {
-  const auth = scope ? requirePlatformScope(request, scope) : requirePlatformAuth(request);
+  const auth = scope ? await requirePlatformScope(request, scope) : await requirePlatformAuth(request);
   if ("response" in auth) return auth.response;
   try {
     return jsonOk(await fn(auth.claims));

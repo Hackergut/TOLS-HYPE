@@ -8,7 +8,7 @@ export const Route = createFileRoute("/api/platform/wallets")({
     handlers: {
       OPTIONS: platformOptions,
       GET: async ({ request }) => {
-        const auth = requirePlatformScope(request, "wallets:read");
+        const auth = await requirePlatformScope(request, "wallets:read");
         if ("response" in auth) return auth.response;
         try {
           const url = new URL(request.url);

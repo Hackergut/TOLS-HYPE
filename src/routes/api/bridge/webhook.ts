@@ -5,7 +5,7 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS,HEAD",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Bridge-Signature, X-Bridge-Timestamp, X-Webhook-Signature, X-Tower-Signature, X-Governance-Signature, X-Bridge-Source, X-Casino-Origin",
+    "Content-Type, Authorization, X-Bridge-Signature, X-Bridge-Timestamp, X-Webhook-Signature, X-Tower-Signature, X-Governance-Signature, X-Bridge-Source, X-Casino-Origin, X-Platform-Public-Key, X-Bridge-Path",
 };
 
 export const Route = createFileRoute("/api/bridge/webhook")({

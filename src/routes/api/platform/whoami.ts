@@ -9,11 +9,11 @@ export const Route = createFileRoute("/api/platform/whoami")({
       OPTIONS: platformOptions,
       GET: async ({ request }) => {
         const cfg = getBridgeConfig();
-        const inspected = inspectPlatformAuth(request);
+        const inspected = await inspectPlatformAuth(request);
         const payload = {
           authenticated: Boolean(inspected.claims),
           auth: inspected.via ?? "none",
-          jwt: { valid: inspected.jwt.valid, error: inspected.jwt.error ?? null },
+          jwt: { valid: inspected.jwt.valid, error: inspected.jwt.error ?? null, jwks: Boolean(inspected.jwks) },
           hmac: { valid: inspected.hmac, present: inspected.hmacPresent },
           iss: inspected.claims?.iss ?? null,
           aud: inspected.claims?.aud ?? null,
@@ -24,7 +24,9 @@ export const Route = createFileRoute("/api/platform/whoami")({
           service: "tols-casino",
           note: inspected.via
             ? inspected.via === "jwt"
-              ? "JWT valid — Tower is authenticated."
+              ? inspected.jwks
+                ? "JWT valid via Governance JWKS — Tower is authenticated."
+                : "JWT valid — Tower is authenticated."
               : "HMAC valid — Tower is authenticated (JWT fallback)."
             : "Send RS256 JWT (iss=tols-governance aud=tols-casino) or X-Bridge-Signature + X-Bridge-Timestamp.",
         };

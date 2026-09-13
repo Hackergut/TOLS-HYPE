@@ -22,6 +22,16 @@ test("REST HMAC canonical verifies GET without body", () => {
   assert.notEqual(hmacHex("c".repeat(32), canonical), hex);
 });
 
+test("REST HMAC of X-Bridge-Path matches even if request URL is rewritten", () => {
+  const secret = "d".repeat(32);
+  const ts = "1710000000";
+  const signedPath = "/api/platform/whoami";
+  const hex = hmacHex(secret, restCanonical("GET", signedPath, ts));
+  const rewritten = restCanonical("GET", "/_server/api/platform/whoami", ts);
+  assert.notEqual(hmacHex(secret, rewritten), hex);
+  assert.equal(hmacHex(secret, restCanonical("GET", signedPath, ts)), hex);
+});
+
 test("webhook ping body HMAC is sha256 hex of raw JSON", () => {
   const secret = "e".repeat(32);
   const raw = JSON.stringify({ type: "ping", payload: {}, ts: "x", source: "governance" });
@@ -66,4 +76,18 @@ test("mismatched RSA public key fails verify", () => {
   verifier.update(input);
   verifier.end();
   assert.equal(verifier.verify(key, sig), false);
+});
+
+test("derived public key from private key verifies the JWT", () => {
+  const pair = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const now = Math.floor(Date.now() / 1000);
+  const encode = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const input = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({ iss: "tols-governance", aud: "tols-casino", iat: now, exp: now + 300, jti: "x" })}`;
+  const sig = sign("RSA-SHA256", Buffer.from(input), pair.privateKey);
+  const derived = createPublicKey(pair.privateKey).export({ type: "spki", format: "pem" }).toString();
+  const key = createPublicKey(derived);
+  const verifier = createVerify("RSA-SHA256");
+  verifier.update(input);
+  verifier.end();
+  assert.equal(verifier.verify(key, sig), true);
 });

@@ -8,7 +8,7 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST,OPTIONS",
   "Access-Control-Allow-Headers":
-    "Authorization, Content-Type, X-Bridge-Signature, X-Bridge-Timestamp, X-Bridge-Source, X-Casino-Origin",
+    "Authorization, Content-Type, X-Bridge-Signature, X-Bridge-Timestamp, X-Bridge-Source, X-Casino-Origin, X-Platform-Public-Key, X-Bridge-Path",
   "Cache-Control": "no-store",
 };
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/platform/command")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
-        const auth = requirePlatformAuth(request);
+        const auth = await requirePlatformAuth(request);
         if ("response" in auth) return auth.response;
         let body: Record<string, unknown>;
         try {
