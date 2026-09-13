@@ -1,20 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { dbPing } from "@/lib/governance/db-ping.server";
 import { getBridgeConfig } from "@/lib/governance/bridge";
+import { platformCors, platformOptions } from "@/lib/governance/platform-http";
 
 export const Route = createFileRoute("/api/platform/health")({
   server: {
     handlers: {
-      OPTIONS: async () =>
-        new Response(null, {
-          status: 204,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET,HEAD,OPTIONS",
-            "Access-Control-Allow-Headers": "Authorization, Content-Type",
-          },
-        }),
-      HEAD: async () => new Response(null, { status: 200 }),
+      OPTIONS: platformOptions,
+      HEAD: async () => new Response(null, { status: 200, headers: platformCors }),
       GET: async () => {
         const started = Date.now();
         const cfg = getBridgeConfig();
@@ -22,7 +15,8 @@ export const Route = createFileRoute("/api/platform/health")({
         return Response.json(
           {
             success: true,
-            ok: dbState.ok,
+            ok: true,
+            platform: "tols-casino",
             service: "tols-casino-platform-bridge",
             status: dbState.ok ? "ok" : "degraded",
             timestamp: new Date().toISOString(),
@@ -40,17 +34,9 @@ export const Route = createFileRoute("/api/platform/health")({
                 GOVERNANCE_TOWER_URL: true,
                 APP_URL: true,
               },
-              endpoints: [
-                "GET /api/platform",
-                "GET /api/platform/health",
-                "GET /api/platform/whoami",
-                "POST /api/bridge/webhook",
-                "GET /api/bridge/health",
-                "GET /api/treasury",
-              ],
             },
           },
-          { status: dbState.ok ? 200 : 503, headers: { "Cache-Control": "no-store" } },
+          { status: 200, headers: platformCors },
         );
       },
     },
