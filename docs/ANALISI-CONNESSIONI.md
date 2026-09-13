@@ -245,6 +245,13 @@ VITE_AUTH_ENABLED=false             # preview; rimuovere in prod per login reale
 - [ ] VAPID prod + test push · Auth prod (Google/broker) + `whoami` · EuroVirtuals solo se confermato.
 - [ ] Suite di smoke: `npm test` + `browser-smoke.mjs` su dev e su build (`preview:restart`), più probe esterne su `/api/platform/health`, `/api/bridge/health`, `/api/treasury`, `/api/operator/games`.
 
+**Grado 4 — Attivazione chiavi reali (PARZIALE — sandbox offline) 2026-09-13**
+- [x] Chiavi Flexrix reali ricevute e cablate come env del sandbox (mai in file/commit): `flexrix:true`, merchant `FXC_…` riconosciuto.
+- [x] Self-test **47/47 verdi anche con le chiavi reali** (tutti i percorsi HMAC locali).
+- [x] Launch real-play ora invia il saldo USDT reale dal ledger invece di 0 (fallback 0 se DB non raggiungibile; il GIS corregge comunque). Documentato: integrazione USDT-only.
+- [ ] ⏳ **BLOCCATO — round-trip vendor**: il sandbox non ha rete outbound (TLS verso `api.upaflex.online` fallisce; verificato anche verso google.com). Lista giochi/launch reali verificabili solo da Vercel. Nessuna doc pubblica Flexrix trovata (API B2B privata) — schema HMAC da confermare col primo 200 reale o con l'account manager.
+- [ ] Prossimo passo: impostare le env su Vercel (vedi RUNBOOK §1) e verificare `/api/operator/status` + `/api/operator/games` in prod/preview.
+
 ## 6. Rischi principali
 
 1. **Doppio percorso Flexrix** (`flexrix` diretto vs `tols-next` via Next) con mapping valute diverso (`USD` vs `USDT`) → riconciliare prima della prod o i saldi divergeranno.

@@ -60,6 +60,26 @@ function mapGame(g: HubGame): RemoteGame | null {
   };
 }
 
+/**
+ * Real-play opening balance from the ledger. The vendor also calls GIS
+ * balance on session start, but sending the real value avoids a 0.00 flash
+ * in the game client. Never throws — a missed read falls back to 0 and the
+ * GIS callback corrects it a moment later.
+ *
+ * NOTE: Flexrix accounts are USD and this integration is USDT-only
+ * (launch maps USDT/SOL→USD, GIS answers the USDT wallet). Non-USDT
+ * players transact against their USDT balance on Flexrix titles.
+ */
+async function openingBalance(userId: string): Promise<number> {
+  try {
+    const { snapshotBalances } = await import("@/lib/wallet.server");
+    const usdt = (await snapshotBalances(userId)).USDT;
+    return Number.isFinite(usdt) ? Math.round(usdt * 100) / 100 : 0;
+  } catch {
+    return 0;
+  }
+}
+
 /** Flexrix hub direct — HMAC-SHA1. Does not go through tols-casino-next. */
 export const flexrixAdapter: AggregatorAdapter = {
   id: "flexrix",
@@ -110,7 +130,7 @@ export const flexrixAdapter: AggregatorAdapter = {
       player_id: req.userId,
       currency: ccy,
       language: req.language ?? "en",
-      balance: 0,
+      balance: await openingBalance(req.userId),
       return_url: req.returnUrl ?? `${origin}/`,
     };
     try {
