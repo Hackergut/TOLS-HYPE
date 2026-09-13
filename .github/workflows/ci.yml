@@ -16,6 +16,17 @@ jobs:
       FLEXRIX_SPORTS_SECRET: ci-throwaway-sports-secret-02
       GOVERNANCE_BRIDGE_SECRET: ci-throwaway-bridge-secret-03
       OPERATOR_WEBHOOK_SECRET: ci-throwaway-webhook-secret-04
+      # Enables the inert-by-default /api/selftest/* scaffolding the settlement
+      # loop is verified through. Without it those routes answer 404.
+      SPORT_SELFTEST: "1"
+      # The Odds API connector, pointed at the fake vendor the self-test boots.
+      THE_ODDS_API_KEY: ci-throwaway-odds-key
+      THE_ODDS_API_BASE: http://127.0.0.1:8099
+      THE_ODDS_API_SPORT: upcoming
+      THE_ODDS_API_REGIONS: us
+      THE_ODDS_API_MARKETS: h2h,spreads,totals
+      THE_ODDS_API_SCORES: "true"
+      ODDS_FAKE_PORT: "8099"
       BASE_URL: http://127.0.0.1:8080
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +48,7 @@ jobs:
       - name: build
         run: npm run build
 
-      - name: integration self-test (fake vendor)
+      - name: integration self-test (fake wallet vendors)
         run: |
           npm run dev > /tmp/tols-dev.log 2>&1 &
           SERVER_PID=$!
@@ -48,5 +59,7 @@ jobs:
           curl -sf http://127.0.0.1:8080/api/health > /dev/null || (cat /tmp/tols-dev.log; exit 1)
           npm run test:integration
           STATUS=$?
+          # The Odds API v4 connector, against a fake api.the-odds-api.com.
+          npm run test:odds || STATUS=$?
           kill $SERVER_PID
           exit $STATUS

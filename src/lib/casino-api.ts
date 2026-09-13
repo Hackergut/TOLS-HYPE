@@ -22,7 +22,10 @@ import {
 } from "@/lib/wallet.server";
 import { pushSettledBet } from "@/lib/governance/bridge";
 import { comboOdds, vigPrice } from "@/lib/odds";
-import { resolveOutcome, type MarketKind } from "@/lib/sports-book";
+import { resolveOutcome, type MarketKind, type Outcome } from "@/lib/sports-book";
+import { resolveApiOutcome, sportKeyForEvent } from "@/lib/sports/odds-api.server";
+import { createSportTicket } from "@/lib/sports/settlement.server";
+import type { SettledLeg } from "@/lib/sports/settlement";
 import {
   crashElapsedFor,
   crashMultiplierAt,
@@ -243,11 +246,86 @@ export const placeSportBet = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     assertBet(data.currency, data.amount);
     await ensureWallets(context.userId);
-    const resolved = data.legs.map((leg) => {
-      const o = resolveOutcome(leg.eventId, leg.market as MarketKind, leg.selection);
+    // Legs resolve against the curated book first, then the live Odds API
+    // feed (whose events are not in SPORT_EVENTS). An event in neither stays
+    // "Market closed" — never a guessed price.
+    const resolved: Outcome[] = [];
+    const fromFeed: boolean[] = [];
+    for (const leg of data.legs) {
+      const curated = resolveOutcome(leg.eventId, leg.market as MarketKind, leg.selection);
+      const o = curated ?? resolveApiOutcome(leg.eventId, leg.market, leg.selection);
       if (!o) throw new Error("Market closed");
-      return o;
-    });
+      resolved.push(o);
+      fromFeed.push(!curated);
+    }
+
+    // Real odds come with real results: a ticket on the live feed stays OPEN
+    // and is settled from the vendor's final score (see settleSportBets).
+    // House markets keep the instant provably-fair settlement below. Mixing
+    // the two in one ticket is refused — half of it would have no result to
+    // settle against.
+    const feedLegs = fromFeed.filter(Boolean).length;
+    if (feedLegs > 0 && feedLegs < resolved.length) {
+      throw new Error("Cannot mix live bookmaker markets with house markets in one ticket");
+    }
+    if (feedLegs > 0) {
+      const legOf = (o: Outcome): SettledLeg => ({
+        eventId: o.eventId,
+        market: o.market,
+        selection: o.selection,
+        odds: o.odds,
+        ...(o.line != null ? { line: o.line } : {}),
+        sportKey: sportKeyForEvent(o.eventId),
+        fixture: o.label,
+      });
+      const ticketIds: string[] = [];
+      if (data.mode === "combo") {
+        const price = comboOdds(resolved.map((o) => o.odds));
+        if (data.amount > 0) await debit(context.userId, data.currency, data.amount, "bet", resolved[0]!.eventId, "sports-acca");
+        ticketIds.push(
+          await createSportTicket({
+            userId: context.userId,
+            currency: data.currency,
+            stake: data.amount,
+            mode: "combo",
+            price,
+            legs: resolved.map(legOf),
+          }),
+        );
+        return {
+          mode: "combo" as const,
+          price,
+          hits: 0,
+          payout: 0,
+          status: "pending" as const,
+          tickets: ticketIds,
+          balances: await snapshot(context.userId),
+        };
+      }
+      for (const o of resolved) {
+        if (data.amount > 0) await debit(context.userId, data.currency, data.amount, "bet", o.eventId, o.marketLabel);
+        ticketIds.push(
+          await createSportTicket({
+            userId: context.userId,
+            currency: data.currency,
+            stake: data.amount,
+            mode: "single",
+            price: o.odds,
+            legs: [legOf(o)],
+          }),
+        );
+      }
+      return {
+        mode: "single" as const,
+        price: null as number | null,
+        hits: 0,
+        payout: 0,
+        status: "pending" as const,
+        tickets: ticketIds,
+        balances: await snapshot(context.userId),
+      };
+    }
+
     const fair = await takeFair(context.userId, data.mode === "combo" ? 1 : resolved.length);
 
     if (data.mode === "combo") {
@@ -263,6 +341,8 @@ export const placeSportBet = createServerFn({ method: "POST" })
         price,
         hits: win ? resolved.length : 0,
         payout,
+        status: "settled" as const,
+        tickets: [] as string[],
         balances: await snapshot(context.userId),
       };
     }
@@ -285,6 +365,8 @@ export const placeSportBet = createServerFn({ method: "POST" })
       price: null as number | null,
       hits,
       payout,
+      status: "settled" as const,
+      tickets: [] as string[],
       balances: await snapshot(context.userId),
     };
   });

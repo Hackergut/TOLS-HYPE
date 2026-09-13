@@ -17,11 +17,12 @@
     "preview:stop": "node scripts/preview.mjs stop",
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/fair.test.ts src/lib/governance/bridge.test.ts src/lib/operator/lobby-quota.test.ts src/lib/operator/config.test.ts src/lib/notifications/vapid.test.ts src/lib/providers.test.ts",
-    "test:unit": "node --test $(ls scripts/*.test.mjs | grep -v 'grok-pwa-plugin.test.mjs') && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/fair.test.ts src/lib/governance/bridge.test.ts src/lib/operator/lobby-quota.test.ts src/lib/operator/config.test.ts src/lib/notifications/vapid.test.ts src/lib/providers.test.ts",
+    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/fair.test.ts src/lib/governance/bridge.test.ts src/lib/operator/lobby-quota.test.ts src/lib/operator/config.test.ts src/lib/notifications/vapid.test.ts src/lib/providers.test.ts src/lib/sports/odds-api.test.ts src/lib/sports/settlement.test.ts",
+    "test:unit": "node --test $(ls scripts/*.test.mjs | grep -v 'grok-pwa-plugin.test.mjs') && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/fair.test.ts src/lib/governance/bridge.test.ts src/lib/operator/lobby-quota.test.ts src/lib/operator/config.test.ts src/lib/notifications/vapid.test.ts src/lib/providers.test.ts src/lib/sports/odds-api.test.ts src/lib/sports/settlement.test.ts",
     "test:integration": "node scripts/integration-selftest.mjs",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:odds": "node scripts/odds-api-selftest.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
