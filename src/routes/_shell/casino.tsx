@@ -43,6 +43,7 @@ function CasinoPage() {
   const navigate = Route.useNavigate();
   const { games: remote, ready } = useRemoteCatalog();
   const providers = useMemo(() => groupByProvider(remote), [remote]);
+  const featured = useMemo(() => providers.filter((p) => p.premium).slice(0, 8), [providers]);
   const selected = providers.find((p) => p.slug === providerParam) ?? null;
   const setProvider = (slug: string | null) =>
     navigate({ search: (prev) => ({ ...prev, provider: slug ?? undefined }) });
@@ -64,7 +65,7 @@ function CasinoPage() {
           Casino
         </BluescreenTitle>
         <p className="mt-1 text-sm text-muted-foreground">
-          Originals, studio providers, live tables, and slots.
+          Originals first, then premium studios and the full Flexrix lobby.
           {ready && providers.length > 0 ? ` ${providers.length} providers live.` : ""}
         </p>
       </header>
@@ -85,14 +86,33 @@ function CasinoPage() {
         <>
           <section>
             <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
-              Originals
+              TOLS Originals
             </BluescreenTitle>
             <GameGrid games={originals} />
           </section>
+          {featured.length > 0 ? (
+            <section className="flex flex-col gap-8">
+              <BluescreenTitle as="h2" className="text-lg font-bold md:text-xl">
+                Premium studios
+              </BluescreenTitle>
+              {featured.map((group) => (
+                <ProviderShelf key={`feat-${group.slug}`} group={group} limit={14} />
+              ))}
+            </section>
+          ) : null}
           {loading ? (
             <GameGrid games={[]} loading />
           ) : (
-            providers.map((group) => <ProviderShelf key={group.slug} group={group} limit={10} />)
+            <section className="flex flex-col gap-8">
+              <BluescreenTitle as="h2" className="text-lg font-bold md:text-xl">
+                All providers
+              </BluescreenTitle>
+              {providers
+                .filter((g) => !featured.some((f) => f.slug === g.slug))
+                .map((group) => (
+                  <ProviderShelf key={group.slug} group={group} limit={10} />
+                ))}
+            </section>
           )}
         </>
       ) : (

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" role="img" aria-label="Spade Gaming">
+  <rect width="160" height="64" rx="8" fill="#0F172A"/>
+  <path d="M80 10 L92 30 L80 54 L68 30 Z" fill="#E2E8F0"/>
+  <text x="80" y="58" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" letter-spacing="1" fill="#94A3B8">SPADE</text>
+</svg>

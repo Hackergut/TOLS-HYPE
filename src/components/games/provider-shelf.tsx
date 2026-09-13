@@ -5,20 +5,36 @@ import { ProviderMark } from "@/components/games/provider-mark";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import type { ProviderGroup } from "@/lib/providers";
 
-/** Horizontal provider shelf: logo header + snap-scroll row of games. */
+/** Horizontal provider shelf: original logo header + snap-scroll row. */
 export function ProviderShelf({ group, limit = 12 }: { group: ProviderGroup; limit?: number }) {
-  const games = group.games.slice(0, limit);
+  const cap = group.premium ? Math.max(limit, 14) : limit;
+  const games = group.games.slice(0, cap);
   if (games.length === 0) return null;
   return (
     <section aria-label={`${group.name} games`}>
       <div className="mb-3 flex items-center gap-3">
-        <ProviderMark name={group.name} logo={group.logo} tone={group.tone} className="h-10 w-16" />
-        <BluescreenTitle as="h2" className="truncate text-lg font-bold md:text-xl">
-          {group.name}
-        </BluescreenTitle>
-        <span className="shrink-0 text-xs text-muted-foreground">
-          {group.games.length} {group.games.length === 1 ? "game" : "games"}
-        </span>
+        <ProviderMark
+          name={group.name}
+          logo={group.logo}
+          tone={group.tone}
+          className="h-11 w-[4.5rem] shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+        />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <BluescreenTitle as="h2" className="truncate text-lg font-bold md:text-xl">
+              {group.name}
+            </BluescreenTitle>
+            {group.premium ? (
+              <span className="shrink-0 rounded-full border border-lime/40 bg-lime/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-lime">
+                PREMIUM
+              </span>
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {group.games.length} {group.games.length === 1 ? "game" : "games"}
+            {group.live ? ` · ${group.live} live` : ""}
+          </p>
+        </div>
         <Link
           to="/casino"
           search={{ provider: group.slug }}
