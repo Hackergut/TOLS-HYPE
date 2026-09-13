@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiDiceLine } from "@remixicon/react";
-import { GameCard } from "@/components/games/game-card";
+import { GameCard, GameCardSkeleton } from "@/components/games/game-card";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { TolsLoader } from "@/components/brand/tols-loader";
 import type { CatalogGame } from "@/lib/games-catalog";
 
 const STEP_NARROW = 24;
@@ -35,8 +34,13 @@ export function GameGrid({ games, loading = false }: { games: CatalogGame[]; loa
 
   if (loading && games.length === 0) {
     return (
-      <div className="flex min-h-[28vh] items-center justify-center py-10">
-        <TolsLoader size="mini" />
+      <div
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+        aria-label="Loading games"
+      >
+        {Array.from({ length: 12 }, (_, i) => (
+          <GameCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
