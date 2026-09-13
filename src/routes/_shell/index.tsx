@@ -1,13 +1,20 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Hero } from "@/components/home/hero";
 import { PromoBanner } from "@/components/home/promo-banner";
-import { GameGrid } from "@/components/games/game-grid";
+import { LobbySection } from "@/components/games/lobby-section";
+import { ProviderShelf } from "@/components/games/provider-shelf";
 import { ProviderStrip } from "@/components/games/provider-strip";
-import { Button } from "@/components/ui/button";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
-import { CATEGORIES, GAMES, gamesByCategory, type GameCategory } from "@/lib/games-catalog";
 import { groupByProvider } from "@/lib/providers";
+import {
+  lobbyPool,
+  sectionLiveShow,
+  sectionMostPlayed,
+  sectionNew,
+  sectionOriginals,
+  sectionTableGames,
+} from "@/lib/lobby-sections";
 import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
 const TITLE = "TOLS — Originals casino | Crash, Dice, Roulette, Blackjack";
@@ -37,24 +44,22 @@ export const Route = createFileRoute("/_shell/")({
 });
 
 function Home() {
-  const [cat, setCat] = useState<GameCategory | "all">("all");
   const navigate = useNavigate();
   const { games: studio, ready, flexrix } = useRemoteCatalog();
+  const pool = useMemo(() => lobbyPool(studio), [studio]);
+  const live = useMemo(() => sectionLiveShow(pool), [pool]);
+  const originals = useMemo(() => sectionOriginals(pool), [pool]);
+  const mostPlayed = useMemo(() => sectionMostPlayed(pool, 18), [pool]);
+  const news = useMemo(() => sectionNew(pool, 18), [pool]);
+  const tables = useMemo(() => sectionTableGames(pool), [pool]);
   const providers = useMemo(() => groupByProvider(studio), [studio]);
-  const originals = GAMES.filter((g) => g.original);
-  const local = cat === "all" ? originals : gamesByCategory(cat);
-  const remote =
-    cat === "all"
-      ? studio.filter((g) => !g.live)
-      : cat === "originals"
-        ? []
-        : studio.filter((g) => (cat === "live" ? g.live : g.category === cat));
-  const slots = studio.filter((g) => !g.live && g.category === "slots");
-  const live = studio.filter((g) => g.live);
+  const premium = providers.filter((p) => p.premium).slice(0, 8);
+  const rest = providers.filter((p) => !p.premium).slice(0, 10);
+  const loading = !ready && studio.length === 0;
   const hubDown = Boolean(flexrix.error) && studio.length === 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 md:gap-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 md:gap-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -65,33 +70,27 @@ function Home() {
             description: DESC,
             url: "/",
             image: OG,
-            potentialAction: {
-              "@type": "SearchAction",
-              target: "/casino",
-              query: "casino originals",
-            },
           }),
         }}
       />
       <Hero />
-      <div className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
-        {CATEGORIES.map((c) => (
-          <Button
-            key={c.id}
-            variant={cat === c.id ? "default" : "outline"}
-            className="h-10 shrink-0 rounded-full px-4"
-            onClick={() => setCat(c.id)}
-          >
-            {c.label}
-          </Button>
-        ))}
-      </div>
       <PromoBanner />
-      {providers.length > 0 ? (
-        <section>
-          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
+
+      <LobbySection title="Live Show" href="/casino?cat=live" games={live} loading={loading} limit={12} />
+      <LobbySection title="Originals" href="/casino?cat=originals" games={originals} limit={14} />
+      <LobbySection title="Most Played" href="/casino" games={mostPlayed} loading={loading} limit={14} />
+      <LobbySection title="New" href="/casino" games={news} loading={loading} limit={14} />
+
+      <section aria-label="Providers" className="flex flex-col gap-4">
+        <div className="flex items-end gap-3">
+          <BluescreenTitle as="h2" className="text-lg font-bold md:text-xl">
             Providers
           </BluescreenTitle>
+          <span className="pb-0.5 text-xs text-muted-foreground">{providers.length || ""}</span>
+        </div>
+        {hubDown ? (
+          <p className="text-sm text-muted-foreground">Studio lobby is waiting on the Flexrix hub.</p>
+        ) : (
           <ProviderStrip
             providers={providers}
             selected={null}
@@ -99,46 +98,16 @@ function Home() {
               if (slug) navigate({ to: "/casino", search: { provider: slug } });
             }}
           />
-        </section>
-      ) : null}
-      {cat !== "slots" && cat !== "live" ? (
-        <section>
-          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
-            Originals
-          </BluescreenTitle>
-          <GameGrid games={local} />
-        </section>
-      ) : null}
-      {cat === "all" || cat === "slots" ? (
-        <section>
-          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
-            Slots
-          </BluescreenTitle>
-          {hubDown ? (
-            <p className="text-sm text-muted-foreground">
-              Flexrix hub is configured but not listing games yet. Check FLEXRIX_MERCHANT_KEY on Vercel.
-            </p>
-          ) : (
-            <GameGrid games={cat === "all" ? slots : remote} loading={!ready && slots.length === 0} />
-          )}
-        </section>
-      ) : null}
-      {cat === "all" || cat === "live" ? (
-        <section>
-          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
-            Live show
-          </BluescreenTitle>
-          <GameGrid games={cat === "all" ? live : remote} loading={!ready && live.length === 0} />
-        </section>
-      ) : null}
-      {cat !== "all" && cat !== "slots" && cat !== "live" && cat !== "originals" ? (
-        <section>
-          <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
-            Studio
-          </BluescreenTitle>
-          <GameGrid games={remote} loading={!ready && remote.length === 0} />
-        </section>
-      ) : null}
+        )}
+        {premium.map((group) => (
+          <ProviderShelf key={`p-${group.slug}`} group={group} limit={12} />
+        ))}
+        {rest.map((group) => (
+          <ProviderShelf key={`r-${group.slug}`} group={group} limit={8} />
+        ))}
+      </section>
+
+      <LobbySection title="Table Games" href="/casino?cat=table" games={tables} loading={loading} limit={12} />
     </main>
   );
 }
