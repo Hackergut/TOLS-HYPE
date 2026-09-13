@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { cn } from "cn";
 
-export type ProviderTone = "light" | "dark";
+export type ProviderTone = "light" | "dark" | "mono";
 
 const HUES = [265, 96, 18, 205, 330, 160, 45, 230, 0, 290] as const;
 
@@ -18,15 +18,11 @@ function hue(name: string): number {
   return HUES[h % HUES.length] ?? 265;
 }
 
-/**
- * Provider logo tile. Light (white) tile by default — most brand assets
- * assume a light background; `tone="dark"` for white-on-dark lockups.
- * Falls back to a deterministic monogram when the logo is missing/broken.
- */
+/** Monochrome lockup on transparent ground. No tile, no color fill. */
 export function ProviderMark({
   name,
   logo,
-  tone = "light",
+  tone = "mono",
   className,
   imgClassName,
 }: {
@@ -38,11 +34,12 @@ export function ProviderMark({
 }) {
   const [broken, setBroken] = useState(false);
   const showLogo = Boolean(logo) && !broken;
+  const mono = tone === "mono" || Boolean(logo?.includes("/mono/"));
   return (
     <span
       className={cn(
-        "grid shrink-0 place-items-center overflow-hidden rounded-lg",
-        tone === "light" ? "bg-white" : "bg-black/70 ring-1 ring-white/10",
+        "grid shrink-0 place-items-center overflow-hidden",
+        mono ? "bg-transparent" : tone === "light" ? "rounded-lg bg-white" : "rounded-lg bg-black/70 ring-1 ring-white/10",
         className,
       )}
       title={name}
@@ -57,7 +54,7 @@ export function ProviderMark({
           decoding="async"
           draggable={false}
           onError={() => setBroken(true)}
-          className={cn("max-h-full max-w-full object-contain", imgClassName ?? "p-1")}
+          className={cn("max-h-full max-w-full object-contain", imgClassName ?? "px-0.5")}
         />
       ) : (
         <span

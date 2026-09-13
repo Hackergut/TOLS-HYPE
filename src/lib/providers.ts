@@ -1,13 +1,5 @@
 import type { CatalogGame } from "@/lib/games-catalog";
 
-/**
- * Provider metadata for the studio lobby: slugs, display names, curated
- * original logos (self-hosted), and premium ranking for shelf order.
- *
- * Resolution: curated original → hub logo → monogram (ProviderMark).
- * Hub assets are often game thumbs, not lockups — curated wins.
- */
-
 export function providerSlug(name: string): string {
   const slug = name
     .toLowerCase()
@@ -38,38 +30,44 @@ const ALIAS: Record<string, string> = {
   "pascal-gaming": "pascal",
 };
 
-type CuratedLogo = { src: string; tone: "light" | "dark" };
+type CuratedLogo = { src: string; tone: "light" | "dark" | "mono" };
 
-const CURATED: Record<string, CuratedLogo> = {
-  "pragmatic-play": { src: "/brand/providers/pragmatic-play.png", tone: "light" },
-  "pragmatic-play-live": { src: "/brand/providers/pragmatic-play.png", tone: "light" },
-  "evolution-gaming": { src: "/brand/providers/evolution-gaming.png", tone: "light" },
-  netent: { src: "/brand/providers/netent.png", tone: "dark" },
-  playngo: { src: "/brand/providers/playngo.png", tone: "light" },
-  "relax-gaming": { src: "/brand/providers/relax-gaming.png", tone: "dark" },
-  redtiger: { src: "/brand/providers/redtiger.png", tone: "light" },
-  yggdrasil: { src: "/brand/providers/yggdrasil.png", tone: "light" },
-  hacksaw: { src: "/brand/providers/hacksaw.png", tone: "dark" },
-  greentube: { src: "/brand/providers/greentube.png", tone: "dark" },
-  amusnet: { src: "/brand/providers/amusnet.jpg", tone: "light" },
-  egt: { src: "/brand/providers/egt.png", tone: "light" },
-  endorphina: { src: "/brand/providers/endorphina.png", tone: "light" },
-  habanero: { src: "/brand/providers/habanero.png", tone: "light" },
-  pgsoft: { src: "/brand/providers/pgsoft.jpg", tone: "light" },
-  popok: { src: "/brand/providers/popok.png", tone: "light" },
-  platipus: { src: "/brand/providers/platipus.png", tone: "light" },
-  "3-oaks": { src: "/brand/providers/3-oaks.jpg", tone: "dark" },
-  wazdan: { src: "/brand/providers/wazdan.png", tone: "dark" },
-  bgaming: { src: "/brand/providers/bgaming.svg", tone: "dark" },
-  cq9: { src: "/brand/providers/cq9.svg", tone: "dark" },
-  "idn-live": { src: "/brand/providers/idn-live.svg", tone: "dark" },
-  idn: { src: "/brand/providers/idn-live.svg", tone: "dark" },
-  spadegaming: { src: "/brand/providers/spadegaming.svg", tone: "dark" },
-  amatic: { src: "/brand/providers/amatic.svg", tone: "light" },
-  rubyplay: { src: "/brand/providers/rubyplay.svg", tone: "dark" },
-  pascal: { src: "/brand/providers/pascal.svg", tone: "dark" },
-  fachai: { src: "/brand/providers/fachai.svg", tone: "dark" },
-};
+function mono(slug: string): CuratedLogo {
+  return { src: `/brand/providers/mono/${slug}.svg`, tone: "mono" };
+}
+
+const CURATED: Record<string, CuratedLogo> = Object.fromEntries(
+  [
+    "pragmatic-play",
+    "pragmatic-play-live",
+    "evolution-gaming",
+    "netent",
+    "playngo",
+    "relax-gaming",
+    "redtiger",
+    "yggdrasil",
+    "hacksaw",
+    "greentube",
+    "amusnet",
+    "egt",
+    "endorphina",
+    "habanero",
+    "pgsoft",
+    "popok",
+    "platipus",
+    "3-oaks",
+    "wazdan",
+    "bgaming",
+    "cq9",
+    "idn-live",
+    "idn",
+    "spadegaming",
+    "amatic",
+    "rubyplay",
+    "pascal",
+    "fachai",
+  ].map((slug) => [slug, mono(slug)]),
+);
 
 const DISPLAY: Record<string, string> = {
   redtiger: "Red Tiger",
@@ -96,7 +94,6 @@ const DISPLAY: Record<string, string> = {
   "pragmatic-play": "Pragmatic Play",
 };
 
-/** Lower = shown earlier on the lobby. Unknown studios fall after. */
 const PREMIUM_RANK: Record<string, number> = {
   "pragmatic-play": 1,
   "pragmatic-play-live": 2,
@@ -150,7 +147,7 @@ export type ProviderGroup = {
   name: string;
   slug: string;
   logo: string | null;
-  tone: "light" | "dark";
+  tone: "light" | "dark" | "mono";
   games: CatalogGame[];
   live: number;
   premium: boolean;
@@ -172,7 +169,7 @@ export function groupByProvider(games: CatalogGame[]): ProviderGroup[] {
         name: providerDisplayName(raw),
         slug,
         logo: logo?.src ?? null,
-        tone: logo?.tone ?? "light",
+        tone: logo?.tone ?? "mono",
         games: gs,
         live: gs.filter((g) => g.live).length,
         premium: isPremiumProvider(slug),
