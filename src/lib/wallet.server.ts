@@ -41,16 +41,17 @@ export async function debit(
   }
   const prisma = await getPrisma();
   return prisma.$transaction(async (tx) => {
+    // Atomic conditional decrement: two concurrent bets can no longer both pass
+    // a stale read-then-check and overdraw the wallet (classic TOCTOU race).
+    const res = await tx.wallet.updateMany({
+      where: { userId, currency, balance: { gte: amount } },
+      data: { balance: { decrement: amount } },
+    });
+    if (res.count === 0) throw new Error("Insufficient balance");
     const row = await tx.wallet.findUnique({
       where: { userId_currency: { userId, currency } },
     });
-    const current = money(row?.balance);
-    if (!row || current < amount) throw new Error("Insufficient balance");
-    const next = current - amount;
-    await tx.wallet.update({
-      where: { userId_currency: { userId, currency } },
-      data: { balance: next },
-    });
+    const next = money(row?.balance);
     await tx.ledger.create({
       data: {
         userId,
@@ -75,15 +76,13 @@ export async function credit(
 ) {
   const prisma = await getPrisma();
   const next = await prisma.$transaction(async (tx) => {
-    const row = await tx.wallet.findUnique({
-      where: { userId_currency: { userId, currency } },
+    // Atomic increment: concurrent credits (payouts, bonuses) can no longer
+    // lose an update through a read-then-write race.
+    const res = await tx.wallet.updateMany({
+      where: { userId, currency },
+      data: { balance: { increment: amount } },
     });
-    if (!row) throw new Error("Wallet missing");
-    const updated = money(row.balance) + amount;
-    await tx.wallet.update({
-      where: { userId_currency: { userId, currency } },
-      data: { balance: updated },
-    });
+    if (res.count === 0) throw new Error("Wallet missing");
     if (amount > 0) {
       await tx.ledger.create({
         data: {
@@ -96,7 +95,10 @@ export async function credit(
         },
       });
     }
-    return updated;
+    const row = await tx.wallet.findUnique({
+      where: { userId_currency: { userId, currency } },
+    });
+    return money(row?.balance);
   });
 
   if (type === "win") {

@@ -142,10 +142,13 @@ export const playInstant = createServerFn({ method: "POST" })
     if (game.kind === "dice") {
       const roll = diceRoll(u[0]!);
       const over = data.choice === "over";
-      const target = data.target ?? 50;
+      // The payout table (99/chance) is only honest for chance 2..98. Clamp the
+      // TARGET, not the chance: clamping the chance while comparing the raw
+      // target let e.g. target=1_000_000 pay 99/98 with an always-true win
+      // check (EV > 100%, guaranteed-money exploit).
+      const target = Math.min(98, Math.max(2, data.target ?? 50));
       const chance = over ? 100 - target : target;
-      const clamped = Math.min(98, Math.max(1, chance));
-      const multiplierWin = 99 / clamped;
+      const multiplierWin = 99 / chance;
       const win = over ? roll >= target : roll < target;
       multiplier = win ? multiplierWin : 0;
       payout = win ? data.amount * multiplierWin : 0;
@@ -352,19 +355,23 @@ export const cashOutCrash = createServerFn({ method: "POST" })
     const currency = parseCurrency(round.currency);
     let payout = 0;
     let multiplier = 0;
-    if (!crashed) {
-      multiplier = current;
-      payout = bet * current;
-      await credit(context.userId, currency, payout, "win", round.game_id, "crash cash out");
-    }
-    await sql`
+    // Claim the settle atomically (returns a row only when we win the flip) so
+    // two concurrent cash-outs can never both credit the payout.
+    const claimed = await sql<{ ok: number }>`
       update game_rounds set status = 'settled', payload = ${JSON.stringify({
         ...payload,
         cashedAt: current,
         crashed,
       })}
-      where id = ${round.id} and user_id = ${context.userId}
+      where id = ${round.id} and user_id = ${context.userId} and status = 'open'
+      returning 1 as ok
     `;
+    if (claimed.length === 0) throw new Error("Round already settled");
+    if (!crashed) {
+      multiplier = current;
+      payout = bet * current;
+      await credit(context.userId, currency, payout, "win", round.game_id, "crash cash out");
+    }
     return {
       crashed,
       crashAt: payload.crashAt,
@@ -477,13 +484,15 @@ export const revealMine = createServerFn({ method: "POST" })
     }
     const hit = payload.mines.includes(data.index);
     if (hit) {
-      await sql`
+      const settled = await sql<{ ok: number }>`
         update game_rounds set status = 'settled', payload = ${JSON.stringify({
           ...payload,
           revealed: [...payload.revealed, data.index],
         })}
-        where id = ${data.roundId} and user_id = ${context.userId}
+        where id = ${data.roundId} and user_id = ${context.userId} and status = 'open'
+        returning 1 as ok
       `;
+      if (settled.length === 0) throw new Error("Round not open");
       return {
         hit: true,
         boom: true,
@@ -496,10 +505,12 @@ export const revealMine = createServerFn({ method: "POST" })
     }
     payload.revealed.push(data.index);
     const multiplier = minesMultiplier(payload.revealed.length, payload.mineCount, payload.size);
-    await sql`
+    const updated = await sql<{ ok: number }>`
       update game_rounds set payload = ${JSON.stringify(payload)}
-      where id = ${data.roundId} and user_id = ${context.userId}
+      where id = ${data.roundId} and user_id = ${context.userId} and status = 'open'
+      returning 1 as ok
     `;
+    if (updated.length === 0) throw new Error("Round not open");
     return {
       hit: false,
       boom: false,
@@ -529,6 +540,14 @@ export const cashOutMines = createServerFn({ method: "POST" })
     if (!round || round.status !== "open") throw new Error("Round not open");
     const payload = JSON.parse(round.payload) as MinesPayload;
     if (payload.revealed.length === 0) throw new Error("Reveal a tile first");
+    // Claim the settle atomically before crediting — concurrent cash-outs must
+    // not both pay out.
+    const claimed = await sql<{ ok: number }>`
+      update game_rounds set status = 'settled', payload = ${JSON.stringify({ ...payload, cashed: true })}
+      where id = ${data.roundId} and user_id = ${context.userId} and status = 'open'
+      returning 1 as ok
+    `;
+    if (claimed.length === 0) throw new Error("Round already settled");
     const multiplier = minesMultiplier(payload.revealed.length, payload.mineCount, payload.size);
     const payout = asNumber(round.bet_amount) * multiplier;
     await credit(
@@ -539,10 +558,6 @@ export const cashOutMines = createServerFn({ method: "POST" })
       round.game_id,
       "mines cash out",
     );
-    await sql`
-      update game_rounds set status = 'settled', payload = ${JSON.stringify({ ...payload, cashed: true })}
-      where id = ${data.roundId} and user_id = ${context.userId}
-    `;
     return {
       multiplier,
       payout,
@@ -636,83 +651,114 @@ export const blackjackAction = createServerFn({ method: "POST" })
   .validator(z.object({ roundId: z.string(), action: z.enum(["hit", "stand", "double"]) }))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const rows = await sql<{
-      payload: string;
-      status: string;
-      bet_amount: string;
-      currency: string;
-      game_id: string;
-    }>`
-      select payload, status, bet_amount, currency, game_id
-      from game_rounds
+    // Claim the round exclusively for this action: concurrent hit/stand/double
+    // requests (or a settle) fail the claim instead of interleaving — without
+    // it, racing "double"+"stand" could double-debit AND double-settle.
+    // `lockedAt` (written atomically with the claim) makes a lock left behind
+    // by a crashed server reclaimable: blackjack actions take well under a
+    // second, so a lock older than the TTL means its owner is gone.
+    const nowMs = Date.now();
+    const LOCK_STALE_MS = 2 * 60 * 1000;
+    const claim = await sql<{ ok: number }>`
+      update game_rounds set status = 'locked', payload = (payload::jsonb || jsonb_build_object('lockedAt', ${nowMs}::bigint))::text
       where id = ${data.roundId} and user_id = ${context.userId}
+        and (
+          status = 'open'
+          or (status = 'locked' and coalesce((payload::jsonb->>'lockedAt')::bigint, 0) < ${nowMs - LOCK_STALE_MS})
+        )
+      returning 1 as ok
     `;
-    const round = rows[0];
-    if (!round || round.status !== "open") throw new Error("Round not open");
-    const payload = JSON.parse(round.payload) as BjPayload;
-    let bet = asNumber(round.bet_amount);
-    const currency = parseCurrency(round.currency);
+    if (claim.length === 0) throw new Error("Round not open");
+    const release = () =>
+      sql`
+        update game_rounds set status = 'open'
+        where id = ${data.roundId} and user_id = ${context.userId} and status = 'locked'
+      `;
+    try {
+      const rows = await sql<{
+        payload: string;
+        status: string;
+        bet_amount: string;
+        currency: string;
+        game_id: string;
+      }>`
+        select payload, status, bet_amount, currency, game_id
+        from game_rounds
+        where id = ${data.roundId} and user_id = ${context.userId}
+      `;
+      const round = rows[0];
+      if (!round) throw new Error("Round not open");
+      const payload = JSON.parse(round.payload) as BjPayload;
+      let bet = asNumber(round.bet_amount);
+      const currency = parseCurrency(round.currency);
 
-    const settle = async (outcome: string, payout: number) => {
-      if (payout > 0) {
-        await credit(context.userId, currency, payout, "win", round.game_id, outcome);
+      const settle = async (outcome: string, payout: number) => {
+        if (payout > 0) {
+          await credit(context.userId, currency, payout, "win", round.game_id, outcome);
+        }
+        await sql`
+          update game_rounds set status = 'settled', payload = ${JSON.stringify(payload)}
+          where id = ${data.roundId} and user_id = ${context.userId} and status = 'locked'
+        `;
+        return {
+          player: payload.player,
+          dealer: payload.dealer,
+          holeHidden: false,
+          status: "settled" as const,
+          outcome,
+          payout,
+          playerTotal: handValue(payload.player).total,
+          dealerTotal: handValue(payload.dealer).total,
+          balances: await snapshot(context.userId),
+        };
+      };
+
+      if (data.action === "double") {
+        if (payload.player.length !== 2) throw new Error("Double only on first two cards");
+        // On insufficient balance this throws and the outer catch releases.
+        await debit(context.userId, currency, bet, "bet", round.game_id, "double");
+        bet *= 2;
+        payload.player.push(payload.shoe.pop()!);
+        await sql`
+          update game_rounds set bet_amount = ${bet}, payload = ${JSON.stringify(payload)}
+          where id = ${data.roundId} and user_id = ${context.userId} and status = 'locked'
+        `;
+        if (handValue(payload.player).total > 21) return settle("bust", 0);
+      } else if (data.action === "hit") {
+        payload.player.push(payload.shoe.pop()!);
+        const v = handValue(payload.player).total;
+        if (v > 21) return settle("bust", 0);
+        await sql`
+          update game_rounds set payload = ${JSON.stringify(payload)}
+          where id = ${data.roundId} and user_id = ${context.userId} and status = 'locked'
+        `;
+        await release();
+        return {
+          player: payload.player,
+          dealer: [payload.dealer[0]!],
+          holeHidden: true,
+          status: "open" as const,
+          outcome: null,
+          payout: 0,
+          playerTotal: v,
+          dealerTotal: handValue([payload.dealer[0]!]).total,
+          balances: await snapshot(context.userId),
+        };
       }
-      await sql`
-        update game_rounds set status = 'settled', payload = ${JSON.stringify(payload)}
-        where id = ${data.roundId} and user_id = ${context.userId}
-      `;
-      return {
-        player: payload.player,
-        dealer: payload.dealer,
-        holeHidden: false,
-        status: "settled" as const,
-        outcome,
-        payout,
-        playerTotal: handValue(payload.player).total,
-        dealerTotal: handValue(payload.dealer).total,
-        balances: await snapshot(context.userId),
-      };
-    };
 
-    if (data.action === "double") {
-      if (payload.player.length !== 2) throw new Error("Double only on first two cards");
-      await debit(context.userId, currency, bet, "bet", round.game_id, "double");
-      bet *= 2;
-      payload.player.push(payload.shoe.pop()!);
-      await sql`
-        update game_rounds set bet_amount = ${bet}, payload = ${JSON.stringify(payload)}
-        where id = ${data.roundId} and user_id = ${context.userId}
-      `;
-      if (handValue(payload.player).total > 21) return settle("bust", 0);
-    } else if (data.action === "hit") {
-      payload.player.push(payload.shoe.pop()!);
-      const v = handValue(payload.player).total;
-      if (v > 21) return settle("bust", 0);
-      await sql`
-        update game_rounds set payload = ${JSON.stringify(payload)}
-        where id = ${data.roundId} and user_id = ${context.userId}
-      `;
-      return {
-        player: payload.player,
-        dealer: [payload.dealer[0]!],
-        holeHidden: true,
-        status: "open" as const,
-        outcome: null,
-        payout: 0,
-        playerTotal: v,
-        dealerTotal: handValue([payload.dealer[0]!]).total,
-        balances: await snapshot(context.userId),
-      };
+      while (handValue(payload.dealer).total < 17) {
+        payload.dealer.push(payload.shoe.pop()!);
+      }
+      const p = handValue(payload.player).total;
+      const d = handValue(payload.dealer).total;
+      if (d > 21 || p > d) return settle("win", bet * 2);
+      if (p === d) return settle("push", bet);
+      return settle("lose", 0);
+    } catch (e) {
+      // The claim must not wedge the round: release it on any failure path.
+      await release().catch(() => undefined);
+      throw e;
     }
-
-    while (handValue(payload.dealer).total < 17) {
-      payload.dealer.push(payload.shoe.pop()!);
-    }
-    const p = handValue(payload.player).total;
-    const d = handValue(payload.dealer).total;
-    if (d > 21 || p > d) return settle("win", bet * 2);
-    if (p === d) return settle("push", bet);
-    return settle("lose", 0);
   });
 
 const KENO_PAY: Record<number, number[]> = {
@@ -824,6 +870,7 @@ export const playHilo = createServerFn({ method: "POST" })
     const payload = readPayload<HiloPayload>(round.payload);
     if (!payload?.card) throw new Error("No card in play");
     const current = payload.card;
+    const wasLive = payload.live === true;
     if (!payload.live) {
       assertBet(data.currency, data.amount);
       await ensureWallets(context.userId);
@@ -847,11 +894,18 @@ export const playHilo = createServerFn({ method: "POST" })
       payload.multiplier = 0;
       payload.card = next;
     }
-    await sql`
+    // Guard on the live state we read (fresh rounds have no live key) so a
+    // concurrent cash-out flipping live=false cannot be overwritten back to
+    // live=true here — that would resurrect a paid-out round.
+    const updated = await sql<{ ok: number }>`
       update game_rounds
       set payload = ${JSON.stringify(payload)}, bet_amount = ${payload.amount ?? data.amount}, currency = ${payload.currency ?? data.currency}
       where id = ${data.roundId} and user_id = ${context.userId}
+        and status = 'open'
+        and coalesce(payload::jsonb->>'live', 'false') = ${wasLive ? "true" : "false"}
+      returning 1 as ok
     `;
+    if (updated.length === 0) throw new Error("Round state changed — reload");
     return {
       previous: current,
       card: next,
@@ -885,6 +939,19 @@ export const cashOutHilo = createServerFn({ method: "POST" })
     if (!round || round.status !== "open") throw new Error("Round not open");
     const payload = readPayload<HiloPayload>(round.payload);
     if (!payload.live) throw new Error("Nothing to cash out");
+    // Flip live=false atomically (jsonb guard on the stored payload) so a
+    // concurrent cash-out cannot also credit — then pay only the winner.
+    const claimed = await sql<{ ok: number }>`
+      update game_rounds set payload = ${JSON.stringify({
+        ...payload,
+        live: false,
+        multiplier: 1,
+      })}
+      where id = ${data.roundId} and user_id = ${context.userId}
+        and status = 'open' and payload::jsonb->>'live' = 'true'
+      returning 1 as ok
+    `;
+    if (claimed.length === 0) throw new Error("Nothing to cash out");
     const multiplier = payload.multiplier ?? 1;
     const amount = payload.amount ?? asNumber(round.bet_amount);
     const currency = payload.currency ?? parseCurrency(round.currency);
@@ -892,12 +959,6 @@ export const cashOutHilo = createServerFn({ method: "POST" })
     if (payout > 0) {
       await credit(context.userId, currency, payout, "win", round.game_id, "hilo cash out");
     }
-    payload.live = false;
-    payload.multiplier = 1;
-    await sql`
-      update game_rounds set payload = ${JSON.stringify(payload)}
-      where id = ${data.roundId} and user_id = ${context.userId}
-    `;
     return { payout, multiplier, card: payload.card, balances: await snapshot(context.userId) };
   });
 
@@ -1041,11 +1102,16 @@ export const pickTower = createServerFn({ method: "POST" })
     const death = payload.deaths[payload.row] ?? 0;
     const hit = data.col === death;
     const nextRow = payload.row + 1;
+    // Serialize picks on the row we read: a racing pick (or replay) can't
+    // advance the row twice, probe several columns, or double-credit the top.
+    const claimed = await sql<{ ok: number }>`
+      update game_rounds set status = ${hit ? "settled" : "open"}, payload = ${JSON.stringify({ ...payload, row: nextRow })}
+      where id = ${data.roundId} and user_id = ${context.userId}
+        and status = 'open' and payload::jsonb->>'row' = ${String(payload.row)}
+      returning 1 as ok
+    `;
+    if (claimed.length === 0) throw new Error("Round state changed — reload");
     if (hit) {
-      await sql`
-        update game_rounds set status = 'settled', payload = ${JSON.stringify({ ...payload, row: nextRow })}
-        where id = ${data.roundId} and user_id = ${context.userId}
-      `;
       return { boom: true, row: payload.row, deaths: payload.deaths, multiplier: 0, payout: 0 };
     }
     const multiplier = towerMultiplier(nextRow);
@@ -1056,16 +1122,8 @@ export const pickTower = createServerFn({ method: "POST" })
       if (payout > 0 && amount > 0) {
         await credit(context.userId, parseCurrency(round.currency), payout, "win", round.game_id, "Tower");
       }
-      await sql`
-        update game_rounds set status = 'settled', payload = ${JSON.stringify({ ...payload, row: nextRow })}
-        where id = ${data.roundId} and user_id = ${context.userId}
-      `;
       return { boom: false, row: nextRow, multiplier, payout, done: true, balances: await snapshot(context.userId) };
     }
-    await sql`
-      update game_rounds set payload = ${JSON.stringify({ ...payload, row: nextRow })}
-      where id = ${data.roundId} and user_id = ${context.userId}
-    `;
     return { boom: false, row: nextRow, multiplier, done: false };
   });
 
@@ -1087,6 +1145,14 @@ export const cashTower = createServerFn({ method: "POST" })
     `;
     const round = rows[0];
     if (!round || round.status !== "open") throw new Error("Round not open");
+    // Claim the settle atomically before crediting — concurrent cash-outs must
+    // not both pay out.
+    const claimed = await sql<{ ok: number }>`
+      update game_rounds set status = 'settled'
+      where id = ${data.roundId} and user_id = ${context.userId} and status = 'open'
+      returning 1 as ok
+    `;
+    if (claimed.length === 0) throw new Error("Round already settled");
     const payload = JSON.parse(round.payload) as TowerPayload;
     const multiplier = towerMultiplier(payload.row);
     const amount = asNumber(round.bet_amount);
@@ -1094,9 +1160,6 @@ export const cashTower = createServerFn({ method: "POST" })
     if (payout > 0 && amount > 0) {
       await credit(context.userId, parseCurrency(round.currency), payout, "win", round.game_id, "Tower");
     }
-    await sql`
-      update game_rounds set status = 'settled' where id = ${data.roundId} and user_id = ${context.userId}
-    `;
     return { payout, multiplier, balances: await snapshot(context.userId) };
   });
 

@@ -77,19 +77,55 @@ async function loadOrCreate(userId: string) {
   const serverSeed = randomBytes(32).toString("hex");
   const clientSeed = randomBytes(8).toString("hex");
   const serverHash = hashSeed(serverSeed);
+  // Two first-time bets can race this insert — the loser must read, not crash
+  // on the primary-key conflict.
   await sql`
     insert into fair_seeds (user_id, server_seed, server_hash, client_seed, nonce)
     values (${userId}, ${serverSeed}, ${serverHash}, ${clientSeed}, 0)
+    on conflict (user_id) do nothing
   `;
-  return { server_seed: serverSeed, server_hash: serverHash, client_seed: clientSeed, nonce: 0 };
+  const again = await sql<{
+    server_seed: string;
+    server_hash: string;
+    client_seed: string;
+    nonce: number;
+  }>`
+    select server_seed, server_hash, client_seed, nonce from fair_seeds where user_id = ${userId}
+  `;
+  const row = again[0];
+  if (!row) throw new Error("fair seed init failed");
+  return row;
+}
+
+type FairSeedRow = {
+  used_nonce: number;
+  server_seed: string;
+  server_hash: string;
+  client_seed: string;
+};
+
+/** Atomically consume the next nonce; returns the nonce this call owns. */
+async function consumeNonce(userId: string): Promise<FairSeedRow | undefined> {
+  const sql = await getSql();
+  // RETURNING sees the post-update row, so the nonce this call draws from is
+  // the pre-increment value (nonce - 1). Concurrent bets each get their own
+  // nonce instead of replaying identical floats from a shared one.
+  const rows = await sql<FairSeedRow>`
+    update fair_seeds set nonce = nonce + 1
+    where user_id = ${userId}
+    returning nonce - 1 as used_nonce, server_seed, server_hash, client_seed
+  `;
+  return rows[0];
 }
 
 export async function takeFairRng(userId: string): Promise<FairRng> {
-  const sql = await getSql();
-  const row = await loadOrCreate(userId);
-  const nonce = row.nonce;
-  await sql`update fair_seeds set nonce = ${nonce + 1} where user_id = ${userId}`;
-  return new FairRng(row.server_seed, row.client_seed, nonce, row.server_hash);
+  let row = await consumeNonce(userId);
+  if (!row) {
+    await loadOrCreate(userId);
+    row = await consumeNonce(userId);
+  }
+  if (!row) throw new Error("fair seed unavailable");
+  return new FairRng(row.server_seed, row.client_seed, row.used_nonce, row.server_hash);
 }
 
 export async function takeFair(userId: string, count = 8): Promise<FairTake> {
