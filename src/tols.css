@@ -600,6 +600,20 @@
   color: rgb(255 255 255 / 0.78);
   animation: tols-auth-rise 0.7s 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+/* Chrome diamond-plus accent above the bonus line (3dsvg, lazy). */
+.tols-auth-art-gem {
+  float: right;
+  width: 64px;
+  height: 64px;
+  margin: -0.4rem -0.15rem 0.15rem 0.6rem;
+  filter: drop-shadow(0 6px 18px rgb(239 68 68 / 0.35));
+}
+@media (max-width: 799px) {
+  .tols-auth-art-gem {
+    width: 52px;
+    height: 52px;
+  }
+}
 .tols-auth-bonus-line {
   margin-bottom: 0.35rem;
   font-size: 12px;

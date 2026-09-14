@@ -5,6 +5,7 @@ import { GROK_PROVIDERS, authClient, signIn } from "@/lib/auth/client";
 import { TolsMark } from "@/components/brand/tols-mark";
 import { TolsT3D } from "@/components/brand/tols-t-3d";
 import { TolsAuthGlow } from "@/components/brand/tols-auth-glow";
+import { TolsDiamondPlus3D } from "@/components/brand/icon3d";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,6 +123,7 @@ export function AuthWidgetPanel({
           <TolsMark large />
         </div>
         <div className="tols-auth-art-foot">
+          <TolsDiamondPlus3D className="tols-auth-art-gem" />
           <p className="tols-auth-bonus-line">
             ${WELCOME_DESKTOP} welcome bonus · ${WELCOME_MOBILE} if you also sign in on mobile
           </p>
