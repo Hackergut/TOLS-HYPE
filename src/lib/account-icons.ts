@@ -31,6 +31,7 @@ export const ACCOUNT_ICONS: Record<NavLink["icon"], typeof RiWallet3Line> = {
   vault: RiLock2Line,
   token: RiCopperCoinLine,
   affiliate: RiShareForwardLine,
+  promotions: RiCoupon3Line,
   alerts: RiNotification3Line,
   tx: RiExchangeDollarLine,
   redeem: RiCoupon3Line,

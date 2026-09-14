@@ -23,6 +23,9 @@ import {
   RiMoneyDollarCircleLine,
   RiInformationLine,
   RiBriefcase4Line,
+  RiCoupon3Line,
+  RiVipLine,
+  RiHandHeartLine,
 } from "@remixicon/react";
 import {
   Sidebar,
@@ -50,6 +53,9 @@ const ICONS = {
   sports: RiBasketballLine,
   fairness: RiShieldCheckLine,
   affiliate: RiShareForwardLine,
+  promotions: RiCoupon3Line,
+  vip: RiVipLine,
+  responsible: RiHandHeartLine,
 };
 
 const CAT_ICONS = {

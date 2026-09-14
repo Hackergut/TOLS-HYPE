@@ -15,6 +15,7 @@ export type NavLink = {
     | "vault"
     | "token"
     | "affiliate"
+    | "promotions"
     | "alerts"
     | "tx"
     | "redeem"
@@ -27,11 +28,14 @@ export type NavLink = {
 export const BROWSE_NAV: NavLink[] = [
   { title: "Lobby", to: "/", icon: "home" },
   { title: "Dashboard", to: "/dashboard", icon: "dashboard" },
+  { title: "Promotions", to: "/promotions", icon: "promotions" },
   { title: "Affiliates", to: "/affiliate", icon: "affiliate" },
+  { title: "VIP", to: "/vip", icon: "vip" },
 ];
 
 export const BROWSE_FOOT: NavLink[] = [
   { title: "Fairness", to: "/fairness", icon: "fairness" },
+  { title: "Responsible play", to: "/responsible", icon: "responsible" },
 ];
 
 export type OriginalNav = {
