@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { RiAddLine, RiChat3Line } from "@remixicon/react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -5,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
 import { isRealPlayer, useCurrentUserState } from "@/lib/auth/use-current-user";
 import { TolsMark } from "@/components/brand/tols-mark";
-import { useAuthWidget } from "@/components/auth/auth-widget-provider";
 import { useRightDock } from "@/components/layout/right-dock";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { NotificationBell } from "@/components/layout/notification-bell";
@@ -17,7 +17,6 @@ export function SiteHeader() {
   const authed = isRealPlayer(user);
   const { toggle } = useRightDock();
   const { openTab } = useWalletHub();
-  const auth = useAuthWidget();
 
   return (
     <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/70 px-2 backdrop-blur-xl md:h-16 md:gap-3 md:px-5">
@@ -26,7 +25,7 @@ export function SiteHeader() {
       <div className="hidden flex-1 md:block">
         <GameSearch />
       </div>
-      <div className="ml-auto flex items-center gap-1.5 md:gap-2">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5 md:gap-2">
         {isPending ? (
           <Skeleton className="h-9 w-24 rounded-lg md:w-36" />
         ) : authed ? (
@@ -55,22 +54,11 @@ export function SiteHeader() {
         ) : (
           <>
             <SignedOut>
-              <Button
-                type="button"
-                variant="outline"
-                data-auth="login"
-                className="h-9 rounded-lg px-3 md:h-10 md:px-4"
-                onClick={() => auth.open("login")}
-              >
-                Login
+              <Button asChild variant="outline" data-auth="login" className="h-9 rounded-lg px-3 md:h-10 md:px-4">
+                <Link to="/login">Login</Link>
               </Button>
-              <Button
-                type="button"
-                data-auth="signup"
-                className="h-9 rounded-lg px-3 md:h-10 md:px-4"
-                onClick={() => auth.open("register")}
-              >
-                Sign up
+              <Button asChild data-auth="signup" className="h-9 rounded-lg px-3 md:h-10 md:px-4">
+                <Link to="/register">Sign up</Link>
               </Button>
             </SignedOut>
             <SignedIn>

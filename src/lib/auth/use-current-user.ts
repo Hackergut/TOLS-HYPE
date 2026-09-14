@@ -71,27 +71,23 @@ function useNativeSession(): CurrentUserState {
  */
 export function useCurrentUserState(): CurrentUserState {
   const native = useNativeSession();
-  if (!authEnabled) {
-    if (native.user) return { user: native.user, isPending: false };
-    if (inGrokSandbox()) return { user: DEV_USER, isPending: false };
-    return { user: null, isPending: native.isPending };
-  }
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending } = authClient.useSession();
   if (native.user) return { user: native.user, isPending: false };
   const user = data?.user;
-  return {
-    user: user
-      ? {
-          id: user.id,
-          displayName: user.name ?? null,
-          primaryEmail: user.email ?? null,
-          profileImageUrl: user.image ?? null,
-          isDevFallback: false,
-        }
-      : null,
-    isPending: native.isPending || isPending,
-  };
+  if (user) {
+    return {
+      user: {
+        id: user.id,
+        displayName: user.name ?? null,
+        primaryEmail: user.email ?? null,
+        profileImageUrl: user.image ?? null,
+        isDevFallback: false,
+      },
+      isPending: false,
+    };
+  }
+  if (!authEnabled && inGrokSandbox()) return { user: DEV_USER, isPending: false };
+  return { user: null, isPending: native.isPending || isPending };
 }
 
 /**

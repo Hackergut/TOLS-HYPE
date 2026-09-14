@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiCloseLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
-import { GROK_PROVIDERS, authClient, signIn } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth/client";
 import { TolsMark } from "@/components/brand/tols-mark";
 import { TolsT3D } from "@/components/brand/tols-t-3d";
 import { TolsAuthGlow } from "@/components/brand/tols-auth-glow";
@@ -31,14 +31,6 @@ function TelegramMark() {
     <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
       <path fill="#2AABEE" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" />
       <path fill="#fff" d="M6.9 11.7c3.1-1.35 5.17-2.24 6.2-2.67 2.95-1.23 3.57-1.44 3.97-1.45.3 0 .57.14.64.42.07.24.04.5.02.86-.25 2.6-1.33 8.92-1.88 11.83-.23 1.22-.69 1.38-1.13 1.15-.9-.43-1.75-.94-2.6-1.43l-.4-.24c-1.12-.7-2.24-1.4-3.36-2.1-.28-.18-.3-.57-.05-.79l.07-.06c.5-.44 1.5-1.32 2.1-1.85.17-.15.08-.42-.14-.42h-.05c-.82.05-2.4.2-3.2.27a.4.4 0 0 1-.43-.48l.03-.1c.2-.7.38-1.44.5-2.18a.5.5 0 0 1 .35-.4Z" />
-    </svg>
-  );
-}
-
-function XMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5 fill-current" aria-hidden>
-      <path d="M18.9 2H22l-6.8 7.8L23 22h-6.5l-5.1-6.7L5.7 22H2.6l7.3-8.3L1 2h6.6l4.6 6.1L18.9 2Zm-1.1 18.1h1.8L6.3 3.8H4.4l13.4 16.3Z" />
     </svg>
   );
 }
@@ -76,21 +68,6 @@ export function AuthWidgetPanel({
     setError(null);
     markAdult();
     window.location.assign(`/api/auth/telegram?next=${tab === "register" ? "/?welcome" : "/"}`);
-  }
-
-  async function onSocial(providerId: string, idp: string) {
-    setError(null);
-    if (idp === "google") {
-      onGoogle();
-      return;
-    }
-    try {
-      markAdult();
-      await signIn(providerId, { callbackURL: "/" });
-      onDone?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign-in failed");
-    }
   }
 
   async function onEmail(e: FormEvent<HTMLFormElement>) {
@@ -262,18 +239,6 @@ export function AuthWidgetPanel({
             <TelegramMark />
             <span className="sr-only">Telegram</span>
           </Button>
-          {GROK_PROVIDERS.filter((p) => p.idp !== "google").map((p) => (
-            <Button
-              key={p.providerId}
-              type="button"
-              variant="outline"
-              className="tols-auth-social"
-              onClick={() => void onSocial(p.providerId, p.idp)}
-            >
-              <XMark />
-              <span className="sr-only">{p.label}</span>
-            </Button>
-          ))}
         </div>
       </section>
     </div>

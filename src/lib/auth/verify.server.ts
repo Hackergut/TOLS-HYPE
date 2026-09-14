@@ -1,6 +1,5 @@
 import { getRequest, getCookie, setCookie } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
-import { gateIdentityEnabled } from "./gate-identity.server";
 import { auth, authConfigured } from "./server";
 import { readSessionToken, SESSION_COOKIE } from "./google-session.server";
 
@@ -78,36 +77,26 @@ export async function getSessionUser(
 ): Promise<VerifiedUser | null> {
   const google = googleSessionUser();
   if (google) return google;
-  if (!authConfigured && !gateIdentityEnabled()) return null;
   const request = getRequest();
   if (!request) return null;
-  let headers = request.headers;
-  if (bearerToken) {
-    headers = new Headers(request.headers);
-    headers.set("Authorization", `Bearer ${bearerToken}`);
+  try {
+    let headers = request.headers;
+    if (bearerToken) {
+      headers = new Headers(request.headers);
+      headers.set("Authorization", `Bearer ${bearerToken}`);
+    }
+    const session = await auth.api.getSession({ headers });
+    if (!session?.user) return null;
+    return { id: session.user.id, email: session.user.email ?? null };
+  } catch {
+    return null;
   }
-  const session = await auth.api.getSession({ headers });
-  if (!session?.user) return null;
-  return { id: session.user.id, email: session.user.email ?? null };
 }
 
-/**
- * Resolve the current user id for a server function, or throw when unauthorized.
- * Prefer `authMiddleware` (`./middleware`), which calls this for you.
- * - Auth enabled -> the verified session user id; throws
- *   `UnauthorizedError` when signed out. Works in the sandbox preview too (real
- *   sign-in via the baked preview client).
- * - Auth disabled + DATABASE_URL -> per-browser guest cookie (not shared dev-user).
- * - Auth disabled + no database -> the shared dev user id.
- */
 export async function requireUserId(bearerToken?: string): Promise<string> {
-  const google = googleSessionUser();
-  if (google) return google.id;
-  if (!authConfigured && !gateIdentityEnabled()) {
-    if (databaseConfigured) return guestUserId();
-    return DEV_USER_ID;
-  }
   const user = await getSessionUser(bearerToken);
-  if (!user) throw new UnauthorizedError();
-  return user.id;
+  if (user) return user.id;
+  if (databaseConfigured) return guestUserId();
+  if (!authConfigured) return DEV_USER_ID;
+  throw new UnauthorizedError();
 }
