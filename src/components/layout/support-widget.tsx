@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiChat3Fill, RiCloseLine, RiHome5Line, RiQuestionLine, RiSearchLine, RiSendPlaneFill } from "@remixicon/react";
 import { TolsWordmark } from "@/components/brand/tols-mark";
+import { TolsChatIcon } from "@/components/brand/tols-chat-icon";
 import { cn } from "cn";
 
 const FAQS = [
@@ -185,9 +186,9 @@ export function SupportWidget() {
           type="button"
           aria-label="Open live support"
           onClick={() => setOpen(true)}
-          className="pointer-events-auto grid size-14 place-items-center rounded-full bg-[#904bf9] text-white shadow-[0_12px_40px_rgb(144_75_249/0.55)] ring-2 ring-white/15 transition hover:brightness-110"
+          className="tols-chat-fab pointer-events-auto"
         >
-          <RiChat3Fill className="size-7" />
+          <TolsChatIcon className="size-full" />
         </button>
       )}
     </div>

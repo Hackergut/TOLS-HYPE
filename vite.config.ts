@@ -161,6 +161,10 @@ export default defineConfig(({ command, isPreview }) => ({
   resolve: { tsconfigPaths: true },
   ssr: {
     noExternal: ["tslib", "radix-ui", /^@radix-ui\//],
+    external: ["3dsvg", "three", "@react-three/fiber", "@react-three/drei"],
+  },
+  optimizeDeps: {
+    include: ["3dsvg", "three", "@react-three/fiber", "@react-three/drei"],
   },
   plugins: [
     pgliteBootstrapPlugin(),

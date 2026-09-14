@@ -1,4 +1,3 @@
-import type { ElementType } from "react"
 import { cn } from "cn"
 
 /**
@@ -11,7 +10,7 @@ export function BluescreenTitle({
   className,
 }: {
   children: string
-  as?: ElementType
+  as?: "h1" | "h2" | "h3" | "h4" | "p" | "span"
   className?: string
 }) {
   return (

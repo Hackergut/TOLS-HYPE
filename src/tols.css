@@ -277,7 +277,35 @@
     color: #fff;
     box-shadow: 0 0 8px rgb(225 81 78 / 0.55);
   }
-  /* Card pills: HOT / NEW / LIVE / RTP / TOLS. */
+  /* Card status: icon-only stroke chips, no word labels. */
+  .tols-card-icon {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    color: #fff;
+    background: rgb(8 8 12 / 0.45);
+    border: 1px solid rgb(255 255 255 / 0.14);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  }
+  .tols-card-icon.is-hot {
+    color: #ff8a3d;
+    border-color: rgb(255 122 24 / 0.35);
+  }
+  .tols-card-icon.is-new {
+    color: #00ffbd;
+    border-color: rgb(0 255 189 / 0.35);
+  }
+  .tols-card-icon.is-live {
+    color: #ff6b68;
+    border-color: rgb(225 81 78 / 0.4);
+  }
+  .tols-card-icon.is-original {
+    color: #fff;
+    border-color: rgb(144 75 249 / 0.45);
+  }
   .tols-pill {
     display: inline-flex;
     align-items: center;
@@ -445,3 +473,370 @@
     min-height: 0;
   }
 }
+
+.tols-auth-dialog {
+  background: #121218;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.tols-auth-dialog [data-slot="dialog-close"] {
+  z-index: 3;
+  color: #fff;
+}
+.tols-auth-split {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 800px) {
+  .tols-auth-split {
+    grid-template-columns: 1.08fr 0.92fr;
+    min-height: min(640px, 86dvh);
+  }
+}
+.tols-auth-art {
+  position: relative;
+  min-height: 260px;
+  overflow: hidden;
+  background: #120816;
+}
+@media (min-width: 800px) {
+  .tols-auth-art {
+    min-height: 100%;
+  }
+}
+.tols-auth-art-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+.tols-auth-art-3d:active {
+  cursor: grabbing;
+}
+.tols-auth-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 36%;
+  filter: brightness(1.12) contrast(1.05);
+}
+@media (min-width: 800px) {
+  .tols-auth-art-img {
+    object-position: center 42%;
+    filter: none;
+  }
+}
+.tols-auth-art-wash {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgb(8 4 14 / 0.28) 0%,
+    transparent 30%,
+    transparent 58%,
+    rgb(8 4 14 / 0.88) 100%
+  );
+}
+.tols-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: var(--canvas, #0d0d10);
+  transition: opacity 0.5s ease-out;
+  pointer-events: none;
+}
+.tols-boot-mark {
+  width: min(72vw, 420px);
+  height: min(72vw, 420px);
+}
+.tols-auth-art-top {
+  position: absolute;
+  top: 1.1rem;
+  left: 1.1rem;
+  z-index: 2;
+}
+.tols-auth-art-foot {
+  position: absolute;
+  inset-inline: 1.15rem;
+  bottom: 1.05rem;
+  z-index: 2;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgb(255 255 255 / 0.78);
+}
+.tols-auth-bonus-line {
+  margin-bottom: 0.35rem;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-lime, #00ffbd);
+}
+.tols-auth-form {
+  position: relative;
+  padding: 1.35rem 1.4rem calc(1.6rem + 72px);
+  background: #121218;
+  overflow-y: auto;
+  max-height: 92dvh;
+}
+@media (min-width: 800px) {
+  .tols-auth-form {
+    padding-bottom: 1.6rem;
+  }
+}
+.tols-auth-close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: rgb(255 255 255 / 0.7);
+}
+.tols-auth-close:hover {
+  color: #fff;
+}
+.tols-auth-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.25rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+.tols-auth-tab {
+  position: relative;
+  height: 46px;
+  padding: 0 2px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.42);
+}
+.tols-auth-tab.is-active {
+  color: #fff;
+}
+.tols-auth-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--color-primary, #904bf9);
+  box-shadow: 0 0 12px rgb(144 75 249 / 0.45);
+}
+.tols-auth-fields {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.tols-auth-input {
+  height: 44px !important;
+  border-radius: 8px !important;
+  background: rgb(0 0 0 / 0.42) !important;
+  border-color: rgb(255 255 255 / 0.12) !important;
+  font-size: 0.9rem !important;
+}
+.tols-auth-input-pw {
+  padding-right: 2.5rem !important;
+}
+.tols-auth-eye {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  padding: 0.25rem;
+  color: rgb(255 255 255 / 0.45);
+}
+.tols-auth-forgot {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary, #904bf9);
+}
+.tols-auth-forgot:hover {
+  color: #fff;
+}
+.tols-auth-submit {
+  height: 48px !important;
+  width: 100%;
+  margin-top: 0.15rem;
+  border-radius: 10px !important;
+  background: var(--color-primary, #904bf9) !important;
+  color: #fff !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+}
+.tols-auth-submit:hover {
+  filter: brightness(1.08);
+}
+.tols-auth-or {
+  margin-top: 1.35rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgb(255 255 255 / 0.5);
+}
+.tols-auth-socials {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+.tols-auth-social {
+  height: 48px !important;
+  border-radius: 10px !important;
+  border-color: rgb(255 255 255 / 0.16) !important;
+  background: transparent !important;
+  color: #fff !important;
+}
+.tols-auth-social:hover {
+  background: rgb(255 255 255 / 0.05) !important;
+  color: #fff !important;
+}
+
+.tols-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (min-width: 800px) {
+  .tols-ref-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+.tols-ref-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.7rem 0.7rem 0.95rem;
+  border-radius: 1rem;
+  background: #120816;
+  box-shadow: var(--shadow-glow);
+}
+.tols-ref-icon {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #120816;
+}
+.tols-ref-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.tols-ref-card h3 {
+  font-family: var(--font-bluescreens, inherit);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.tols-ref-card p {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgb(255 255 255 / 0.62);
+}
+
+.tols-chat-fab {
+  width: 4.75rem;
+  height: 4.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 1.2rem;
+  overflow: hidden;
+  background: #0d0d10;
+  box-shadow: 0 14px 36px rgb(139 92 246 / 0.42);
+  cursor: pointer;
+}
+.tols-chat-fab:hover {
+  filter: brightness(1.08);
+}
+
+.tols-auth-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.tols-auth-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  will-change: transform, opacity;
+  animation: tols-glow-drift 16s ease-in-out infinite;
+}
+.tols-auth-glow-orb.is-cyan {
+  width: 62%;
+  height: 52%;
+  left: -12%;
+  top: 6%;
+  background: rgb(6 182 212 / 0.38);
+}
+.tols-auth-glow-orb.is-purple {
+  width: 58%;
+  height: 48%;
+  right: -16%;
+  top: 22%;
+  background: rgb(139 92 246 / 0.34);
+  animation-duration: 21s;
+  animation-direction: reverse;
+}
+.tols-auth-glow-orb.is-lime {
+  width: 42%;
+  height: 36%;
+  left: 28%;
+  bottom: -8%;
+  background: rgb(0 255 189 / 0.22);
+  animation-duration: 18s;
+  animation-delay: -4s;
+}
+.tols-auth-glow-orb.is-magenta {
+  width: 34%;
+  height: 30%;
+  right: 8%;
+  bottom: 12%;
+  background: rgb(234 47 212 / 0.2);
+  animation-duration: 14s;
+  animation-delay: -7s;
+}
+.tols-auth-spark {
+  position: absolute;
+  z-index: 2;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7ff7f0;
+  box-shadow: 0 0 12px 4px rgb(6 182 212 / 0.7);
+  mix-blend-mode: screen;
+  animation: tols-spark-float 9s ease-in-out infinite;
+}
+.tols-auth-spark.s1 { left: 14%; top: 22%; animation-duration: 8s; }
+.tols-auth-spark.s2 { left: 78%; top: 18%; animation-duration: 11s; background: #c4b5fd; box-shadow: 0 0 12px 4px rgb(139 92 246 / 0.7); }
+.tols-auth-spark.s3 { left: 22%; top: 68%; animation-duration: 10s; animation-delay: -2s; }
+.tols-auth-spark.s4 { left: 86%; top: 58%; animation-duration: 13s; background: #34edcd; box-shadow: 0 0 12px 4px rgb(0 255 189 / 0.65); }
+.tols-auth-spark.s5 { left: 48%; top: 12%; animation-duration: 9.5s; animation-delay: -3s; }
+.tols-auth-spark.s6 { left: 62%; top: 78%; animation-duration: 12s; background: #ea2fd4; box-shadow: 0 0 12px 4px rgb(234 47 212 / 0.6); }
+
+@keyframes tols-glow-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.85; }
+  35% { transform: translate(9%, -8%) scale(1.14); opacity: 1; }
+  65% { transform: translate(-7%, 10%) scale(0.9); opacity: 0.7; }
+}
+@keyframes tols-spark-float {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+  50% { transform: translate(18px, -28px) scale(1.45); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tols-auth-glow-orb,
+  .tols-auth-spark {
+    animation: none;
+  }
+}
+

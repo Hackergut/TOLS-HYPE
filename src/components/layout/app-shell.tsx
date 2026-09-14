@@ -10,6 +10,7 @@ import { WalletHubProvider } from "@/components/wallet/wallet-hub";
 import { RoundViewerProvider } from "@/components/games/round-dialog";
 import { GamePreviewProvider } from "@/components/games/guest-game-preview";
 import { SupportWidget } from "@/components/layout/support-widget";
+import { AuthWidgetProvider } from "@/components/auth/auth-widget-provider";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <RoundViewerProvider>
       <GamePreviewProvider>
       <WalletHubProvider>
+      <AuthWidgetProvider>
       <RightDockProvider>
         <SidebarLeft />
         <SidebarInset className="bg-transparent">
@@ -33,6 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <RightDock />
         <SupportWidget />
       </RightDockProvider>
+      </AuthWidgetProvider>
       </WalletHubProvider>
       </GamePreviewProvider>
       </RoundViewerProvider>
