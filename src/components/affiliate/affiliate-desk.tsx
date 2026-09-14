@@ -133,6 +133,15 @@ export function AffiliateDesk({ tab }: { tab: AffiliateTab }) {
 
   return (
     <div className="flex flex-col gap-6">
+      <section className="overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-glow)]">
+        <img
+          src="/brand/affiliate/refer-hero.png"
+          alt="TOLS Refer for Rewards"
+          className="block w-full object-cover"
+          loading="eager"
+          decoding="async"
+        />
+      </section>
       <div
         role="tablist"
         aria-label="Affiliate sections"
