@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { waitUntil } from "@vercel/functions";
 import { env } from "@/lib/env.server";
 import { CANONICAL_CASINO_ORIGIN, normalizePublicOrigin, resolveCasinoOrigin } from "@/lib/operator/env.server";
 
@@ -224,7 +225,22 @@ export async function probeGovernanceHealth(timeoutMs = 4000): Promise<{
   return last;
 }
 
-export async function pushBridgeEvent(
+/**
+ * Keep fire-and-forget bridge work alive past the response on Vercel — without
+ * it the invocation can freeze/terminate before the fetch to the Tower lands
+ * and the event is silently lost. Outside Vercel (dev/preview) this degrades
+ * to a plain void'ed promise: `waitUntil` either no-ops or throws when no
+ * invocation context exists, and the `void` fallback keeps dev behavior.
+ */
+function scheduleBridgeWork(work: Promise<unknown>): void {
+  try {
+    waitUntil(work);
+  } catch {
+    void work.catch(() => undefined);
+  }
+}
+
+export async function pushBridgeEventInner(
   type: BridgeEventType | string,
   payload: Record<string, unknown> = {},
 ): Promise<{ ok: boolean; status: number; body?: unknown }> {
@@ -248,6 +264,20 @@ export async function pushBridgeEvent(
     }
   }
   return { ok: false, status: 404, body: { error: "webhook 404" } };
+}
+
+/**
+ * Fire-and-forget with delivery guarantees: every caller (`void pushBridgeEvent(…)`)
+ * gets its work registered with Vercel `waitUntil`, so a slow Tower fetch still
+ * completes after the response is sent.
+ */
+export function pushBridgeEvent(
+  type: BridgeEventType | string,
+  payload: Record<string, unknown> = {},
+): Promise<{ ok: boolean; status: number; body?: unknown }> {
+  const work = pushBridgeEventInner(type, payload);
+  scheduleBridgeWork(work);
+  return work;
 }
 
 export function pushSettledBet(opts: {

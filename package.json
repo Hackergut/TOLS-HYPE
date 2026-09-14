@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
     "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/fair.test.ts src/lib/governance/bridge.test.ts src/lib/governance/live.test.ts src/lib/governance/platform-auth.test.ts src/lib/operator/lobby-quota.test.ts src/lib/operator/config.test.ts src/lib/notifications/vapid.test.ts src/lib/providers.test.ts",
-    "test:unit": "node --test $(ls scripts/*.test.mjs | grep -v 'grok-pwa-plugin.test.mjs') && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/fair.test.ts src/lib/governance/bridge.test.ts src/lib/governance/live.test.ts src/lib/governance/platform-auth.test.ts src/lib/operator/lobby-quota.test.ts src/lib/operator/config.test.ts src/lib/notifications/vapid.test.ts src/lib/providers.test.ts",
+    "test:unit": "node scripts/run-unit-tests.mjs",
     "test:integration": "node scripts/integration-selftest.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
@@ -61,6 +61,7 @@
     "@tanstack/react-start": "^1.168.0",
     "@tanstack/react-table": "^8.21.0",
     "@tanstack/router-plugin": "^1.168.0",
+    "@vercel/functions": "^3.9.7",
     "better-auth": "~1.6.30",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

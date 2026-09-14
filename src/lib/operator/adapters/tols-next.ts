@@ -112,13 +112,20 @@ export const tolsNextAdapter: AggregatorAdapter = {
       return { error: "Originals play on this UI" };
     }
     const slug = req.gameId.replace(/^flexrix-/, "");
+    // Same USDT-only currency rule as the direct Flexrix adapter: USD-priced
+    // session (USDT pegs 1:1), USDT ledger settlement via GIS. Keeps both
+    // launch paths identical per docs/ANALISI-CONNESSIONI.md §6.1.
+    const ccy = req.currency === "USDT" || req.currency === "SOL" ? "USD" : null;
+    if (!ccy) {
+      return { error: "Flexrix titles are USDT-only — play them with your USDT balance" };
+    }
     const session = await casinoPlayerSession({ userId: req.userId, email: req.email });
     const authHeaders: Record<string, string> = session ? { cookie: `tols_session=${session}` } : {};
     try {
       const real = await casino("/api/flexrix/launch", {
         method: "POST",
         headers: authHeaders,
-        body: JSON.stringify({ slug, gameId: slug, currency: req.currency }),
+        body: JSON.stringify({ slug, gameId: slug, currency: ccy }),
       });
       const realUrl = urlOf(real.json);
       if (real.ok && realUrl) return { url: realUrl };

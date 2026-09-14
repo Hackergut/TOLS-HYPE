@@ -59,8 +59,12 @@ test("an explicit process-env override wins over the file", () => {
   assert.equal(merged.PATH, "/usr/bin");
 });
 
-test("the template ships auth off", () => {
-  assert.deepEqual(readAppEnv(projectRoot()), { VITE_AUTH_ENABLED: "false" });
+test("the template ships no auth flag — auth on by default", () => {
+  // The shipped app-env must NOT carry VITE_AUTH_ENABLED=false: `npm run build`
+  // (the Vercel build command, see vercel.json) merges this file, so a shipped
+  // auth-off flag would disable real sign-in in production and fall back to
+  // per-browser guest wallets. Per-workspace overrides can still set it.
+  assert.deepEqual(readAppEnv(projectRoot()), {});
 });
 
 test("vite loadEnv resolves the wrapped value", () => {

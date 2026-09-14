@@ -36,7 +36,46 @@ Redeploy, poi verifica la readiness (tutto booleano, niente secret in chiaro):
 ```bash
 curl -s https://www.tols.fun/api/operator/status | python3 -m json.tool
 # atteso: flexrix:true sports:true db:"neon" webhookSecret:true
+#         auth.prodReady:true  (vedi §1bis)
 ```
+
+## 1bis. Auth — login reale (obbligatorio per la prod)
+
+Dal 2026-09-14 `.grok/app-env.json` **non** spedisce più
+`VITE_AUTH_ENABLED=false`: quel valore veniva mergiato anche nel build di
+produzione (`npm run build` è il buildCommand di `vercel.json`) → il login reale
+risultava spento in prod e i wallet giravano su cookie guest per browser.
+L'auth ora è **on by default** ovunque; si spegne solo con un override esplicito
+dell'ambiente (`VITE_AUTH_ENABLED=false`).
+
+Per il login reale su tols.fun, imposta su Vercel **almeno una** di:
+
+```
+# Opzione A — Google OAuth diretto (consigliata):
+GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...
+BETTER_AUTH_URL=https://www.tols.fun
+
+# Opzione B — Grok auth broker con client dedicato:
+GROK_AUTH_ISSUER=... GROK_AUTH_CLIENT_ID=... GROK_AUTH_CLIENT_SECRET=...
+BETTER_AUTH_URL=https://www.tols.fun
+```
+
+Verifica: `GET /api/operator/status` → `auth.prodReady:true`
+(`google` o `brokerCustom` true). Con `auth.brokerPreviewFallback:true` il
+fallback usa il client preview, che completa il callback **solo** su
+`*.grok-sandbox.com` — su tols.fun il login resterebbe bloccato.
+
+## 1ter. Push notifications — rotazione VAPID
+
+La vecchia coppia VAPID è esposta nella git history (vedi ANALISI §5): va
+**ruotata**. Nuova coppia generata 2026-09-14 (consegnata in chat, da mettere su
+Vercel, MAI nel repo):
+
+```
+VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:ops@tols.fun
+```
+
+Dopo il redeploy: `auth.vapid:true` in `/api/operator/status` e registra `sw.js`.
 
 ## 2. Lobby reale
 

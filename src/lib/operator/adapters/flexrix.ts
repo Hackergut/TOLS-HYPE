@@ -132,7 +132,16 @@ export const flexrixAdapter: AggregatorAdapter = {
     const slug = req.gameId.replace(/^flexrix:/, "");
     if (!slug) return { error: "Missing game slug" };
     const origin = operatorServer().casinoOrigin;
-    const ccy = req.currency === "USDT" || req.currency === "SOL" ? "USD" : req.currency;
+    // USDT-only integration, reconciled across BOTH launch paths (direct hub
+    // and tols-next proxy): sessions are USD-priced (USDT pegs 1:1, same
+    // mapping tols-casino-next uses for its EuroVirtuals launches) while every
+    // bet settles against the USDT ledger via GIS. Launching BTC/ETH raw would
+    // open a differently-priced session that GIS still debits in USDT — the
+    // balance divergence flagged in docs/ANALISI-CONNESSIONI.md §6.1.
+    const ccy = req.currency === "USDT" || req.currency === "SOL" ? "USD" : null;
+    if (!ccy) {
+      return { error: "Flexrix titles are USDT-only — play them with your USDT balance" };
+    }
     if (!flexrixConfigured()) {
       const qs = new URLSearchParams({ balance: "5000", currency: "USD", lang: req.language ?? "en" });
       try {

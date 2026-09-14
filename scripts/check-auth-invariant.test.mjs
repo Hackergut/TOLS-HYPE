@@ -91,7 +91,10 @@ test("only a divergence warns the smoke verdict", () => {
 });
 
 test("the build side resolves the template's shipped app-env", () => {
-  assert.equal(buildAuthEnabled(projectRoot(), {}), false);
+  // The shipped app-env no longer forces auth off: deployed builds resolve to
+  // auth-on unless the deployer explicitly sets VITE_AUTH_ENABLED=false.
+  assert.equal(buildAuthEnabled(projectRoot(), {}), true);
+  assert.equal(buildAuthEnabled(projectRoot(), { VITE_AUTH_ENABLED: "false" }), false);
   assert.equal(buildAuthEnabled(projectRoot(), { VITE_AUTH_ENABLED: "true" }), true);
 });
 

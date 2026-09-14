@@ -103,7 +103,7 @@ DB: `migrations/*.sql` (auth Better Auth + wallets/transactions + notifications 
 
 ### 3.7 Auth — Better Auth + Grok broker + Google (priorità P1) 🟠
 - **Codice**: `lib/auth/*`, `routes/api/auth/*`, `routes/login.tsx`, `lib/app-data/*`
-- **Stato cruciale**: `.grok/app-env.json` ha `VITE_AUTH_ENABLED=false` → in preview gira l'utente fittizio `dev-user`; in produzione (Vercel, senza quella flag) il login è reale.
+- **Stato cruciale**: `.grok/app-env.json` **non spedisce più** `VITE_AUTH_ENABLED=false` (rimosso 2026-09-14 — vedasi §5 "Round launch-prep"): l'auth è on by default ovunque e il login reale è attivo in produzione. In preview il sign-in usa il client/gate di piattaforma; un override esplicito `VITE_AUTH_ENABLED=false` resta possibile via env.
 - **Provider**: broker Grok OAuth (`GROK_PROVIDERS`, popup in preview / redirect in prod) + Google OAuth diretto (`/api/auth/google*`, handlers in `google-handlers.server.ts`) + email/password **disabilitata di default** (`email-password.ts`).
 - **Isolamento multi-skin**: `isolation.server.ts` + `gate-identity.server.ts` mappano l'identità per non mescolare utenti tra skin.
 - **Da fare**:
@@ -257,6 +257,18 @@ VITE_AUTH_ENABLED=false             # preview; rimuovere in prod per login reale
 - Catena logo: `providerLogo` hub (passthrough negli adapter) → mappa curata `src/lib/providers.ts` → monogramma deterministico. 18 loghi originali self-hosted in `public/brand/providers/` (verificati visivamente, ~390KB), tile chiara/scura per lockup, fallback se il file manca.
 - Nuovo provider senza logo: appare comunque col monogramma. Per aggiungere un logo: file in `public/brand/providers/<slug>.<png|jpg>` + riga in `CURATED` (slug = `providerSlug()` del nome hub, es. `PlayNGO`→`playngo`).
 
+**Round launch-prep (2026-09-14, `main`)** — obiettivo: pronto per l'esercizio reale. Trovato e corretto:
+
+1. 🔴 **Auth spenta in produzione (bloccante launch)** — `.grok/app-env.json` spedi­va `VITE_AUTH_ENABLED=false` e il build di Vercel (`npm run build`, buildCommand di `vercel.json`) merge quel file → in prod l'auth risultava spenta e i wallet giravano su **cookie guest per browser** (nessun account, saldo non persistente tra dispositivi). **Fix**: flag rimossa dal file (auth on by default, override esplicito ancora possibile); test di policy aggiornati al nuovo contratto (`with-app-env.test` "ships auth on by default", `check-auth-invariant.test` build-side=true). **Serve l'utente**: `GOOGLE_CLIENT_ID/SECRET` oppure `GROK_AUTH_CLIENT_ID/SECRET` + `BETTER_AUTH_URL` su Vercel (RUNBOOK §1bis).
+2. 🟠 **Eventi bridge fire-and-forget persi su Vercel** — `void pushSettledBet/pushBridgeEvent`: la funzione serverless può congelarsi prima che la fetch al Tower parta → eventi `casino.bet/win`/`solana_ledger` persi. **Fix**: `pushBridgeEvent` ora registra il lavoro con `waitUntil` (`@vercel/functions`, nuova dep, fallback `void` fuori Vercel) — un solo punto, copre tutti i 9 call site.
+3. 🟠 **Blackjack `locked` residui** — claim con `lockedAt` scritto atomicamente + reclaim dei lock stale (>2 min, `jsonb_build_object` + guard sul payload) → un crash mid-azione non blocca più il round per sempre.
+4. 🟠 **Mapping valute riconciliato (§6.1 chiuso)** — entrambi i percorsi launch (`flexrix` diretto e `tols-next` proxy) ora si comportano identico: sessione USD-priced (USDT peg 1:1, stessa convenzione di tols-casino-next per EuroVirtuals), settlement USDT via GIS; launch con BTC/ETH rifiutato con messaggio chiaro invece di aprire una sessione a prezzo diverso che il GIS debita comunque in USDT.
+5. 🟢 **`test:unit` cross-platform** — sostituito il `$(ls|grep)` POSIX-only con `scripts/run-unit-tests.mjs` (stessa lista file, `--test-isolation=none`, exit-code parity). CI/Linux invariato nel risultato.
+6. 🟢 **`/api/operator/status` esteso**: nuovo blocco `auth` (`enabled`, `google`, `brokerCustom`, `brokerPreviewFallback`, `prodReady`) per verificare il login reale dal probe ops senza esporre secret.
+7. 🟢 **VAPID**: nuova coppia generata (consegnata in chat; su Vercel, mai nel repo) — RUNBOOK §1ter. La vecchia (esposta in git history) resta da revocare/ruotare lato push service.
+
+Post-fix: typecheck ✅, src test 83/83 ✅, script test 132/148 (le 16 restanti = spawn negato dal sandbox Windows, verdi su CI), `test:unit` runner verificato end-to-end ✅.
+
 **Debug round — exploit + race di denaro (2026-09-14, branch `main`)**
 Audit su `main` (`d1024cf`): typecheck ✅, test src 83/83 ✅, build ✅. Trovati e corretti:
 
@@ -267,7 +279,7 @@ Audit su `main` (`d1024cf`): typecheck ✅, test src 83/83 ✅, build ✅. Trova
 5. 🟠 **Wallet TOCTOU** — `debit`/`credit` (Prisma) leggevano poi riscrivevano il saldo in transazione: due bet concorrenti potevano entrambe superare il check e andare in overdraw; due credit potevano perdere un update. **Fix**: `updateMany` con `balance: { gte }` + `decrement` (debit) e `increment` (credit) — decremento/incremento atomici, ledger creato solo dopo il esito.
 6. 🟠 **Nonce provably-fair** — `takeFairRng` leggeva `nonce`, aggiornava `nonce+1` e disegnava col vecchio: due bet concorrenti riusavano lo stesso nonce (floats identici, contract violato); inoltre il primo `insert into fair_seeds` di due bet simultanee crashava sul PK. **Fix**: consumo atomico `UPDATE fair_seeds SET nonce=nonce+1 … RETURNING nonce-1 AS used_nonce, …`; insert con `ON CONFLICT (user_id) DO NOTHING` + re-read.
 
-Note ambiente (Windows sandbox): 16 test `scripts/*.test.mjs` (CLI wrapper: write-atomic, with-app-env, brand-check, check-auth-invariant) falliscono SOLO qui perché il sandbox nega `child_process.spawn` (`EPERM`, syscall spawn) — su CI/Linux passano; `test:unit` usa sostituzione POSIX `$(ls|grep)` quindi su Windows va eseguito via runner equivalente. Build richiede un ambiente che consenta lo spawn `net use` di Vite su Windows (su Vercel/CI non è un problema).
+Note ambiente (Windows sandbox): 16 test `scripts/*.test.mjs` (CLI wrapper: write-atomic, with-app-env, brand-check, check-auth-invariant) falliscono SOLO qui perché il sandbox nega `child_process.spawn` (`EPERM`, syscall spawn) — su CI/Linux passano. `test:unit` ora passa da `scripts/run-unit-tests.mjs` (cross-platform). Build richiede un ambiente che consenta lo spawn `net use` di Vite su Windows (su Vercel/CI non è un problema).
 
 ## 6. Rischi principali
 
@@ -276,5 +288,6 @@ Note ambiente (Windows sandbox): 16 test `scripts/*.test.mjs` (CLI wrapper: writ
 3. **`EV_APP_KEY` e `SUPABASE_*` lette ma inutilizzate** → specifiche incomplete, non attivare in prod senza verifica.
 4. **Callback aperti in GET** per health-check: ok, ma i POST devono restare firmati (Flexrix HMAC, Tower HMAC+timestamp, operator secret) — non abbassare mai a `*` senza firma.
 5. **`/api/casino-deposits` retired (410)**: qualsiasi client vecchio che lo chiama va migrato su `/deposit` di Next.
-6. **`pushSettledBet`/`pushBridgeEvent` fire-and-forget** (`void`): su Vercel la funzione può terminare prima dell'invio → eventi bet/win persi verso il Tower. Da migrare su `waitUntil`/coda se la ledger del Tower deve essere completa.
-7. **Round `locked` residui** (crash del server a metà azione blackjack): restano non-open — nessun exploit, ma il bet resta bloccato; serve recovery manuale o TTL se capita in prod.
+6. **`pushSettledBet`/`pushBridgeEvent` fire-and-forget**: ✅ mitigato 2026-09-14 — il lavoro ora è registrato con `waitUntil` (`@vercel/functions`) quindi sopravvive alla risposta; resta il fallback `void` fuori Vercel.
+7. **Round `locked` residui** (crash del server a metà azione blackjack): ✅ mitigato 2026-09-14 — i lock scrivono `lockedAt` e vengono reclamati automaticamente dopo 2 minuti; nessun puntino bloccato permanente.
+8. **Auth in produzione**: il build spedisce auth ON (flag rimossa da `.grok/app-env.json`); il login reale richiede `GOOGLE_CLIENT_ID/SECRET` **o** `GROK_AUTH_CLIENT_ID/SECRET` + `BETTER_AUTH_URL` su Vercel — verificabile con `auth.prodReady` in `/api/operator/status` (RUNBOOK §1bis).

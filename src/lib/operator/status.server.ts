@@ -1,4 +1,6 @@
+import { env } from "@/lib/env.server";
 import { googleEnabled } from "@/lib/auth/google-oauth";
+import { gateIdentityEnabled } from "@/lib/auth/gate-identity.server";
 import { getBridgeConfig } from "@/lib/governance/bridge";
 import { pushConfigured } from "@/lib/notifications/push.server";
 import { operatorServer } from "@/lib/operator/env.server";
@@ -20,6 +22,11 @@ export async function getOperatorStatus() {
   const cfg = operatorServer();
   const bridge = getBridgeConfig();
   const gov = await governanceHealth().catch(() => ({ ok: false as const }));
+  // Prod sign-in works via native Google OAuth or custom Grok-broker creds;
+  // the baked preview client only completes callbacks on *.grok-sandbox.com,
+  // so a deployed casino without either would strand visitors at sign-in.
+  const brokerCustom = Boolean(env("GROK_AUTH_CLIENT_ID") && env("GROK_AUTH_CLIENT_SECRET"));
+  const google = googleEnabled();
   return {
     ok: true,
     aggregator: cfg.aggregatorKind,
@@ -35,7 +42,16 @@ export async function getOperatorStatus() {
     webhookSecret: Boolean(cfg.webhookSecret),
     treasury: Boolean(treasuryAddresses().SOL),
     vapid: pushConfigured(),
-    google: googleEnabled(),
+    google,
+    auth: {
+      enabled: gateIdentityEnabled(),
+      google,
+      brokerCustom,
+      // True when sign-in federation would fall back to the baked preview
+      // client — real operation on tols.fun needs google or brokerCustom.
+      brokerPreviewFallback: !brokerCustom,
+      prodReady: google || brokerCustom,
+    },
     payments: "local-wallet",
     supabase: Boolean(cfg.databaseUrl || cfg.supabaseUrl),
   };
