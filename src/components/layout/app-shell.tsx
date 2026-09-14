@@ -11,7 +11,6 @@ import { RoundViewerProvider } from "@/components/games/round-dialog";
 import { GamePreviewProvider } from "@/components/games/guest-game-preview";
 import { SupportWidget } from "@/components/layout/support-widget";
 import { AuthWidgetProvider } from "@/components/auth/auth-widget-provider";
-import { PresenceBeacon } from "@/components/governance/presence-beacon";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -35,7 +34,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         </SidebarInset>
         <RightDock />
         <SupportWidget />
-        <PresenceBeacon />
       </RightDockProvider>
       </WalletHubProvider>
       </AuthWidgetProvider>
