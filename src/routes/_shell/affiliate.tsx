@@ -1,49 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
-import { ReferralIconRow } from "@/components/brand/referral-icon-row";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { AffiliateDesk } from "@/components/affiliate/affiliate-desk";
+import { AFFILIATE_SECTIONS, type AffiliateTab } from "@/lib/nav";
+
+function parseTab(value: unknown): AffiliateTab | undefined {
+  if (typeof value !== "string") return undefined;
+  return AFFILIATE_SECTIONS.some((s) => s.tab === value) ? (value as AffiliateTab) : undefined;
+}
 
 export const Route = createFileRoute("/_shell/affiliate")({
   component: AffiliatePage,
-  head: () => ({ meta: [{ title: "Affiliate Program — TOLS" }] }),
+  head: () => ({ meta: [{ title: "Affiliates — TOLS" }] }),
+  validateSearch: (search: Record<string, unknown>): { tab?: AffiliateTab } =>
+    parseTab(search.tab) ? { tab: parseTab(search.tab) } : {},
 });
 
 function AffiliatePage() {
-  const { user } = useCurrentUserState();
-  const code = user ? `TOLS-${user.id.slice(0, 8).toUpperCase()}` : "TOLS-SIGNIN";
-  const [copied, setCopied] = useState(false);
-
-  function copy() {
-    void navigator.clipboard.writeText(`https://tols.fun/?r=${code}`);
-    setCopied(true);
-    toast.success("Referral link copied");
-  }
-
+  const { tab } = Route.useSearch();
+  const active: AffiliateTab = tab ?? "overview";
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      <TolsBreadcrumb items={[{ label: "Lobby", to: "/" }, { label: "Affiliate" }]} />
+      <TolsBreadcrumb items={[{ label: "Lobby", to: "/" }, { label: "Affiliates" }]} />
       <header>
-        <p className="text-xs font-medium tracking-[0.18em] text-lime uppercase">Referral</p>
+        <p className="text-xs font-medium tracking-[0.18em] text-lime uppercase">Partners</p>
         <BluescreenTitle as="h1" className="mt-1 text-3xl font-bold tracking-tight">
-          Affiliate
+          Affiliates
         </BluescreenTitle>
         <p className="mt-1 text-sm text-muted-foreground">
-          Earn 25–30% revenue share on referred wagers, for the lifetime of the account.
+          25–30% lifetime revenue share. Campaigns, postbacks, and professional deals.
         </p>
       </header>
-      <ReferralIconRow />
-      <section className="rounded-2xl bg-card p-5 shadow-[var(--shadow-glow)]">
-        <p className="text-xs tracking-[0.16em] text-lime uppercase">Your code</p>
-        <p className="mt-1 font-mono text-lg">{code}</p>
-        <Button className="mt-4 h-10" onClick={copy} disabled={!user}>
-          {copied ? "Copied" : "Copy invite link"}
-        </Button>
-        {!user ? <p className="mt-2 text-xs text-muted-foreground">Sign in to generate a live code.</p> : null}
-      </section>
+      <AffiliateDesk tab={active} />
     </main>
   );
 }

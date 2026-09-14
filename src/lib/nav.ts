@@ -27,6 +27,7 @@ export type NavLink = {
 export const BROWSE_NAV: NavLink[] = [
   { title: "Lobby", to: "/", icon: "home" },
   { title: "Dashboard", to: "/dashboard", icon: "dashboard" },
+  { title: "Affiliates", to: "/affiliate", icon: "affiliate" },
 ];
 
 export const BROWSE_FOOT: NavLink[] = [
@@ -83,6 +84,23 @@ export const SPORT_SECTIONS: SportNav[] = [
   { title: "Tennis", sport: "tennis" },
   { title: "MMA", sport: "mma" },
   { title: "Esports", sport: "esports" },
+];
+
+export type AffiliateTab = "overview" | "users" | "campaigns" | "earnings" | "info" | "pro";
+
+export type AffiliateNav = {
+  title: string;
+  tab: AffiliateTab;
+};
+
+/** Left-rail Affiliates section — full program, not only the account link. */
+export const AFFILIATE_SECTIONS: AffiliateNav[] = [
+  { title: "Overview", tab: "overview" },
+  { title: "Referred Users", tab: "users" },
+  { title: "Campaigns", tab: "campaigns" },
+  { title: "Earnings", tab: "earnings" },
+  { title: "Info", tab: "info" },
+  { title: "Professional", tab: "pro" },
 ];
 
 /** Avatar menu — account. One source so it never drifts from the dock. */

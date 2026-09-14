@@ -33,6 +33,7 @@ import { Route as ShellTermsRouteImport } from './routes/_shell/terms'
 import { Route as ShellTokenRouteImport } from './routes/_shell/token'
 import { Route as ShellVaultRouteImport } from './routes/_shell/vault'
 import { Route as ShellVipRouteImport } from './routes/_shell/vip'
+import { Route as ApiAffiliateRouteImport } from './routes/api/affiliate'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiTreasuryRouteImport } from './routes/api/treasury'
 import { Route as ShellGamesIdRouteImport } from './routes/_shell/games.$id'
@@ -207,6 +208,11 @@ const ShellVipRoute = ShellVipRouteImport.update({
   id: '/vip',
   path: '/vip',
   getParentRoute: () => ShellRoute,
+} as any)
+const ApiAffiliateRoute = ApiAffiliateRouteImport.update({
+  id: '/api/affiliate',
+  path: '/api/affiliate',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
@@ -512,6 +518,7 @@ export interface FileRoutesByFullPath {
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
+  '/api/affiliate': typeof ApiAffiliateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/treasury': typeof ApiTreasuryRoute
   '/games/$id': typeof ShellGamesIdRoute
@@ -591,6 +598,7 @@ export interface FileRoutesByTo {
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
+  '/api/affiliate': typeof ApiAffiliateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/treasury': typeof ApiTreasuryRoute
   '/': typeof ShellIndexRoute
@@ -673,6 +681,7 @@ export interface FileRoutesById {
   '/_shell/token': typeof ShellTokenRoute
   '/_shell/vault': typeof ShellVaultRoute
   '/_shell/vip': typeof ShellVipRoute
+  '/api/affiliate': typeof ApiAffiliateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/treasury': typeof ApiTreasuryRoute
   '/_shell/': typeof ShellIndexRoute
@@ -756,6 +765,7 @@ export interface FileRouteTypes {
     | '/token'
     | '/vault'
     | '/vip'
+    | '/api/affiliate'
     | '/api/health'
     | '/api/treasury'
     | '/games/$id'
@@ -835,6 +845,7 @@ export interface FileRouteTypes {
     | '/token'
     | '/vault'
     | '/vip'
+    | '/api/affiliate'
     | '/api/health'
     | '/api/treasury'
     | '/'
@@ -916,6 +927,7 @@ export interface FileRouteTypes {
     | '/_shell/token'
     | '/_shell/vault'
     | '/_shell/vip'
+    | '/api/affiliate'
     | '/api/health'
     | '/api/treasury'
     | '/_shell/'
@@ -978,6 +990,7 @@ export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  ApiAffiliateRoute: typeof ApiAffiliateRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiTreasuryRoute: typeof ApiTreasuryRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -1190,6 +1203,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/vip'
       preLoaderRoute: typeof ShellVipRouteImport
       parentRoute: typeof ShellRoute
+    }
+    '/api/affiliate': {
+      id: '/api/affiliate'
+      path: '/api/affiliate'
+      fullPath: '/api/affiliate'
+      preLoaderRoute: typeof ApiAffiliateRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/health': {
       id: '/api/health'
@@ -1732,6 +1752,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  ApiAffiliateRoute: ApiAffiliateRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiTreasuryRoute: ApiTreasuryRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

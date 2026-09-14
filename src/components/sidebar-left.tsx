@@ -17,6 +17,12 @@ import {
   RiPingPongLine,
   RiBoxingLine,
   RiGamepadLine,
+  RiShareForwardLine,
+  RiGroupLine,
+  RiMegaphoneLine,
+  RiMoneyDollarCircleLine,
+  RiInformationLine,
+  RiBriefcase4Line,
 } from "@remixicon/react";
 import {
   Sidebar,
@@ -34,7 +40,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { TolsT, TolsWordmark } from "@/components/brand/tols-mark";
-import { BROWSE_FOOT, BROWSE_NAV, CASINO_SECTIONS, ORIGINAL_SECTIONS, SPORT_SECTIONS } from "@/lib/nav";
+import { AFFILIATE_SECTIONS, BROWSE_FOOT, BROWSE_NAV, CASINO_SECTIONS, ORIGINAL_SECTIONS, SPORT_SECTIONS } from "@/lib/nav";
 
 const ICONS = {
   home: RiHome5Line,
@@ -43,6 +49,7 @@ const ICONS = {
   dashboard: RiDashboard3Line,
   sports: RiBasketballLine,
   fairness: RiShieldCheckLine,
+  affiliate: RiShareForwardLine,
 };
 
 const CAT_ICONS = {
@@ -61,6 +68,15 @@ const SPORT_ICONS = {
   tennis: RiPingPongLine,
   mma: RiBoxingLine,
   esports: RiGamepadLine,
+};
+
+const AFF_ICONS = {
+  overview: RiShareForwardLine,
+  users: RiGroupLine,
+  campaigns: RiMegaphoneLine,
+  earnings: RiMoneyDollarCircleLine,
+  info: RiInformationLine,
+  pro: RiBriefcase4Line,
 };
 
 export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
@@ -206,6 +222,40 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
                       className="h-9 w-full justify-start gap-3 px-3 text-sm"
                     >
                       <Link to="/sports" search={{ sport: item.sport }} onClick={closeIfMobile}>
+                        <Icon className={active ? "text-lime" : undefined} />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
+
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel className="font-sub text-[0.65rem] tracking-[0.12em] text-lime uppercase">Affiliates</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-0.5">
+              {AFFILIATE_SECTIONS.map((item) => {
+                const Icon = AFF_ICONS[item.tab];
+                const tabQ =
+                  typeof search === "object" && search && "tab" in search
+                    ? String((search as { tab?: string }).tab ?? "overview")
+                    : "overview";
+                const onAff = pathname === "/affiliate";
+                const active = onAff && (item.tab === "overview" ? tabQ === "overview" || !tabQ : tabQ === item.tab);
+                return (
+                  <SidebarMenuItem key={item.tab}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      tooltip={item.title}
+                      className="h-9 w-full justify-start gap-3 px-3 text-sm"
+                    >
+                      <Link to="/affiliate" search={{ tab: item.tab }} onClick={closeIfMobile}>
                         <Icon className={active ? "text-lime" : undefined} />
                         <span>{item.title}</span>
                       </Link>
