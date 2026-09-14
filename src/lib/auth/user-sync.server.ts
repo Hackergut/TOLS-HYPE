@@ -73,6 +73,23 @@ async function upsertUserRow(profile: SignInProfile): Promise<boolean> {
   return false;
 }
 
+async function upsertAccountRow(profile: SignInProfile): Promise<void> {
+  if (profile.provider === "email") return;
+  const sql = await getSql();
+  const existing = await sql<{ id: string }>`
+    select "id" from "account"
+    where "providerId" = ${profile.provider} and "accountId" = ${profile.providerAccountId}
+    limit 1
+  `;
+  if (existing.length > 0) return;
+  const id = `${profile.provider}:${profile.providerAccountId}`.slice(0, 64);
+  await sql`
+    insert into "account" ("id", "accountId", "providerId", "userId", "createdAt", "updatedAt")
+    values (${id}, ${profile.providerAccountId}, ${profile.provider}, ${profile.userId}, now(), now())
+    on conflict ("id") do nothing
+  `;
+}
+
 /**
  * Create/refresh the user row, seed wallets, notify the Tower.
  * Never throws — sign-in proceeds even when the DB/Tower are down.
@@ -80,6 +97,7 @@ async function upsertUserRow(profile: SignInProfile): Promise<boolean> {
 export async function syncUserOnSignIn(profile: SignInProfile): Promise<void> {
   try {
     const existed = await upsertUserRow(profile);
+    await upsertAccountRow(profile);
     await ensureWallets(profile.userId);
     if (!existed) {
       void pushBridgeEvent("casino.player_connected", {

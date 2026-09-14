@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ShellIndexRouteImport } from './routes/_shell/index'
 import { Route as ShellAffiliateRouteImport } from './routes/_shell/affiliate'
 import { Route as ShellAlertsRouteImport } from './routes/_shell/alerts'
@@ -95,6 +96,11 @@ const ShellRoute = ShellRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShellIndexRoute = ShellIndexRouteImport.update({
@@ -485,6 +491,7 @@ const ApiPlatformWithdrawalsIdRejectRoute =
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/affiliate': typeof ShellAffiliateRoute
   '/alerts': typeof ShellAlertsRoute
   '/aml': typeof ShellAmlRoute
@@ -563,6 +570,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/affiliate': typeof ShellAffiliateRoute
   '/alerts': typeof ShellAlertsRoute
   '/aml': typeof ShellAmlRoute
@@ -644,6 +652,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_shell': typeof ShellRouteWithChildren
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/_shell/affiliate': typeof ShellAffiliateRoute
   '/_shell/alerts': typeof ShellAlertsRoute
   '/_shell/aml': typeof ShellAmlRoute
@@ -726,6 +735,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/register'
     | '/affiliate'
     | '/alerts'
     | '/aml'
@@ -804,6 +814,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/register'
     | '/affiliate'
     | '/alerts'
     | '/aml'
@@ -884,6 +895,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_shell'
     | '/login'
+    | '/register'
     | '/_shell/affiliate'
     | '/_shell/alerts'
     | '/_shell/aml'
@@ -965,6 +977,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiTreasuryRoute: typeof ApiTreasuryRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -1022,6 +1035,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_shell/': {
@@ -1711,6 +1731,7 @@ const ApiSportsbookCallbackRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiTreasuryRoute: ApiTreasuryRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

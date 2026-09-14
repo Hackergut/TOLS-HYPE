@@ -17,7 +17,32 @@ import { requestHost, isTolsHost } from "./google-oauth";
  */
 
 export function telegramEnabled(): boolean {
-  return Boolean(env("TELEGRAM_BOT_NAME") && env("TELEGRAM_BOT_TOKEN"));
+  // Token alone is enough — bot username is resolved via getMe (or TELEGRAM_BOT_NAME).
+  return Boolean(env("TELEGRAM_BOT_TOKEN"));
+}
+
+let cachedBotName: string | null | undefined;
+
+/** Botfather username without @. Cached per isolate after the first getMe. */
+export async function resolveTelegramBotName(): Promise<string | null> {
+  const named = env("TELEGRAM_BOT_NAME")?.replace(/^@/, "").trim();
+  if (named) return named;
+  if (cachedBotName !== undefined) return cachedBotName;
+  const token = env("TELEGRAM_BOT_TOKEN");
+  if (!token) {
+    cachedBotName = null;
+    return null;
+  }
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, { cache: "no-store" });
+    const json = (await res.json()) as { ok?: boolean; result?: { username?: string } };
+    const username = json?.ok && typeof json.result?.username === "string" ? json.result.username : "";
+    cachedBotName = username || null;
+    return cachedBotName;
+  } catch {
+    cachedBotName = null;
+    return null;
+  }
 }
 
 export function telegramRedirectUri(origin?: string): string {

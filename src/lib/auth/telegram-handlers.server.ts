@@ -1,14 +1,12 @@
-import { pushBridgeEvent } from "@/lib/governance/bridge";
 import {
-  readSessionFromRequest,
   sessionClearCookies,
   sessionSetCookies,
   signSession,
   withCookies,
-  googleUserId,
 } from "./google-session.server";
 import {
   readTelegramState,
+  resolveTelegramBotName,
   signTelegramState,
   telegramEnabled,
   telegramLoginPage,
@@ -59,10 +57,13 @@ export async function handleTelegramStart(request: Request): Promise<Response> {
   if (!telegramEnabled()) {
     return new Response(null, { status: 303, headers: { Location: `${origin}/login?social=not_configured` } });
   }
+  const botName = await resolveTelegramBotName();
+  if (!botName) {
+    return new Response(null, { status: 303, headers: { Location: `${origin}/login?social=not_configured` } });
+  }
   const next = url.searchParams.get("next");
   const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
   const state = signTelegramState(dest);
-  const botName = (import.meta.env?.TELEGRAM_BOT_NAME ?? process.env.TELEGRAM_BOT_NAME) as string;
   const html = telegramLoginPage(botName, `${telegramRedirectUri(origin)}?state=${encodeURIComponent(state)}`, origin);
   return withCookies(
     new Response(html, {
@@ -136,8 +137,10 @@ export async function handleTelegramCallback(request: Request): Promise<Response
     googleId: `telegram:${profile.id}`,
   });
   const cookies = [...failCookies, ...sessionSetCookies(token, request)];
+  const dest = signed?.dest || "/";
+  const land = dest.includes("?") ? `${dest}&social=ok` : `${dest}?social=ok`;
   return withCookies(
-    new Response(null, { status: 303, headers: { Location: `${origin}/?social=ok` } }),
+    new Response(null, { status: 303, headers: { Location: `${origin}${land}` } }),
     cookies,
   );
 }

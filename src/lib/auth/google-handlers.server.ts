@@ -1,5 +1,3 @@
-import { ensureWallets } from "@/lib/wallet.server";
-import { pushBridgeEvent } from "@/lib/governance/bridge";
 import { syncUserOnSignIn } from "./user-sync.server";
 import {
   exchangeGoogle,
@@ -144,7 +142,9 @@ export async function handleGoogleCallback(request: Request): Promise<Response> 
 
   const token = signSession(user);
   const cookies = [...oauthClearCookies(request), ...sessionSetCookies(token, request)];
-  return htmlHandoff(`${origin}/?google=ok`, cookies);
+  const dest = signed?.dest || "/";
+  const land = dest.includes("?") ? `${dest}&google=ok` : `${dest}?google=ok`;
+  return htmlHandoff(`${origin}${land}`, cookies);
 }
 
 export async function handleGoogleLogout(request: Request): Promise<Response> {
