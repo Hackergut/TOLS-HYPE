@@ -20,7 +20,7 @@ class SceneGuard extends Component<{ children: ReactNode }, { fail: boolean }> {
   }
 }
 
-/** Pixel T extruded with 3dsvg. One canvas. Orbit/drag off. */
+/** Pixel T extruded with 3dsvg. Follows the mouse; wheel zooms. */
 export function TolsT3D({
   className,
 }: {
@@ -46,7 +46,7 @@ export function TolsT3D({
   }, []);
 
   return (
-    <div ref={ref} className={cn("relative overflow-hidden pointer-events-none", className)} aria-hidden>
+    <div ref={ref} className={cn("relative overflow-hidden", className)} aria-hidden>
       {box.w > 8 && box.h > 8 ? (
         <SceneGuard>
           <Suspense fallback={null}>
@@ -65,10 +65,11 @@ export function TolsT3D({
               lightPosition={[10, 4.5, 10]}
               lightIntensity={4.2}
               ambientIntensity={0.55}
-              interactive={false}
-              cursorOrbit={false}
-              draggable={false}
-              scrollZoom={false}
+              interactive
+              cursorOrbit
+              draggable
+              scrollZoom
+              orbitStrength={0.45}
               shadow={false}
               background="transparent"
               width={box.w}
