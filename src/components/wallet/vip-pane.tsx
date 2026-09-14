@@ -5,20 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useBetHistory } from "@/lib/bet-history";
 import { cn } from "cn";
-
-const TIERS = [
-  { name: "Member", wager: 0 },
-  { name: "Gold", wager: 1000 },
-  { name: "Diamond", wager: 5000 },
-  { name: "Obsidian", wager: 25000 },
-] as const;
-
-const REWARDS = [
-  { id: "instant", title: "Instant Rakeback", hint: "Wager to Unlock", cta: "Claim", ready: true },
-  { id: "daily", title: "Daily Rakeback", hint: "Claim Soon!", cta: "02h 22m", ready: false },
-  { id: "weekly", title: "Weekly Bonus", hint: "Claim Soon!", cta: "05d 13h", ready: false },
-  { id: "monthly", title: "Monthly Bonus", hint: "Claim Soon!", cta: "20d 02h", ready: false },
-] as const;
+import { VIP_REWARDS, VIP_TIERS, vipTierIndex } from "@/lib/vip";
 
 export function VipPane() {
   const bets = useBetHistory();
@@ -27,11 +14,11 @@ export function VipPane() {
   const [openCode, setOpenCode] = useState(false);
   const [claimed, setClaimed] = useState(false);
 
-  const idx = TIERS.reduce((i, t, n) => (wagered >= t.wager ? n : i), 0);
-  const cur = TIERS[idx]!;
-  const next = TIERS[idx + 1];
-  const span = next ? next.wager - cur.wager : 1;
-  const into = next ? Math.min(1, (wagered - cur.wager) / span) : 1;
+  const idx = vipTierIndex(wagered);
+  const cur = VIP_TIERS[idx]!;
+  const next = VIP_TIERS[idx + 1];
+  const span = next ? next.points - cur.points : 1;
+  const into = next ? Math.min(1, (wagered - cur.points) / span) : 1;
   const pct = Math.round(into * 10000) / 100;
 
   return (
@@ -78,11 +65,11 @@ export function VipPane() {
           Your rewards
         </h3>
         <ul className="grid grid-cols-2 gap-2">
-          {REWARDS.map((r) => (
+          {VIP_REWARDS.map((r) => (
             <li key={r.id} className="flex flex-col items-center rounded-xl border border-white/10 bg-[#12141a] px-2 py-3 text-center md:py-4">
               <p className="text-[0.65rem] text-white/40">{r.hint}</p>
               <p className="mt-2 text-2xl" aria-hidden>
-                {r.id === "instant" ? "🧹" : r.id === "daily" ? "🎁" : r.id === "weekly" ? "📦" : "🎀"}
+                {r.icon}
               </p>
               <p className="mt-1 text-[0.78rem] font-semibold">{r.title}</p>
               <button
