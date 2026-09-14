@@ -54,10 +54,11 @@ export function TolsT3D({
               svg={TOLS_T_SVG}
               depth={2}
               smoothness={0.6}
-              color="#8b5cf6"
-              material="metal"
-              metalness={0.9}
-              roughness={0.2}
+              color="#00ffbd"
+              material="holographic"
+              metalness={0.8}
+              roughness={0.1}
+              opacity={0.7}
               animate="pulse"
               animateSpeed={0.5}
               animateReverse
