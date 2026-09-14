@@ -14,7 +14,7 @@ export function useAuthWidget(): AuthWidgetApi {
   if (!ctx) {
     return {
       open: (tab) => {
-        window.location.assign(tab === "register" ? "/login?tab=register" : "/login");
+        window.location.assign(tab === "register" ? "/register" : "/login");
       },
       close: () => undefined,
     };

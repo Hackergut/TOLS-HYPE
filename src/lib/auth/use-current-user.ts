@@ -12,11 +12,8 @@ export type AppUser = {
 };
 
 /**
- * Stable fallback user, used ONLY when auth is disabled
- * (`VITE_AUTH_ENABLED=false`, the shipped default). With auth on, the sandbox
- * live preview does real sign-in via the baked preview client. Its id is
- * `"dev-user"` — the SAME id `verify.server.ts` returns server-side — so per-user
- * rows written in that mode belong to one consistent owner.
+ * Sandbox-only fallback. NEVER inject this on tols.fun — it makes SignedOut
+ * hide Login/Sign up and pretends every visitor is already signed in.
  */
 export const DEV_USER: AppUser = {
   id: "dev-user",
@@ -26,6 +23,14 @@ export const DEV_USER: AppUser = {
   isDevFallback: true,
 };
 
+export function isRealPlayer(user: AppUser | null | undefined): boolean {
+  return Boolean(user && !user.isDevFallback);
+}
+
+function inGrokSandbox(): boolean {
+  return typeof window !== "undefined" && window.location.hostname.endsWith(".grok-sandbox.com");
+}
+
 /** `useCurrentUserState()` result: the user plus the session-loading flag. */
 export type CurrentUserState = {
   /** The user — `null` BOTH while the session loads and when signed out. */
@@ -34,50 +39,46 @@ export type CurrentUserState = {
   isPending: boolean;
 };
 
-/**
- * Current user + loading state. Same behavior in live preview and when deployed:
- *   - Auth enabled -> the real signed-in user; `user` is `null` while
- *                            the session resolves (`isPending: true`) and when
- *                            signed out (`isPending: false`). Session comes from
- *                            Better Auth `useSession()` → `/api/auth/get-session`
- *                            (cookie when deployed; bearer in live preview).
- *   - Auth disabled (`VITE_AUTH_ENABLED=false`) -> `DEV_USER`, never pending.
- *
- * Protect a route by waiting out `isPending` before acting on `user` —
- * redirecting on `user: null` alone bounces signed-in visitors to sign-in on
- * every hard reload:
- *
- *   import { RedirectToSignIn } from "@/lib/auth/gates";
- *   const { user, isPending } = useCurrentUserState();
- *   if (isPending) return null;              // still resolving — don't redirect yet
- *   if (!user) return <RedirectToSignIn />;  // definitely signed out
- *
- * `authEnabled` is a module-level constant fixed at load, so the guarded hook
- * call keeps a stable hook order across every render of a given component.
- */
-function useNativeGoogleUser(): AppUser | null {
+function useNativeSession(): CurrentUserState {
   const [user, setUser] = useState<AppUser | null>(null);
+  const [isPending, setPending] = useState(true);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((body: { user?: AppUser | null }) => {
-        if (!cancelled && body?.user?.id) setUser({ ...body.user, isDevFallback: false });
+        if (cancelled) return;
+        if (body?.user?.id) setUser({ ...body.user, isDevFallback: false });
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setPending(false);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
-  return user;
+  return { user, isPending };
 }
 
+/**
+ * Current user + loading state.
+ *
+ * Real identity is `/api/auth/me` (`tols_session` from Google/Telegram) and,
+ * when `VITE_AUTH_ENABLED` is not `"false"`, Better Auth email session.
+ * Production guests are signed **out** (Login + Sign up). The shared DEV_USER
+ * is only for the Grok sandbox preview.
+ */
 export function useCurrentUserState(): CurrentUserState {
-  const googleUser = useNativeGoogleUser();
-  if (!authEnabled) return { user: googleUser ?? DEV_USER, isPending: false };
+  const native = useNativeSession();
+  if (!authEnabled) {
+    if (native.user) return { user: native.user, isPending: false };
+    if (inGrokSandbox()) return { user: DEV_USER, isPending: false };
+    return { user: null, isPending: native.isPending };
+  }
   // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending } = authClient.useSession();
-  if (googleUser) return { user: googleUser, isPending: false };
+  if (native.user) return { user: native.user, isPending: false };
   const user = data?.user;
   return {
     user: user
@@ -89,7 +90,7 @@ export function useCurrentUserState(): CurrentUserState {
           isDevFallback: false,
         }
       : null,
-    isPending,
+    isPending: native.isPending || isPending,
   };
 }
 

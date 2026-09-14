@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { RiFireFill, RiRecordCircleFill, RiSparkling2Fill } from "@remixicon/react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
@@ -11,13 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import { TolsT } from "@/components/brand/tols-mark";
-import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { useAuthWidget } from "@/components/auth/auth-widget-provider";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { GAME_LEGENDS } from "@/lib/game-legends";
 import type { CatalogGame } from "@/lib/games-catalog";
@@ -39,8 +35,8 @@ export function useGamePreviewOptional(): PreviewCtx | null {
   return useContext(Ctx);
 }
 
-export function isGuestPlayer(user: unknown, isPending: boolean): boolean {
-  return authEnabled && !isPending && !user;
+export function isGuestPlayer(user: { isDevFallback?: boolean } | null | undefined, isPending: boolean): boolean {
+  return !isPending && !(user && !user.isDevFallback);
 }
 
 export function GamePreviewProvider({ children }: { children: ReactNode }) {
@@ -174,92 +170,20 @@ function GameInfoCard({ game }: { game: CatalogGame }) {
   );
 }
 
-function GuestAuthForm({ nextPath }: { nextPath: string }) {
-  const navigate = useNavigate();
-  const [mode, setMode] = useState<"in" | "up">("in");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-
-  async function onEmail(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const fd = new FormData(e.currentTarget);
-    const email = String(fd.get("email") ?? "");
-    const password = String(fd.get("password") ?? "");
-    const name = String(fd.get("name") ?? "Player");
-    setPending(true);
-    try {
-      if (mode === "up") {
-        const { error: err } = await authClient.signUp.email({ email, password, name });
-        if (err) throw new Error(err.message);
-      } else {
-        const { error: err } = await authClient.signIn.email({ email, password });
-        if (err) throw new Error(err.message);
-      }
-      window.location.href = nextPath;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign-in failed");
-      setPending(false);
-    }
-  }
-
+function GuestAuthForm({ nextPath: _nextPath }: { nextPath: string }) {
+  const auth = useAuthWidget();
   return (
     <div className="mt-5 rounded-2xl bg-muted/40 p-4 ring-1 ring-border">
       <p className="font-sub text-sm font-medium">Sign in to play</p>
       <p className="mt-0.5 text-xs text-muted-foreground">Create an account or log in to launch this table.</p>
-      <Tabs value={mode} onValueChange={(v) => setMode(v as "in" | "up")} className="mt-3">
-        <TabsList className="h-9 w-full">
-          <TabsTrigger value="in" className="flex-1">
-            Login
-          </TabsTrigger>
-          <TabsTrigger value="up" className="flex-1">
-            Sign up
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value={mode} className="mt-3">
-          {authEnabled ? (
-            <div className="grid gap-2">
-              {GROK_PROVIDERS.map((p) => (
-                <Button
-                  key={p.providerId}
-                  type="button"
-                  variant="outline"
-                  className="h-10 w-full"
-                  disabled={pending}
-                  onClick={() => void signIn(p.providerId, { callbackURL: nextPath })}
-                >
-                  Continue with {p.label}
-                </Button>
-              ))}
-              <p className="py-1 text-center text-[0.65rem] text-muted-foreground">or email</p>
-              <form className="grid gap-2" onSubmit={(e) => void onEmail(e)}>
-                {mode === "up" ? (
-                  <div className="grid gap-1">
-                    <Label htmlFor="guest-name">Name</Label>
-                    <Input id="guest-name" name="name" className="h-10" required />
-                  </div>
-                ) : null}
-                <div className="grid gap-1">
-                  <Label htmlFor="guest-email">Email</Label>
-                  <Input id="guest-email" name="email" type="email" className="h-10" required />
-                </div>
-                <div className="grid gap-1">
-                  <Label htmlFor="guest-password">Password</Label>
-                  <Input id="guest-password" name="password" type="password" className="h-10" required minLength={8} />
-                </div>
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
-                <Button type="submit" className="h-10" disabled={pending}>
-                  {mode === "in" ? "Login" : "Create account"}
-                </Button>
-              </form>
-            </div>
-          ) : (
-            <Button className="h-10 w-full" onClick={() => void navigate({ to: nextPath })}>
-              Play
-            </Button>
-          )}
-        </TabsContent>
-      </Tabs>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Button type="button" variant="outline" className="h-10" onClick={() => auth.open("login")}>
+          Login
+        </Button>
+        <Button type="button" className="h-10" onClick={() => auth.open("register")}>
+          Sign up
+        </Button>
+      </div>
     </div>
   );
 }

@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ACCOUNT_ICONS } from "@/lib/account-icons";
 import { ACCOUNT_NAV } from "@/lib/nav";
-import { authEnabled, signOut } from "@/lib/auth/client";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useWalletHub, type WalletHubTab } from "@/components/wallet/wallet-hub";
@@ -49,7 +48,7 @@ export function AccountMenu() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const canSignOut = authEnabled && !gateSession;
+  const canSignOut = !user.isDevFallback && !gateSession;
 
   return (
     <DropdownMenu>
@@ -114,7 +113,7 @@ export function AccountMenu() {
               disabled={signingOut}
               onClick={() => {
                 setSigningOut(true);
-                void signOut().catch(() => setSigningOut(false));
+                window.location.assign("/api/auth/logout");
               }}
             >
               <RiLogoutBoxRLine />

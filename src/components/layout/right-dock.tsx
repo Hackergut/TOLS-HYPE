@@ -263,9 +263,14 @@ function ProfilePanel() {
     <ScrollArea className="h-full px-4 py-4">
       <SignedOut>
         <p className="text-sm text-muted-foreground">Sign in to see balances, VIP, and limits.</p>
-        <Button asChild className="mt-4 w-full">
-          <Link to="/login">Login</Link>
-        </Button>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/login">Login</Link>
+          </Button>
+          <Button asChild className="w-full">
+            <Link to="/register">Sign up</Link>
+          </Button>
+        </div>
       </SignedOut>
       <SignedIn>
         <p className="font-heading text-lg font-semibold">{user?.displayName ?? "Player"}</p>
