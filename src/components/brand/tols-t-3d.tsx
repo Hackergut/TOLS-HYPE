@@ -55,7 +55,7 @@ export function TolsT3D({
               svg={TOLS_T_SVG}
               depth={2.3}
               smoothness={0.6}
-              color="#06b6d4"
+              color="#34edcd"
               material="glass"
               metalness={0.1}
               roughness={0.05}
