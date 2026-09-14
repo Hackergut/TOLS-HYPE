@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "cn";
 
 const SVG3D = lazy(() => import("3dsvg").then((m) => ({ default: m.SVG3D })));
@@ -20,56 +20,63 @@ class SceneGuard extends Component<{ children: ReactNode }, { fail: boolean }> {
   }
 }
 
-/**
- * Pixel T extruded with 3dsvg. One canvas, no OrbitControls:
- * interactive/cursorOrbit/draggable stay off — those called connect(null)
- * after Context Lost.
- */
+/** Pixel T extruded with 3dsvg. One canvas. Orbit/drag off. */
 export function TolsT3D({
   className,
 }: {
   className?: string;
   mode?: "hero" | "boot";
 }) {
-  const [live, setLive] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+
   useEffect(() => {
-    setLive(true);
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      const w = Math.max(1, Math.round(r.width));
+      const h = Math.max(1, Math.round(r.height));
+      setBox((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
-  if (!live) {
-    return <div className={cn("relative overflow-hidden", className)} aria-hidden />;
-  }
-
   return (
-    <div className={cn("relative overflow-hidden pointer-events-none", className)} aria-hidden>
-      <SceneGuard>
-        <Suspense fallback={null}>
-          <SVG3D
-            svg={TOLS_T_SVG}
-            depth={2}
-            smoothness={0.6}
-            color="#8b5cf6"
-            material="metal"
-            metalness={0.9}
-            roughness={0.2}
-            animate="pulse"
-            animateSpeed={0.5}
-            animateReverse
-            zoom={18}
-            lightPosition={[10, 4.5, 10]}
-            lightIntensity={4.2}
-            ambientIntensity={0.55}
-            interactive={false}
-            cursorOrbit={false}
-            draggable={false}
-            scrollZoom={false}
-            shadow={false}
-            background="transparent"
-            width="100%"
-            height="100%"
-          />
-        </Suspense>
-      </SceneGuard>
+    <div ref={ref} className={cn("relative overflow-hidden pointer-events-none", className)} aria-hidden>
+      {box.w > 8 && box.h > 8 ? (
+        <SceneGuard>
+          <Suspense fallback={null}>
+            <SVG3D
+              svg={TOLS_T_SVG}
+              depth={2}
+              smoothness={0.6}
+              color="#8b5cf6"
+              material="metal"
+              metalness={0.9}
+              roughness={0.2}
+              animate="pulse"
+              animateSpeed={0.5}
+              animateReverse
+              zoom={18}
+              lightPosition={[10, 4.5, 10]}
+              lightIntensity={4.2}
+              ambientIntensity={0.55}
+              interactive={false}
+              cursorOrbit={false}
+              draggable={false}
+              scrollZoom={false}
+              shadow={false}
+              background="transparent"
+              width={box.w}
+              height={box.h}
+            />
+          </Suspense>
+        </SceneGuard>
+      ) : null}
     </div>
   );
 }

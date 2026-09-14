@@ -625,6 +625,16 @@
   max-height: none;
   animation: tols-auth-form-in 0.8s 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+.tols-auth-form-mark {
+  display: grid;
+  place-items: center;
+  height: 148px;
+  margin: 0.15rem auto 0.85rem;
+}
+.tols-auth-form-3d {
+  width: 148px;
+  height: 148px;
+}
 @media (min-width: 800px) {
   .tols-auth-form {
     padding-bottom: 1.6rem;

@@ -125,6 +125,9 @@ export function AuthWidgetPanel({
             <RiCloseLine className="size-5" />
           </Link>
         ) : null}
+        <div className="tols-auth-form-mark">
+          <TolsT3D className="tols-auth-form-3d" />
+        </div>
         <div className="tols-auth-tabs">
           <button
             type="button"
