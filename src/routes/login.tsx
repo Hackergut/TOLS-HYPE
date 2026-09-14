@@ -24,7 +24,6 @@ function Login() {
 
   return (
     <main className="tols-auth-page">
-      <div className="tols-auth-page-glow" aria-hidden />
       <div className="tols-auth-dialog tols-auth-enter w-full max-w-[920px]">
         <AuthWidgetPanel
           tab={tab}

@@ -4,7 +4,6 @@ import { RiCloseLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
 import { authClient } from "@/lib/auth/client";
 import { TolsMark } from "@/components/brand/tols-mark";
 import { TolsT3D } from "@/components/brand/tols-t-3d";
-import { TolsAuthGlow } from "@/components/brand/tols-auth-glow";
 import { TolsDiamondPlus3D } from "@/components/brand/icon3d";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,9 +107,7 @@ export function AuthWidgetPanel({
   return (
     <div className="tols-auth-split">
       <aside className="tols-auth-art">
-        <TolsAuthGlow />
-        <TolsT3D mode="hero" className="tols-auth-art-3d" />
-        <div className="tols-auth-art-wash" />
+        <TolsT3D className="tols-auth-art-3d" />
         <div className="tols-auth-art-top">
           <TolsMark large />
         </div>
