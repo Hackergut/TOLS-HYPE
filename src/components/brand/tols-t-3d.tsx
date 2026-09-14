@@ -62,14 +62,14 @@ export function TolsT3D({
               animateSpeed={0.5}
               animateReverse
               zoom={18}
+              cursorOrbit
+              orbitStrength={0.06}
+              resetOnIdle
+              resetDelay={5}
               lightPosition={[10, 4.5, 10]}
               lightIntensity={4.2}
               ambientIntensity={0.55}
               interactive
-              cursorOrbit
-              draggable
-              scrollZoom
-              orbitStrength={0.45}
               shadow={false}
               background="transparent"
               width={box.w}
