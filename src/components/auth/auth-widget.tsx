@@ -2,9 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiCloseLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
 import { authClient } from "@/lib/auth/client";
-import { TolsMark } from "@/components/brand/tols-mark";
 import { TolsT3D } from "@/components/brand/tols-t-3d";
-import { TolsDiamondPlus3D } from "@/components/brand/icon3d";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,11 +106,7 @@ export function AuthWidgetPanel({
     <div className="tols-auth-split">
       <aside className="tols-auth-art">
         <TolsT3D className="tols-auth-art-3d" />
-        <div className="tols-auth-art-top">
-          <TolsMark large />
-        </div>
         <div className="tols-auth-art-foot">
-          <TolsDiamondPlus3D className="tols-auth-art-gem" />
           <p className="tols-auth-bonus-line">
             ${WELCOME_DESKTOP} welcome bonus · ${WELCOME_MOBILE} if you also sign in on mobile
           </p>
