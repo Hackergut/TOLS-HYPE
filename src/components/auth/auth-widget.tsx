@@ -156,7 +156,7 @@ export function AuthWidgetPanel({
             Login
           </button>
         </div>
-        <form className="tols-auth-fields" onSubmit={(e) => void onEmail(e)}>
+        <form className="tols-auth-fields" key={tab} onSubmit={(e) => void onEmail(e)}>
           {tab === "register" ? (
             <div className="grid gap-1.5">
               <Label htmlFor="auth-name">Username*</Label>
@@ -214,8 +214,8 @@ export function AuthWidgetPanel({
               </button>
             </div>
           </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="submit" className="tols-auth-submit" disabled={pending}>
+          {error ? <p className="tols-auth-error">{error}</p> : null}
+          <Button type="submit" className={cn("tols-auth-submit", pending && "is-pending")} disabled={pending}>
             {pending ? "Please wait…" : tab === "login" ? "Login" : "Create account"}
           </Button>
         </form>

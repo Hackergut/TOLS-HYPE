@@ -20,8 +20,9 @@ function Login() {
   }, []);
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-background px-3 py-6">
-      <div className="tols-auth-dialog w-full max-w-[920px] overflow-hidden rounded-2xl shadow-[0_24px_80px_rgb(0_0_0/0.55)]">
+    <main className="tols-auth-page">
+      <div className="tols-auth-page-glow" aria-hidden />
+      <div className="tols-auth-dialog tols-auth-enter w-full max-w-[920px]">
         <AuthWidgetPanel tab={tab} onTab={setTab} homeClose />
       </div>
     </main>

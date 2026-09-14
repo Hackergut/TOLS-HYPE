@@ -55,7 +55,7 @@ export function TolsSvg3DIcon({
           metalness={spec.metalness}
           roughness={spec.roughness}
           animate="float"
-          zoom={14}
+          zoom={8}
           lightPosition={spec.lightPosition}
           lightIntensity={spec.lightIntensity}
           ambientIntensity={spec.ambientIntensity}

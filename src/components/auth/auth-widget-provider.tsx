@@ -42,7 +42,7 @@ export function AuthWidgetProvider({ children }: { children: ReactNode }) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           showCloseButton
-          className="tols-auth-dialog gap-0 overflow-hidden p-0 text-sm sm:max-w-[920px]"
+          className="tols-auth-dialog tols-auth-enter gap-0 overflow-hidden p-0 text-sm duration-500 sm:max-w-[920px]"
         >
           <DialogTitle className="sr-only">{tab === "login" ? "Login" : "Register"}</DialogTitle>
           <AuthWidgetPanel tab={tab} onTab={setTab} onDone={() => setOpen(false)} />

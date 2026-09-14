@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TolsReels } from "@/components/brand/tols-loader";
+import { TolsT3D } from "@/components/brand/tols-t-3d";
 
-const MIN_MS = 1100;
-const CAP_MS = 3500;
+const MIN_MS = 1600;
+const CAP_MS = 2800;
 
 export function VideoLoader({ ready }: { ready: boolean }) {
   const [minDone, setMinDone] = useState(false);
@@ -25,8 +25,8 @@ export function VideoLoader({ ready }: { ready: boolean }) {
   const done = (ready && minDone) || capReached;
   useEffect(() => {
     if (!done) return;
-    const t0 = setTimeout(() => setFading(true), 0);
-    const t = setTimeout(() => setGone(true), 500);
+    const t0 = setTimeout(() => setFading(true), 40);
+    const t = setTimeout(() => setGone(true), 560);
     return () => {
       clearTimeout(t0);
       clearTimeout(t);
@@ -37,22 +37,12 @@ export function VideoLoader({ ready }: { ready: boolean }) {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--canvas, #0d0d10)",
-        opacity: fading ? 0 : 1,
-        transition: "opacity 0.5s ease-out",
-        pointerEvents: fading ? "none" : "auto",
-      }}
+      className="tols-boot"
+      style={{ opacity: fading ? 0 : 1 }}
       role="img"
       aria-label="Loading TOLS"
     >
-      <TolsReels size="full" />
+      <TolsT3D mode="boot" className="tols-boot-mark" />
     </div>
   );
 }

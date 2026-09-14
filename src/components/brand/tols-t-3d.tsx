@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { cn } from "cn";
 import { LoginSatellites } from "@/components/brand/tols-login-satellites";
 
@@ -14,9 +14,22 @@ function Fallback({ className }: { className?: string }) {
     <img
       src="/brand/tols-t-relief.png"
       alt=""
-      className={cn("size-full object-contain p-[18%]", className)}
+      className={cn("size-full object-contain p-[8%]", className)}
     />
   );
+}
+
+class SceneGuard extends Component<{ children: ReactNode; fallback: ReactNode }, { fail: boolean }> {
+  state = { fail: false };
+  static getDerivedStateFromError() {
+    return { fail: true };
+  }
+  componentDidCatch() {
+    /* WebGL / 3dsvg can throw on context loss */
+  }
+  render() {
+    return this.state.fail ? this.props.fallback : this.props.children;
+  }
 }
 
 export type TolsT3DMode = "hero" | "boot";
@@ -49,40 +62,48 @@ export function TolsT3D({
   }
 
   const live = mode === "hero";
+  const zoom = live ? 7.4 : 6.8;
 
   return (
     <div className={cn("tols-t-3d relative overflow-hidden", className)} aria-hidden>
-      <Suspense fallback={<Fallback />}>
-        <SVG3D
-          svg={TOLS_T_SVG}
-          depth={3.6}
-          smoothness={0.6}
-          color="#06b6d4"
-          material="metal"
-          metalness={0.9}
-          roughness={0.2}
-          animate="spinFloat"
-          zoom={live ? 18 : 11}
-          cursorOrbit={live}
-          orbitStrength={0.14}
-          resetOnIdle={live}
-          resetDelay={5}
-          lightPosition={[10, 4.5, 10]}
-          lightIntensity={4.2}
-          ambientIntensity={0.55}
-          interactive={live}
-          draggable={live}
-          scrollZoom={live}
-          shadow={false}
-          background={live ? "transparent" : "#120816"}
-          intro={live ? "fade" : "zoom"}
-          introDuration={live ? 1.6 : 1.2}
-          width="100%"
-          height="100%"
-        >
-          {live ? <LoginSatellites /> : null}
-        </SVG3D>
-      </Suspense>
+      <div className="pointer-events-none absolute inset-0">
+        <Fallback />
+      </div>
+      <SceneGuard fallback={null}>
+        <Suspense fallback={null}>
+          <SVG3D
+            svg={TOLS_T_SVG}
+            depth={3.6}
+            smoothness={0.6}
+            color="#06b6d4"
+            material="metal"
+            metalness={0.9}
+            roughness={0.2}
+            animate="spinFloat"
+            zoom={zoom}
+            cursorOrbit={live}
+            orbitStrength={0.12}
+            resetOnIdle={live}
+            resetDelay={5}
+            lightPosition={[10, 4.5, 10]}
+            lightIntensity={4.2}
+            ambientIntensity={0.55}
+            interactive={live}
+            draggable={live}
+            scrollZoom={false}
+            shadow={false}
+            background={live ? "transparent" : "#0d0d10"}
+            intro={live ? "fade" : "zoom"}
+            introDuration={live ? 1.1 : 1.4}
+            introFrom={{ zoom: live ? 11 : 16, opacity: 0 }}
+            introTo={{ zoom, opacity: 1 }}
+            width="100%"
+            height="100%"
+          >
+            {live ? <LoginSatellites /> : null}
+          </SVG3D>
+        </Suspense>
+      </SceneGuard>
     </div>
   );
 }
