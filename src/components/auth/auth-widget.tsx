@@ -26,6 +26,15 @@ function GoogleMark() {
   );
 }
 
+function TelegramMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+      <path fill="#2AABEE" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" />
+      <path fill="#fff" d="M6.9 11.7c3.1-1.35 5.17-2.24 6.2-2.67 2.95-1.23 3.57-1.44 3.97-1.45.3 0 .57.14.64.42.07.24.04.5.02.86-.25 2.6-1.33 8.92-1.88 11.83-.23 1.22-.69 1.38-1.13 1.15-.9-.43-1.75-.94-2.6-1.43l-.4-.24c-1.12-.7-2.24-1.4-3.36-2.1-.28-.18-.3-.57-.05-.79l.07-.06c.5-.44 1.5-1.32 2.1-1.85.17-.15.08-.42-.14-.42h-.05c-.82.05-2.4.2-3.2.27a.4.4 0 0 1-.43-.48l.03-.1c.2-.7.38-1.44.5-2.18a.5.5 0 0 1 .35-.4Z" />
+    </svg>
+  );
+}
+
 function XMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-5 fill-current" aria-hidden>
@@ -60,7 +69,13 @@ export function AuthWidgetPanel({
   function onGoogle() {
     setError(null);
     markAdult();
-    window.location.assign("/api/auth/google?next=/");
+    window.location.assign(`/api/auth/google?next=${tab === "register" ? "/?welcome" : "/"}`);
+  }
+
+  function onTelegram() {
+    setError(null);
+    markAdult();
+    window.location.assign(`/api/auth/telegram?next=${tab === "register" ? "/?welcome" : "/"}`);
   }
 
   async function onSocial(providerId: string, idp: string) {
@@ -160,32 +175,48 @@ export function AuthWidgetPanel({
         </div>
         <form className="tols-auth-fields" key={tab} onSubmit={(e) => void onEmail(e)}>
           {tab === "register" ? (
+            <>
+              <div className="grid gap-1.5">
+                <Label htmlFor="auth-name">Username*</Label>
+                <Input
+                  id="auth-name"
+                  name="name"
+                  autoComplete="username"
+                  placeholder="Enter username"
+                  className="tols-auth-input"
+                  required
+                  minLength={3}
+                  maxLength={24}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="auth-email">Email*</Label>
+                <Input
+                  id="auth-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Enter email"
+                  className="tols-auth-input"
+                  required
+                />
+              </div>
+            </>
+          ) : null}
+          {tab === "login" ? (
             <div className="grid gap-1.5">
-              <Label htmlFor="auth-name">Username*</Label>
+              <Label htmlFor="auth-email">Email or Username*</Label>
               <Input
-                id="auth-name"
-                name="name"
-                autoComplete="username"
-                placeholder="Enter username"
+                id="auth-email"
+                name="email"
+                type="text"
+                autoComplete="email"
+                placeholder="Enter email or username"
                 className="tols-auth-input"
                 required
-                minLength={3}
-                maxLength={24}
               />
             </div>
           ) : null}
-          <div className="grid gap-1.5">
-            <Label htmlFor="auth-email">{tab === "login" ? "Email or Username*" : "Email*"}</Label>
-            <Input
-              id="auth-email"
-              name="email"
-              type={tab === "login" ? "text" : "email"}
-              autoComplete="email"
-              placeholder={tab === "login" ? "Enter email or username" : "Enter email"}
-              className="tols-auth-input"
-              required
-            />
-          </div>
           <div className="grid gap-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="auth-password">Password*</Label>
@@ -218,7 +249,7 @@ export function AuthWidgetPanel({
           </div>
           {error ? <p className="tols-auth-error">{error}</p> : null}
           <Button type="submit" className={cn("tols-auth-submit", pending && "is-pending")} disabled={pending}>
-            {pending ? "Please wait…" : tab === "login" ? "Login" : "Create account"}
+            {pending ? "Please wait…" : tab === "login" ? "Login" : "Sign up & claim $200"}
           </Button>
         </form>
         <p className="tols-auth-or">Or continue with</p>
@@ -226,6 +257,10 @@ export function AuthWidgetPanel({
           <Button type="button" variant="outline" className="tols-auth-social" onClick={onGoogle}>
             <GoogleMark />
             <span className="sr-only">Google</span>
+          </Button>
+          <Button type="button" variant="outline" className="tols-auth-social" onClick={onTelegram}>
+            <TelegramMark />
+            <span className="sr-only">Telegram</span>
           </Button>
           {GROK_PROVIDERS.filter((p) => p.idp !== "google").map((p) => (
             <Button

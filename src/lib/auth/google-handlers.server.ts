@@ -1,5 +1,6 @@
 import { ensureWallets } from "@/lib/wallet.server";
 import { pushBridgeEvent } from "@/lib/governance/bridge";
+import { syncUserOnSignIn } from "./user-sync.server";
 import {
   exchangeGoogle,
   googleAuthUrl,
@@ -131,16 +132,15 @@ export async function handleGoogleCallback(request: Request): Promise<Response> 
     googleId: profile.sub,
   };
 
-  try {
-    await ensureWallets(user.id);
-  } catch (e) {
-    console.error("[google-oauth] wallet seed failed:", e);
-  }
-
-  void pushBridgeEvent("casino.session_start", {
+  // User creation + wallet seed + Tower sync — one choke point for every path.
+  await syncUserOnSignIn({
+    providerAccountId: profile.sub,
     userId: user.id,
+    email: user.email,
+    name: user.name,
+    picture: user.picture,
     provider: "google",
-  }).catch(() => undefined);
+  });
 
   const token = signSession(user);
   const cookies = [...oauthClearCookies(request), ...sessionSetCookies(token, request)];
