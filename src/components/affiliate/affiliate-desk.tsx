@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ReferralIconRow } from "@/components/brand/referral-icon-row";
+import { PromoCardGrid } from "@/components/home/promo-card-grid";
 import { AFFILIATE_SECTIONS, type AffiliateTab } from "@/lib/nav";
 import { isRealPlayer, useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "cn";
@@ -61,16 +62,6 @@ const TAB_ICONS = {
   earnings: RiMoneyDollarCircleLine,
   info: RiInformationLine,
   pro: RiBriefcase4Line,
-};
-
-/** Hero per tab — the TOLS BANNER pack fills the TOP hero slot, one image per tab. */
-const TAB_HERO: Record<AffiliateTab, { src: string; alt: string }> = {
-  overview: { src: "/brand/affiliate/banner-income.jpg", alt: "TOLS affiliates — Income That Lasts, 25-30% lifetime revenue share" },
-  users: { src: "/brand/affiliate/banner-referrals.jpg", alt: "TOLS affiliates — Every Referral Counts, real-time tracking" },
-  campaigns: { src: "/brand/affiliate/banner-promote.jpg", alt: "TOLS affiliates — Promote. Track. Convert." },
-  earnings: { src: "/brand/affiliate/banner-rank-win.jpg", alt: "TOLS affiliates — Refer, Rank, Win with leaderboard prizes" },
-  info: { src: "/brand/affiliate/banner-info.jpg", alt: "TOLS affiliates — how the program works" },
-  pro: { src: "/brand/affiliate/banner-pro.jpg", alt: "TOLS affiliates — professional plans" },
 };
 
 function readCampaigns(): AffCampaign[] {
@@ -143,15 +134,7 @@ export function AffiliateDesk({ tab }: { tab: AffiliateTab }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-glow)]">
-        <img
-          src={TAB_HERO[tab].src}
-          alt={TAB_HERO[tab].alt}
-          className="block w-full object-cover"
-          loading="eager"
-          decoding="async"
-        />
-      </section>
+      <PromoCardGrid />
       <div
         role="tablist"
         aria-label="Affiliate sections"
