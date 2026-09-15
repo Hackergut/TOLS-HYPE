@@ -285,8 +285,8 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
   },
   slots: {
     summary:
-      "Three reels, one payline. Line up 7s, BARs, or diamonds. RTP 92%, 4% edge. A fast original — no bonus round, just the payline.",
-    what: "Neon Sevens is a TOLS Original slot. One row, three symbols. Matching 7s are the top line. Everything else is a miss or a smaller three-of-a-kind.",
+      "Three reels, one payline classic. Line up 7s, BARs, or diamonds. Instant settle, no bonus rounds — just the payline.",
+    what: "A classic TOLS slot format. One row, three symbols. Matching 7s are the top line. Everything else is a miss or a smaller three-of-a-kind.",
     how: [
       "Set stake and Spin.",
       "Three reels stop on the payline.",
@@ -294,7 +294,6 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
     ],
     features: [
       "Three reels, one payline",
-      "92% RTP",
       "Instant settle",
     ],
     payouts: [
