@@ -96,14 +96,14 @@ export function SiteFooter() {
           <p className="text-xs">18+ only · TOLS B.V. · Willemstad, Curaçao · support@tols.fun</p>
         </div>
         <a
-          href="https://www.gambleaware.org/"
+          href="https://www.begambleaware.org/"
           target="_blank"
           rel="noreferrer"
-          aria-label="GambleAware — free, confidential support with gambling"
-          title="GambleAware"
+          aria-label="BeGambleAware — free, confidential support with gambling"
+          title="BeGambleAware"
           className="inline-flex shrink-0 items-center self-start rounded-md bg-white px-1.5 py-1 transition-opacity hover:opacity-80 sm:self-auto"
         >
-          <img src="/brand/gambleaware.webp" alt="GambleAware" className="h-5 w-auto" loading="lazy" />
+          <img src="/brand/begambleaware.svg" alt="BeGambleAware" className="h-4 w-auto" loading="lazy" />
         </a>
       </div>
       <CookiePreferences open={cookies} onOpenChange={setCookies} />
