@@ -52,7 +52,45 @@ export function RoundClone({
   if (view.kind === "hilo") return <HiloClone view={view} pill={pill} />;
   if (view.kind === "blackjack") return <BlackjackClone view={view} pill={pill} />;
   if (view.kind === "pool") return <PoolClone view={view} win={win} pill={pill} />;
+  if (view.kind === "limbo") return <LimboClone view={view} win={win} pill={pill} />;
+  if (view.kind === "plinko") return <PlinkoClone view={view} pill={pill} />;
+  if (view.kind === "tower") return <TowerClone view={view} pill={pill} />;
+  if (view.kind === "crazy") return <CrazyClone view={view} win={win} pill={pill} />;
   return null;
+}
+
+function LimboClone({ view, win, pill }: { view: Extract<RoundView, { kind: "limbo" }>; win: boolean; pill: boolean }) {
+  return (
+    <span className={cn("grid place-items-center font-heading font-bold tabular-nums", pill ? cn("h-8 min-w-10 px-1.5 text-[0.7rem]", widgetWinClass(win)) : "h-16 text-2xl")}>
+      {view.roll.toFixed(2)}×
+    </span>
+  );
+}
+
+function PlinkoClone({ view, pill }: { view: Extract<RoundView, { kind: "plinko" }>; pill: boolean }) {
+  return (
+    <span className={cn("grid place-items-center font-heading font-bold tabular-nums", pill ? "h-8 min-w-10 px-1.5 text-[0.7rem] bg-muted" : "h-16 text-2xl")}>
+      {view.multiplier.toFixed(2)}×
+    </span>
+  );
+}
+
+function TowerClone({ view, pill }: { view: Extract<RoundView, { kind: "tower" }>; pill: boolean }) {
+  return (
+    <span className={cn("grid place-items-center font-heading font-bold tabular-nums", pill ? "h-8 min-w-10 px-1.5 text-[0.7rem] bg-muted" : "h-16 text-2xl")}>
+      L{view.row}
+    </span>
+  );
+}
+
+function CrazyClone({ view, win, pill }: { view: Extract<RoundView, { kind: "crazy" }>; pill: boolean; win: boolean }) {
+  const t = view.segment === "1" || view.segment === "2" || view.segment === "5" || view.segment === "10" ? "" : "";
+  return (
+    <span className={cn("grid place-items-center font-heading font-bold tabular-nums", pill ? cn("h-8 min-w-10 px-1.5 text-[0.7rem]", widgetWinClass(win)) : "h-16 text-2xl")}>
+      {view.segment}
+      {t}
+    </span>
+  );
 }
 
 function RouletteChip({ n, color }: { n: number; color: string }) {

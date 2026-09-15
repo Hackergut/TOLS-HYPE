@@ -8,6 +8,7 @@ import { KenoGame } from "@/components/games/keno-game";
 import { MinesGame } from "@/components/games/mines-game";
 import { RouletteGame } from "@/components/games/roulette-game";
 import { SlotsGame } from "@/components/games/slots-game";
+import { CrazyTolsGame } from "@/components/games/crazy-tols-game";
 import { PoolGame } from "@/components/games/pool-game";
 import { LimboGame } from "@/components/games/limbo-game";
 import { PlinkoGame } from "@/components/games/plinko-game";
@@ -137,6 +138,8 @@ function GameSwitch({ kind, id }: { kind: string; id: string }) {
       return <PoolGame gameId={id} />;
     case "limbo":
       return <LimboGame gameId={id} />;
+    case "crazy":
+      return <CrazyTolsGame gameId={id} />;
     case "plinko":
       return <PlinkoGame gameId={id} />;
     case "tower":

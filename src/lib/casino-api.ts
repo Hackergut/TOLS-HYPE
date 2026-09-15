@@ -13,6 +13,7 @@ import { takeFair } from "@/lib/fair.server";
 import { crashPointFromFloat, diceRoll, pickIndex, uniquePicks } from "@/lib/fair";
 import { limboFromFloat, plinkoBucket, plinkoMultipliers, towerMultiplier, TOWER_COLS, TOWER_ROWS } from "@/lib/originals";
 import { poolMultiplier, simulateBreak, type PoolDiff } from "@/lib/pool-physics";
+import { crazyRound, type CrazyBetSpot } from "@/lib/crazy-tols";
 import {
   credit,
   debit,
@@ -93,6 +94,21 @@ function assertBet(currency: Currency, amount: number) {
   if (amount > meta.maxBet) throw new Error(`Maximum bet is ${meta.maxBet} ${currency}`);
 }
 
+export type CrazyDetail = {
+  wheelIndex: number;
+  segment: string;
+  segmentLabel: string;
+  win: boolean;
+  multiplier: number;
+  topSlot: { segment: string; multiplier: number } | null;
+  bonus:
+    | { kind: "coinflip"; blue: number; red: number; side: "blue" | "red" }
+    | { kind: "pachinko"; slot: number; value: number; doubles: number }
+    | { kind: "cashhunt"; cell: number; value: number }
+    | { kind: "crazy"; wheelIndex: number; value: number; doubles: number }
+    | null;
+};
+
 export type PlayResult = {
   payout: number;
   multiplier: number;
@@ -102,6 +118,7 @@ export type PlayResult = {
     number?: number;
     color?: string;
     reels?: string[];
+    crazy?: CrazyDetail;
   };
   balances: Record<Currency, number>;
   fair?: { serverHash: string; clientSeed: string; nonce: number };
@@ -200,6 +217,19 @@ export const playInstant = createServerFn({ method: "POST" })
       payout = data.amount * m;
       detail.number = bucket;
       detail.roll = m;
+    } else if (game.kind === "crazy") {
+      const result = crazyRound(u, (data.choice ?? "1") as CrazyBetSpot);
+      multiplier = result.win ? result.multiplier : 0;
+      payout = result.win ? data.amount * result.multiplier : 0;
+      detail.crazy = {
+        wheelIndex: result.wheelIndex,
+        segment: result.segment,
+        segmentLabel: result.segmentLabel,
+        win: result.win,
+        multiplier: result.multiplier,
+        topSlot: result.topSlot,
+        bonus: result.bonus,
+      };
     } else if (game.kind === "crash") {
       throw new Error("Use startCrash for this game");
     } else if (game.kind === "blackjack") {

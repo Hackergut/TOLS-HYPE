@@ -325,4 +325,39 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
     payouts: [{ label: "Provider RTP", value: "Studio published" }],
     symbols: ["Iframe — studio canvas"],
   },
+  crazy: {
+    summary:
+      "Money-wheel game show. Bet one of eight spots on a 54-segment wheel (1, 2, 5, 10, Coin Flip, Cash Hunt, Pachinko, Crazy Time). The Top Slot can boost the result; bonus segments open four different bonus rounds. Per-spot RTP 94.4-96.1%.",
+    what:
+      "Crazy Tols is the TOLS Original take on the classic live money-wheel game show. The wheel has 54 segments with the classic composition — 21×1, 13×2, 7×5, 4×10, 4 Coin Flip, 2 Cash Hunt, 2 Pachinko, 1 Crazy Time. A Top Slot above the wheel draws a multiplier for one spot before every spin; if the wheel lands there, the payout is boosted.",
+    how: [
+      "Set stake and pick one of the eight bet spots.",
+      "Spin. The Top Slot draws a multiplier for one spot (2x-100x).",
+      "The wheel stops on one of 54 segments. Numbers pay 1:1, 2:1, 5:1, 10:1.",
+      "Bonus segments (Coin Flip, Cash Hunt, Pachinko, Crazy Time) resolve with their own mini-game and pay the resolved multiplier.",
+    ],
+    features: [
+      "54-segment wheel, classic composition",
+      "Top Slot multipliers up to 100x",
+      "Four bonus rounds: Coin Flip, Cash Hunt, Pachinko, Crazy Time",
+      "Per-spot RTP 94.4-96.1%",
+      "Provably fair — server commits the wheel before the spin",
+    ],
+    payouts: [
+      { label: "1 (21 segs)", value: "1:1" },
+      { label: "2 (13 segs)", value: "2:1" },
+      { label: "5 (7 segs)", value: "5:1" },
+      { label: "10 (4 segs)", value: "10:1" },
+      { label: "Coin Flip (4 segs)", value: "2x-50x bonus" },
+      { label: "Cash Hunt (2 segs)", value: "5x-300x bonus" },
+      { label: "Pachinko (2 segs)", value: "2x-75x bonus" },
+      { label: "Crazy Time (1 seg)", value: "up to 20,000x bonus" },
+    ],
+    symbols: [
+      "Top Slot — multiplier reel above the wheel",
+      "Coin Flip — blue/red coin with two wall multipliers",
+      "Pachinko — puck drop with DOUBLE re-drops",
+      "Crazy Time — 64-stop bonus wheel with doubles",
+    ],
+  },
 };

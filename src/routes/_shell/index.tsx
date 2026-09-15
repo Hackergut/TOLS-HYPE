@@ -19,7 +19,7 @@ import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
 const TITLE = "TOLS — Originals casino | Crash, Dice, Roulette, Blackjack";
 const DESC =
-  "TOLS originals casino. Play crash, dice, roulette, blackjack, mines, keno, pool rush and neon sevens. 18+ play-money tables, provably fair.";
+  "TOLS originals casino. Play crash, dice, roulette, blackjack, mines, keno, pool rush and crazy tols. 18+ play-money tables, provably fair.";
 const OG = "/brand/promo/hero-main.jpg";
 
 export const Route = createFileRoute("/_shell/")({

@@ -37,6 +37,7 @@ export type GameKind =
   | "limbo"
   | "plinko"
   | "tower"
+  | "crazy"
   | "iframe";
 
 export type CatalogGame = {
@@ -105,18 +106,19 @@ export const ORIGINALS: CatalogGame[] = [
     cta: "Deal",
   },
   {
-    id: "pulse-slots",
-    title: "Neon Sevens",
+    id: "crazy-tols",
+    title: "Crazy Tols",
     provider: "TOLS Originals",
-    category: "slots",
-    kind: "slots",
+    category: "table",
+    kind: "crazy",
     isNew: true,
     original: true,
-    players: 2204,
-    edge: 0.04,
-    rtp: 92,
-    blurb: "Three reels, one payline.",
-    cover: "/brand/games/slots.jpg",
+    hot: true,
+    players: 1907,
+    edge: 0.041,
+    rtp: 95.9,
+    blurb: "The money wheel with four bonus rounds.",
+    cover: "/brand/games/crazy.jpg",
     cta: "Spin",
   },
   {
@@ -341,9 +343,8 @@ const ORIGINAL_ALIASES: Record<string, string> = {
   "hi lo": "hilo-ace",
   roulette: "midnight-roulette",
   blackjack: "obsidian-blackjack",
-  slots: "pulse-slots",
-  sevens: "pulse-slots",
-  "neon-sevens": "pulse-slots",
+  "crazy-time": "crazy-tols",
+  crazy: "crazy-tols",
   pool: "pool-rush",
   limbo: "pulse-limbo",
   plinko: "grid-plinko",
@@ -376,15 +377,15 @@ export const HERO_SLIDES = [
     alt: "TOLS lime chip with official T mark among dark silicone cards with purple rims",
   },
   {
-    id: "pulse-slots",
-    kicker: "NEON SEVENS",
-    titleLime: "NEON",
-    titleRest: "SEVENS",
-    subtitle: "Three reels, one payline · 92% RTP",
+    id: "crazy-tols",
+    kicker: "CRAZY TOLS",
+    titleLime: "CRAZY",
+    titleRest: "TOLS",
+    subtitle: "Money wheel · 4 bonus rounds · Top Slot",
     cta: "SPIN",
-    image: "/brand/games/slots.jpg",
+    image: "/brand/games/crazy.jpg",
     position: "right center",
-    alt: "Neon Sevens slot reels in dark-grey silicone with lime sevens",
+    alt: "Crazy Tols money wheel in dark silicone with lime segments",
   },
   {
     id: "pool-rush",

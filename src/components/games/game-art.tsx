@@ -105,6 +105,72 @@ function SlotsArt({ hue }: { hue: number }) {
   );
 }
 
+function CrazyArt({ hue }: { hue: number }) {
+  // 54-segment Crazy Time layout, miniaturized for the card.
+  const segs = [
+    { label: "1", color: "#1d63ff", count: 21 },
+    { label: "2", color: "#e8b84a", count: 13 },
+    { label: "5", color: "#1a8f2c", count: 7 },
+    { label: "10", color: "#7c3aec", count: 4 },
+    { label: "PACHINKO", color: "#ff5b79", count: 2 },
+    { label: "CASH HUNT", color: "#0aa3c2", count: 2 },
+    { label: "COIN FLIP", color: "#d4a017", count: 4 },
+    { label: "CRAZY TIME", color: "#e11d48", count: 1 },
+  ];
+  let cursor = 0;
+  const R_OUT = 150;
+  const R_IN = 46;
+  const toXY = (r: number, a: number) => [150 + r * Math.cos(a), 210 + r * Math.sin(a)];
+  return (
+    <svg viewBox="0 0 300 400" className="size-full" aria-hidden>
+      <rect width="300" height="400" fill={`hsl(${hue} 40% 7%)`} />
+      <g transform="translate(0 0)">
+        <circle cx="150" cy="210" r="152" fill="#0c0c10" />
+        {segs.map((s) => {
+          const span = (s.count / 54) * Math.PI * 2;
+          const a0 = cursor;
+          const a1 = cursor + span;
+          cursor = a1;
+          const [x0, y0] = toXY(R_OUT, a0);
+          const [x1, y1] = toXY(R_OUT, a1);
+          const [xi1, yi1] = toXY(R_IN, a1);
+          const [xi0, yi0] = toXY(R_IN, a0);
+          const mid = a0 + span / 2;
+          const long = span > Math.PI ? 1 : 0;
+          return (
+            <g key={s.label}>
+              <path
+                d={`M ${x0} ${y0} A ${R_OUT} ${R_OUT} 0 ${long} 1 ${x1} ${y1} L ${xi1} ${yi1} A ${R_IN} ${R_IN} 0 ${long} 0 ${xi0} ${yi0} Z`}
+                fill={s.color}
+                fillOpacity="0.92"
+              />
+              <text
+                x={150 + 100 * Math.cos(mid)}
+                y={210 + 100 * Math.sin(mid)}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={s.label.length > 3 ? "6" : "16"}
+                fontWeight="bold"
+                fill="#fff"
+                fontFamily="Outfit, sans-serif"
+              >
+                {s.label}
+              </text>
+            </g>
+          );
+        })}
+        <circle cx="150" cy="210" r="42" fill="#0c0c10" stroke="#e8b84a" strokeWidth="4" />
+        <text x="150" y="206" textAnchor="middle" fontSize="13" fontWeight="bold" fill="var(--lime)" fontFamily="Outfit, sans-serif">
+          TOLS
+        </text>
+        <text x="150" y="222" textAnchor="middle" fontSize="8" fill="#9ca3af" fontFamily="Outfit, sans-serif">
+          CRAZY WHEEL
+        </text>
+      </g>
+    </svg>
+  );
+}
+
 function DiceArt({ hue }: { hue: number }) {
   return (
     <svg viewBox="0 0 300 400" className="size-full" aria-hidden>
@@ -164,6 +230,7 @@ const ART: Record<CatalogGame["kind"], (p: { hue: number }) => ReactNode> = {
   limbo: ({ hue }) => <CrashArt hue={hue} />,
   plinko: ({ hue }) => <MinesArt hue={hue} />,
   tower: ({ hue }) => <MinesArt hue={hue} />,
+  crazy: ({ hue }) => <CrazyArt hue={hue} />,
   iframe: ({ hue }) => <SlotsArt hue={hue} />,
 };
 

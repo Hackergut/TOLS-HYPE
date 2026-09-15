@@ -32,7 +32,7 @@ export function Hero() {
       className="relative overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-glow)]"
     >
       <h1 className="sr-only">
-        TOLS casino — originals for crash, dice, roulette, blackjack, mines, keno, pool rush and neon sevens.
+        TOLS casino — originals for crash, dice, roulette, blackjack, mines, keno, pool rush and crazy tols.
         18+ play-money tables.
       </h1>
       <div className="relative min-h-48 w-full sm:min-h-56 md:min-h-72 lg:min-h-80">

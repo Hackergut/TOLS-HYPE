@@ -55,7 +55,7 @@ export const ORIGINAL_SECTIONS: OriginalNav[] = [
   { title: "Tower", id: "sky-tower" },
   { title: "Roulette", id: "midnight-roulette" },
   { title: "Blackjack", id: "obsidian-blackjack" },
-  { title: "Neon Sevens", id: "pulse-slots" },
+  { title: "Crazy Tols", id: "crazy-tols" },
   { title: "Pool Rush", id: "pool-rush" },
 ];
 
