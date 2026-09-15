@@ -179,8 +179,10 @@ function MatchCenter() {
             currency={currency}
             busy={busy}
             mode={picks.length < 2 ? "single" : mode}
+            systemK={2}
             format={format}
             onMode={setMode}
+            onSystemK={() => {}}
             onAmount={setAmount}
             onRemove={(pid) => setPicks((c) => c.filter((p) => p.id !== pid))}
             onClear={() => setPicks([])}

@@ -26,6 +26,13 @@ import {
   RiCoupon3Line,
   RiVipLine,
   RiHandHeartLine,
+  RiBaseballLine,
+  RiSnowflakeLine,
+  RiFireLine,
+  RiCalendar2Line,
+  RiTrophyLine,
+  RiFileList3Line,
+  RiBookOpenLine,
 } from "@remixicon/react";
 import {
   Sidebar,
@@ -43,7 +50,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { TolsT, TolsWordmark } from "@/components/brand/tols-mark";
-import { AFFILIATE_SECTIONS, BROWSE_FOOT, BROWSE_NAV, CASINO_SECTIONS, ORIGINAL_SECTIONS, SPORT_SECTIONS } from "@/lib/nav";
+import { AFFILIATE_SECTIONS, BROWSE_FOOT, BROWSE_NAV, CASINO_SECTIONS, ORIGINAL_SECTIONS, SPORT_SECTIONS, SPORT_TABS } from "@/lib/nav";
 
 const ICONS = {
   home: RiHome5Line,
@@ -74,6 +81,16 @@ const SPORT_ICONS = {
   tennis: RiPingPongLine,
   mma: RiBoxingLine,
   esports: RiGamepadLine,
+  baseball: RiBaseballLine,
+  hockey: RiSnowflakeLine,
+};
+
+const SPORT_TAB_ICONS = {
+  live: RiFireLine,
+  upcoming: RiCalendar2Line,
+  leagues: RiTrophyLine,
+  bets: RiFileList3Line,
+  guide: RiBookOpenLine,
 };
 
 const AFF_ICONS = {
@@ -216,6 +233,29 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel className="font-sub text-[0.65rem] tracking-[0.12em] text-lime uppercase">Sports</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
+              {SPORT_TABS.map((item) => {
+                const Icon = SPORT_TAB_ICONS[item.tab];
+                const tabQ =
+                  typeof search === "object" && search && "tab" in search
+                    ? String((search as { tab?: string }).tab ?? "home")
+                    : "home";
+                const active = onSports && tabQ === item.tab;
+                return (
+                  <SidebarMenuItem key={item.tab}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      tooltip={item.title}
+                      className="h-9 w-full justify-start gap-3 px-3 text-sm"
+                    >
+                      <Link to="/sports" search={{ tab: item.tab }} onClick={closeIfMobile}>
+                        <Icon className={active ? "text-lime" : undefined} />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
               {SPORT_SECTIONS.map((item) => {
                 const Icon = SPORT_ICONS[item.sport];
                 const active = onSports && (item.sport === "all" ? sportQ === "all" || !sportQ : sportQ === item.sport);

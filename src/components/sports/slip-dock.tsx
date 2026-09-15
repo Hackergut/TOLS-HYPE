@@ -17,8 +17,10 @@ type Props = {
   currency: Currency;
   busy: boolean;
   mode: SlipMode;
+  systemK: number;
   format: OddsFormat;
   onMode: (m: SlipMode) => void;
+  onSystemK: (k: number) => void;
   onAmount: (n: number) => void;
   onRemove: (id: string) => void;
   onClear: () => void;

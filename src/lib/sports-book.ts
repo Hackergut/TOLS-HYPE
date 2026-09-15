@@ -1,6 +1,6 @@
-export type SportKind = "football" | "basketball" | "tennis" | "mma" | "esports";
+export type SportKind = "football" | "basketball" | "tennis" | "mma" | "esports" | "baseball" | "hockey";
 
-export type MarketKind = "ml" | "spread" | "total" | "btts" | "dc";
+export type MarketKind = "ml" | "spread" | "total" | "btts" | "dc" | "oe" | "dnb" | "cs";
 
 export type SportEvent = {
   id: string;
@@ -21,6 +21,9 @@ export type SportEvent = {
     total?: { line: number; over: number; under: number };
     btts?: { yes: number; no: number };
     dc?: { homeDraw: number; homeAway: number; awayDraw: number };
+    oe?: { odd: number; even: number };
+    dnb?: { home: number; away: number };
+    cs?: Array<{ score: string; odds: number }>;
   };
 };
 
@@ -45,7 +48,22 @@ export const SPORT_META: Record<SportKind, { label: string; cover: string; field
   tennis: { label: "Tennis", cover: "/brand/sports/tennis.jpg", field: "/brand/sports/field-basketball.jpg" },
   mma: { label: "MMA", cover: "/brand/sports/mma.jpg", field: "/brand/sports/field-mma.jpg" },
   esports: { label: "Esports", cover: "/brand/sports/football.jpg", field: "/brand/sports/field-esports.jpg" },
+  baseball: { label: "Baseball", cover: "/brand/sports/basketball.jpg", field: "/brand/sports/field-basketball.jpg" },
+  hockey: { label: "Ice hockey", cover: "/brand/sports/mma.jpg", field: "/brand/sports/field-mma.jpg" },
 };
+
+export const SPORT_LEAGUES: Record<SportKind, string[]> = {
+  football: ["Champions League", "Premier League", "La Liga", "Serie A", "Bundesliga"],
+  basketball: ["NBA", "EuroLeague"],
+  tennis: ["ATP Tour", "WTA Tour"],
+  mma: ["UFC", "Bellator"],
+  esports: ["ESL Pro", "LEC", "LCK"],
+  baseball: ["MLB", "NPB"],
+  hockey: ["NHL", "KHL"],
+};
+
+/** Sports that use two-way moneylines (no draw). */
+export const TWO_WAY = new Set<SportKind>(["basketball", "tennis", "mma", "esports", "baseball", "hockey"]);
 
 export const SPORT_EVENTS: SportEvent[] = [
   {
@@ -67,6 +85,16 @@ export const SPORT_EVENTS: SportEvent[] = [
       total: { line: 2.5, over: 1.87, under: 1.93 },
       btts: { yes: 1.72, no: 2.1 },
       dc: { homeDraw: 1.36, homeAway: 1.28, awayDraw: 1.62 },
+      oe: { odd: 1.98, even: 1.82 },
+      dnb: { home: 1.62, away: 2.12 },
+      cs: [
+        { score: "1-0", odds: 7.5 },
+        { score: "2-1", odds: 9.0 },
+        { score: "1-1", odds: 6.5 },
+        { score: "2-2", odds: 12.0 },
+        { score: "0-1", odds: 8.5 },
+        { score: "1-2", odds: 10.0 },
+      ],
     },
   },
   {
@@ -85,6 +113,16 @@ export const SPORT_EVENTS: SportEvent[] = [
       total: { line: 2.5, over: 1.91, under: 1.89 },
       btts: { yes: 1.8, no: 2.0 },
       dc: { homeDraw: 1.32, homeAway: 1.22, awayDraw: 1.44 },
+      oe: { odd: 1.91, even: 1.91 },
+      dnb: { home: 1.55, away: 2.05 },
+      cs: [
+        { score: "2-1", odds: 8.5 },
+        { score: "1-1", odds: 6.8 },
+        { score: "1-2", odds: 9.5 },
+        { score: "2-0", odds: 10.0 },
+        { score: "0-2", odds: 11.0 },
+        { score: "3-1", odds: 14.0 },
+      ],
     },
   },
   {
@@ -143,6 +181,8 @@ export const SPORT_EVENTS: SportEvent[] = [
       total: { line: 2.5, over: 1.9, under: 1.9 },
       btts: { yes: 1.78, no: 2.02 },
       dc: { homeDraw: 1.28, homeAway: 1.3, awayDraw: 1.68 },
+      oe: { odd: 1.95, even: 1.87 },
+      dnb: { home: 1.58, away: 2.15 },
     },
   },
   {
@@ -299,6 +339,80 @@ export const SPORT_EVENTS: SportEvent[] = [
       total: { line: 2.5, over: 1.7, under: 2.15 },
     },
   },
+  {
+    id: "mlb-1",
+    sport: "baseball",
+    league: "MLB",
+    home: "New York Yankees",
+    away: "Boston Red Sox",
+    homeAbbr: "NYY",
+    awayAbbr: "BOS",
+    start: "Tomorrow 01:05",
+    live: true,
+    minute: "Top 5th",
+    score: [3, 2],
+    cover: "/brand/sports/basketball.jpg",
+    markets: {
+      ml: [1.55, 2.45],
+      spread: { line: -1.5, home: 2.2, away: 1.7 },
+      total: { line: 8.5, over: 1.9, under: 1.9 },
+      oe: { odd: 1.95, even: 1.95 },
+    },
+  },
+  {
+    id: "mlb-2",
+    sport: "baseball",
+    league: "MLB",
+    home: "Los Angeles Dodgers",
+    away: "San Francisco Giants",
+    homeAbbr: "LAD",
+    awayAbbr: "SFG",
+    start: "Tomorrow 04:10",
+    cover: "/brand/sports/basketball.jpg",
+    markets: {
+      ml: [1.48, 2.6],
+      spread: { line: -1.5, home: 2.35, away: 1.62 },
+      total: { line: 7.5, over: 1.85, under: 1.95 },
+      oe: { odd: 1.9, even: 1.9 },
+    },
+  },
+  {
+    id: "nhl-1",
+    sport: "hockey",
+    league: "NHL",
+    home: "Boston Bruins",
+    away: "Toronto Maple Leafs",
+    homeAbbr: "BOS",
+    awayAbbr: "TOR",
+    start: "Tonight 00:00",
+    live: true,
+    minute: "P2 8:44",
+    score: [2, 1],
+    cover: "/brand/sports/mma.jpg",
+    markets: {
+      ml: [2.1, 3.1, 3.4],
+      spread: { line: -1.5, home: 2.4, away: 1.6 },
+      total: { line: 5.5, over: 1.92, under: 1.88 },
+      oe: { odd: 1.87, even: 1.93 },
+    },
+  },
+  {
+    id: "nhl-2",
+    sport: "hockey",
+    league: "NHL",
+    home: "Colorado Avalanche",
+    away: "Vegas Golden Knights",
+    homeAbbr: "COL",
+    awayAbbr: "VGK",
+    start: "Tomorrow 03:30",
+    cover: "/brand/sports/mma.jpg",
+    markets: {
+      ml: [1.95, 3.6, 3.3],
+      spread: { line: -1.5, home: 2.15, away: 1.75 },
+      total: { line: 6.5, over: 1.9, under: 1.9 },
+      oe: { odd: 1.95, even: 1.95 },
+    },
+  },
 ];
 
 export function eventById(id: string) {
@@ -312,6 +426,24 @@ export function eventsBySport(sport: SportKind | "all") {
 
 export function featuredEvents() {
   return SPORT_EVENTS.filter((e) => e.live).slice(0, 4);
+}
+
+export function liveEvents() {
+  return SPORT_EVENTS.filter((e) => e.live);
+}
+
+export function upcomingEvents() {
+  return SPORT_EVENTS.filter((e) => !e.live);
+}
+
+export function allLeagues(): { league: string; sport: SportKind; events: SportEvent[] }[] {
+  const map = new Map<string, { league: string; sport: SportKind; events: SportEvent[] }>();
+  for (const ev of SPORT_EVENTS) {
+    const hit = map.get(ev.league);
+    if (hit) hit.events.push(ev);
+    else map.set(ev.league, { league: ev.league, sport: ev.sport, events: [ev] });
+  }
+  return [...map.values()];
 }
 
 export function groupedByLeague(events: SportEvent[]) {
@@ -422,6 +554,23 @@ export function outcomesFor(ev: SportEvent): Outcome[] {
       { id: outcomeId(ev.id, "dc", "12"), eventId: ev.id, market: "dc", marketLabel: "Double chance", selection: "12", label: "12", odds: ev.markets.dc.homeAway },
       { id: outcomeId(ev.id, "dc", "X2"), eventId: ev.id, market: "dc", marketLabel: "Double chance", selection: "X2", label: "X2", odds: ev.markets.dc.awayDraw },
     );
+  }
+  if (ev.markets.oe) {
+    out.push(
+      { id: outcomeId(ev.id, "oe", "odd"), eventId: ev.id, market: "oe", marketLabel: "Odd/Even", selection: "odd", label: "Odd", odds: ev.markets.oe.odd },
+      { id: outcomeId(ev.id, "oe", "even"), eventId: ev.id, market: "oe", marketLabel: "Odd/Even", selection: "even", label: "Even", odds: ev.markets.oe.even },
+    );
+  }
+  if (ev.markets.dnb) {
+    out.push(
+      { id: outcomeId(ev.id, "dnb", "home"), eventId: ev.id, market: "dnb", marketLabel: "Draw no bet", selection: "home", label: ev.homeAbbr, odds: ev.markets.dnb.home },
+      { id: outcomeId(ev.id, "dnb", "away"), eventId: ev.id, market: "dnb", marketLabel: "Draw no bet", selection: "away", label: ev.awayAbbr, odds: ev.markets.dnb.away },
+    );
+  }
+  if (ev.markets.cs) {
+    for (const c of ev.markets.cs) {
+      out.push({ id: outcomeId(ev.id, "cs", c.score), eventId: ev.id, market: "cs", marketLabel: "Correct score", selection: c.score, label: c.score, odds: c.odds });
+    }
   }
   return out;
 }

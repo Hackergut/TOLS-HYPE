@@ -21,7 +21,7 @@ import {
   snapshotBalances,
 } from "@/lib/wallet.server";
 import { pushSettledBet } from "@/lib/governance/bridge";
-import { comboOdds, vigPrice } from "@/lib/odds";
+import { comboOdds, systemCombos, vigPrice } from "@/lib/odds";
 import { resolveOutcome, type MarketKind } from "@/lib/sports-book";
 import {
   crashElapsedFor,
@@ -230,12 +230,13 @@ export const placeSportBet = createServerFn({ method: "POST" })
     z.object({
       amount: z.number().min(0),
       currency: currencySchema,
-      mode: z.enum(["single", "combo"]),
+      mode: z.enum(["single", "combo", "system"]),
+      systemK: z.number().int().min(2).max(6).optional(),
       legs: z
         .array(
           z.object({
             eventId: z.string(),
-            market: z.enum(["ml", "spread", "total", "btts", "dc"]),
+            market: z.enum(["ml", "spread", "total", "btts", "dc", "oe", "dnb", "cs"]),
             selection: z.string(),
           }),
         )
@@ -251,6 +252,49 @@ export const placeSportBet = createServerFn({ method: "POST" })
       if (!o) throw new Error("Market closed");
       return o;
     });
+
+    if (data.mode === "system") {
+      const k = Math.min(data.systemK ?? 2, resolved.length - 1);
+      if (k < 2 || resolved.length <= k) throw new Error("System needs more legs");
+      const combos = systemCombos(resolved.length, k);
+      const fair = await takeFair(context.userId, combos.length);
+      const stakeEach = data.amount / combos.length;
+      let payout = 0;
+      let hits = 0;
+      await debit(context.userId, data.currency, data.amount, "bet", resolved[0]!.eventId, `sports-system-${k}-${resolved.length}`);
+      for (let c = 0; c < combos.length; c++) {
+        const combo = combos[c]!;
+        const price = comboOdds(combo.map((i) => resolved[i]!.odds));
+        if (fair.floats[c]! < vigPrice(price)) {
+          hits += 1;
+          const won = stakeEach * price;
+          payout += won;
+        }
+      }
+      if (payout > 0) {
+        await credit(context.userId, data.currency, payout, "win", resolved[0]!.eventId, `sports-system-${k}-${resolved.length}`);
+      }
+      if (data.amount > 0) {
+        void pushSettledBet({
+          userId: context.userId,
+          game: "sports-system",
+          amount: data.amount,
+          payout,
+          multiplier: data.amount > 0 ? payout / data.amount : 0,
+          won: payout > 0,
+        });
+      }
+      return {
+        mode: "system" as const,
+        price: null as number | null,
+        systemK: k,
+        combos: combos.length,
+        hits,
+        payout,
+        balances: await snapshot(context.userId),
+      };
+    }
+
     const fair = await takeFair(context.userId, data.mode === "combo" ? 1 : resolved.length);
 
     if (data.mode === "combo") {

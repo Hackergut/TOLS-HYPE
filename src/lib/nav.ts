@@ -77,8 +77,17 @@ export const CASINO_SECTIONS: CasinoSection[] = [
 
 export type SportNav = {
   title: string;
-  sport: "all" | "football" | "basketball" | "tennis" | "mma" | "esports";
+  sport: "all" | "football" | "basketball" | "tennis" | "mma" | "esports" | "baseball" | "hockey";
 };
+
+/** Sportsbook views — book sections reachable from the left rail. */
+export const SPORT_TABS: { title: string; tab: "live" | "upcoming" | "leagues" | "bets" | "guide" }[] = [
+  { title: "Live now", tab: "live" },
+  { title: "Upcoming", tab: "upcoming" },
+  { title: "Leagues", tab: "leagues" },
+  { title: "My bets", tab: "bets" },
+  { title: "Odds guide", tab: "guide" },
+];
 
 /** Sportsbook rails — never mixed into casino. */
 export const SPORT_SECTIONS: SportNav[] = [
@@ -88,6 +97,8 @@ export const SPORT_SECTIONS: SportNav[] = [
   { title: "Tennis", sport: "tennis" },
   { title: "MMA", sport: "mma" },
   { title: "Esports", sport: "esports" },
+  { title: "Baseball", sport: "baseball" },
+  { title: "Ice hockey", sport: "hockey" },
 ];
 
 export type AffiliateTab = "overview" | "users" | "campaigns" | "earnings" | "info" | "pro";
