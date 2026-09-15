@@ -69,8 +69,8 @@ const TAB_HERO: Record<AffiliateTab, { src: string; alt: string }> = {
   users: { src: "/brand/affiliate/banner-referrals.jpg", alt: "TOLS affiliates — Every Referral Counts, real-time tracking" },
   campaigns: { src: "/brand/affiliate/banner-promote.jpg", alt: "TOLS affiliates — Promote. Track. Convert." },
   earnings: { src: "/brand/affiliate/banner-rank-win.jpg", alt: "TOLS affiliates — Refer, Rank, Win with leaderboard prizes" },
-  info: { src: "/brand/affiliate/banner-brand.jpg", alt: "TOLS — Refer for Rewards" },
-  pro: { src: "/brand/affiliate/banner-brand.jpg", alt: "TOLS — Refer for Rewards" },
+  info: { src: "/brand/affiliate/banner-info.jpg", alt: "TOLS affiliates — how the program works" },
+  pro: { src: "/brand/affiliate/banner-pro.jpg", alt: "TOLS affiliates — professional plans" },
 };
 
 function readCampaigns(): AffCampaign[] {
