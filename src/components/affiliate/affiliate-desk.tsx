@@ -63,6 +63,16 @@ const TAB_ICONS = {
   pro: RiBriefcase4Line,
 };
 
+/** Campaign banner per tab — user-supplied TOLS BANNER pack (1200×630). */
+const TAB_BANNER: Record<AffiliateTab, { src: string; alt: string } | null> = {
+  overview: { src: "/brand/affiliate/banner-income.jpg", alt: "TOLS affiliates — Income That Lasts, 25-30% lifetime revenue share" },
+  users: { src: "/brand/affiliate/banner-referrals.jpg", alt: "TOLS affiliates — Every Referral Counts, real-time tracking" },
+  campaigns: { src: "/brand/affiliate/banner-promote.jpg", alt: "TOLS affiliates — Promote. Track. Convert." },
+  earnings: { src: "/brand/affiliate/banner-rank-win.jpg", alt: "TOLS affiliates — Refer, Rank, Win with leaderboard prizes" },
+  info: null,
+  pro: null,
+};
+
 function readCampaigns(): AffCampaign[] {
   try {
     const raw = JSON.parse(localStorage.getItem(AFF_CAMPAIGN_KEY) || "[]") as AffCampaign[];
@@ -168,6 +178,18 @@ export function AffiliateDesk({ tab }: { tab: AffiliateTab }) {
           );
         })}
       </div>
+
+      {TAB_BANNER[tab] ? (
+        <section className="overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-border)]">
+          <img
+            src={TAB_BANNER[tab]!.src}
+            alt={TAB_BANNER[tab]!.alt}
+            className="block w-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+        </section>
+      ) : null}
 
       {tab === "overview" ? (
         <>
