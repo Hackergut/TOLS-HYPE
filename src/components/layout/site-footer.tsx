@@ -90,9 +90,21 @@ export function SiteFooter() {
           </ul>
         </nav>
       </div>
-      <div className="mx-auto mt-8 flex max-w-6xl flex-col gap-2 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <TolsWordmark className="h-4 w-auto opacity-50" />
-        <p className="text-xs">18+ only · TOLS B.V. · Willemstad, Curaçao · support@tols.fun</p>
+      <div className="mx-auto mt-8 flex max-w-6xl flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <TolsWordmark className="h-4 w-auto opacity-50" />
+          <p className="text-xs">18+ only · TOLS B.V. · Willemstad, Curaçao · support@tols.fun</p>
+        </div>
+        <a
+          href="https://www.gambleaware.org/"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="GambleAware — free, confidential support with gambling"
+          title="GambleAware"
+          className="inline-flex shrink-0 items-center self-start rounded-md bg-white px-1.5 py-1 transition-opacity hover:opacity-80 sm:self-auto"
+        >
+          <img src="/brand/gambleaware.webp" alt="GambleAware" className="h-5 w-auto" loading="lazy" />
+        </a>
       </div>
       <CookiePreferences open={cookies} onOpenChange={setCookies} />
     </footer>
