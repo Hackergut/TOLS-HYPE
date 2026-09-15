@@ -63,14 +63,14 @@ const TAB_ICONS = {
   pro: RiBriefcase4Line,
 };
 
-/** Campaign banner per tab — user-supplied TOLS BANNER pack (1200×630). */
-const TAB_BANNER: Record<AffiliateTab, { src: string; alt: string } | null> = {
+/** Hero per tab — the TOLS BANNER pack fills the TOP hero slot, one image per tab. */
+const TAB_HERO: Record<AffiliateTab, { src: string; alt: string }> = {
   overview: { src: "/brand/affiliate/banner-income.jpg", alt: "TOLS affiliates — Income That Lasts, 25-30% lifetime revenue share" },
   users: { src: "/brand/affiliate/banner-referrals.jpg", alt: "TOLS affiliates — Every Referral Counts, real-time tracking" },
   campaigns: { src: "/brand/affiliate/banner-promote.jpg", alt: "TOLS affiliates — Promote. Track. Convert." },
   earnings: { src: "/brand/affiliate/banner-rank-win.jpg", alt: "TOLS affiliates — Refer, Rank, Win with leaderboard prizes" },
-  info: null,
-  pro: null,
+  info: { src: "/brand/affiliate/banner-brand.jpg", alt: "TOLS — Refer for Rewards" },
+  pro: { src: "/brand/affiliate/banner-brand.jpg", alt: "TOLS — Refer for Rewards" },
 };
 
 function readCampaigns(): AffCampaign[] {
@@ -145,8 +145,8 @@ export function AffiliateDesk({ tab }: { tab: AffiliateTab }) {
     <div className="flex flex-col gap-6">
       <section className="overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-glow)]">
         <img
-          src="/brand/affiliate/refer-hero.png"
-          alt="TOLS Refer for Rewards"
+          src={TAB_HERO[tab].src}
+          alt={TAB_HERO[tab].alt}
           className="block w-full object-cover"
           loading="eager"
           decoding="async"
@@ -178,18 +178,6 @@ export function AffiliateDesk({ tab }: { tab: AffiliateTab }) {
           );
         })}
       </div>
-
-      {TAB_BANNER[tab] ? (
-        <section className="overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-border)]">
-          <img
-            src={TAB_BANNER[tab]!.src}
-            alt={TAB_BANNER[tab]!.alt}
-            className="block w-full object-cover"
-            loading="eager"
-            decoding="async"
-          />
-        </section>
-      ) : null}
 
       {tab === "overview" ? (
         <>
