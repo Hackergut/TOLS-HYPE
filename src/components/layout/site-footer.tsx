@@ -101,7 +101,7 @@ export function SiteFooter() {
           rel="noreferrer"
           aria-label="BeGambleAware — free, confidential support with gambling"
           title="BeGambleAware"
-          className="inline-flex shrink-0 items-center self-start rounded-md bg-white px-1.5 py-1 transition-opacity hover:opacity-80 sm:self-auto"
+          className="inline-flex shrink-0 items-center self-start opacity-80 transition-opacity hover:opacity-100 sm:self-auto"
         >
           <img src="/brand/begambleaware.svg" alt="BeGambleAware" className="h-4 w-auto" loading="lazy" />
         </a>
