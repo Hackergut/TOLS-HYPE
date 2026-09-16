@@ -33,13 +33,14 @@ import { Route as ShellTermsRouteImport } from './routes/_shell/terms'
 import { Route as ShellTokenRouteImport } from './routes/_shell/token'
 import { Route as ShellVaultRouteImport } from './routes/_shell/vault'
 import { Route as ShellVipRouteImport } from './routes/_shell/vip'
-import { Route as ApiAffiliateRouteImport } from './routes/api/affiliate'
+import { Route as ApiAffiliatePostbackRouteImport } from './routes/api/affiliate-postback'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiTreasuryRouteImport } from './routes/api/treasury'
 import { Route as ShellGamesIdRouteImport } from './routes/_shell/games.$id'
 import { Route as ShellOriginalsIdRouteImport } from './routes/_shell/originals.$id'
 import { Route as ShellPlaySlugRouteImport } from './routes/_shell/play.$slug'
 import { Route as ShellSportsIdRouteImport } from './routes/_shell/sports.$id'
+import { Route as ApiAffiliateIndexRouteImport } from './routes/api/affiliate/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAuthGoogleRouteImport } from './routes/api/auth/google'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
@@ -209,9 +210,9 @@ const ShellVipRoute = ShellVipRouteImport.update({
   path: '/vip',
   getParentRoute: () => ShellRoute,
 } as any)
-const ApiAffiliateRoute = ApiAffiliateRouteImport.update({
-  id: '/api/affiliate',
-  path: '/api/affiliate',
+const ApiAffiliatePostbackRoute = ApiAffiliatePostbackRouteImport.update({
+  id: '/api/affiliate-postback',
+  path: '/api/affiliate-postback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -243,6 +244,11 @@ const ShellSportsIdRoute = ShellSportsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ShellSportsRoute,
+} as any)
+const ApiAffiliateIndexRoute = ApiAffiliateIndexRouteImport.update({
+  id: '/api/affiliate/',
+  path: '/api/affiliate/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -518,7 +524,7 @@ export interface FileRoutesByFullPath {
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
-  '/api/affiliate': typeof ApiAffiliateRoute
+  '/api/affiliate-postback': typeof ApiAffiliatePostbackRoute
   '/api/health': typeof ApiHealthRoute
   '/api/treasury': typeof ApiTreasuryRoute
   '/games/$id': typeof ShellGamesIdRoute
@@ -563,6 +569,7 @@ export interface FileRoutesByFullPath {
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/affiliate/': typeof ApiAffiliateIndexRoute
   '/api/platform/': typeof ApiPlatformIndexRoute
   '/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
@@ -598,7 +605,7 @@ export interface FileRoutesByTo {
   '/token': typeof ShellTokenRoute
   '/vault': typeof ShellVaultRoute
   '/vip': typeof ShellVipRoute
-  '/api/affiliate': typeof ApiAffiliateRoute
+  '/api/affiliate-postback': typeof ApiAffiliatePostbackRoute
   '/api/health': typeof ApiHealthRoute
   '/api/treasury': typeof ApiTreasuryRoute
   '/': typeof ShellIndexRoute
@@ -644,6 +651,7 @@ export interface FileRoutesByTo {
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/affiliate': typeof ApiAffiliateIndexRoute
   '/api/platform': typeof ApiPlatformIndexRoute
   '/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
@@ -681,7 +689,7 @@ export interface FileRoutesById {
   '/_shell/token': typeof ShellTokenRoute
   '/_shell/vault': typeof ShellVaultRoute
   '/_shell/vip': typeof ShellVipRoute
-  '/api/affiliate': typeof ApiAffiliateRoute
+  '/api/affiliate-postback': typeof ApiAffiliatePostbackRoute
   '/api/health': typeof ApiHealthRoute
   '/api/treasury': typeof ApiTreasuryRoute
   '/_shell/': typeof ShellIndexRoute
@@ -727,6 +735,7 @@ export interface FileRoutesById {
   '/api/sportsbook/callback': typeof ApiSportsbookCallbackRouteWithChildren
   '/api/sportsbook/events': typeof ApiSportsbookEventsRoute
   '/api/sportsbook/session': typeof ApiSportsbookSessionRoute
+  '/api/affiliate/': typeof ApiAffiliateIndexRoute
   '/api/platform/': typeof ApiPlatformIndexRoute
   '/_shell/sports/club/$slug': typeof ShellSportsClubSlugRoute
   '/_shell/sports/player/$slug': typeof ShellSportsPlayerSlugRoute
@@ -765,7 +774,7 @@ export interface FileRouteTypes {
     | '/token'
     | '/vault'
     | '/vip'
-    | '/api/affiliate'
+    | '/api/affiliate-postback'
     | '/api/health'
     | '/api/treasury'
     | '/games/$id'
@@ -810,6 +819,7 @@ export interface FileRouteTypes {
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
     | '/api/sportsbook/session'
+    | '/api/affiliate/'
     | '/api/platform/'
     | '/sports/club/$slug'
     | '/sports/player/$slug'
@@ -845,7 +855,7 @@ export interface FileRouteTypes {
     | '/token'
     | '/vault'
     | '/vip'
-    | '/api/affiliate'
+    | '/api/affiliate-postback'
     | '/api/health'
     | '/api/treasury'
     | '/'
@@ -891,6 +901,7 @@ export interface FileRouteTypes {
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
     | '/api/sportsbook/session'
+    | '/api/affiliate'
     | '/api/platform'
     | '/sports/club/$slug'
     | '/sports/player/$slug'
@@ -927,7 +938,7 @@ export interface FileRouteTypes {
     | '/_shell/token'
     | '/_shell/vault'
     | '/_shell/vip'
-    | '/api/affiliate'
+    | '/api/affiliate-postback'
     | '/api/health'
     | '/api/treasury'
     | '/_shell/'
@@ -973,6 +984,7 @@ export interface FileRouteTypes {
     | '/api/sportsbook/callback'
     | '/api/sportsbook/events'
     | '/api/sportsbook/session'
+    | '/api/affiliate/'
     | '/api/platform/'
     | '/_shell/sports/club/$slug'
     | '/_shell/sports/player/$slug'
@@ -990,7 +1002,7 @@ export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
-  ApiAffiliateRoute: typeof ApiAffiliateRoute
+  ApiAffiliatePostbackRoute: typeof ApiAffiliatePostbackRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiTreasuryRoute: typeof ApiTreasuryRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -1031,6 +1043,7 @@ export interface RootRouteChildren {
   ApiSportsbookCallbackRoute: typeof ApiSportsbookCallbackRouteWithChildren
   ApiSportsbookEventsRoute: typeof ApiSportsbookEventsRoute
   ApiSportsbookSessionRoute: typeof ApiSportsbookSessionRoute
+  ApiAffiliateIndexRoute: typeof ApiAffiliateIndexRoute
   ApiPlatformIndexRoute: typeof ApiPlatformIndexRoute
 }
 
@@ -1204,11 +1217,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellVipRouteImport
       parentRoute: typeof ShellRoute
     }
-    '/api/affiliate': {
-      id: '/api/affiliate'
-      path: '/api/affiliate'
-      fullPath: '/api/affiliate'
-      preLoaderRoute: typeof ApiAffiliateRouteImport
+    '/api/affiliate-postback': {
+      id: '/api/affiliate-postback'
+      path: '/api/affiliate-postback'
+      fullPath: '/api/affiliate-postback'
+      preLoaderRoute: typeof ApiAffiliatePostbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -1252,6 +1265,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sports/$id'
       preLoaderRoute: typeof ShellSportsIdRouteImport
       parentRoute: typeof ShellSportsRoute
+    }
+    '/api/affiliate/': {
+      id: '/api/affiliate/'
+      path: '/api/affiliate'
+      fullPath: '/api/affiliate/'
+      preLoaderRoute: typeof ApiAffiliateIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -1752,7 +1772,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
-  ApiAffiliateRoute: ApiAffiliateRoute,
+  ApiAffiliatePostbackRoute: ApiAffiliatePostbackRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiTreasuryRoute: ApiTreasuryRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
@@ -1793,6 +1813,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSportsbookCallbackRoute: ApiSportsbookCallbackRouteWithChildren,
   ApiSportsbookEventsRoute: ApiSportsbookEventsRoute,
   ApiSportsbookSessionRoute: ApiSportsbookSessionRoute,
+  ApiAffiliateIndexRoute: ApiAffiliateIndexRoute,
   ApiPlatformIndexRoute: ApiPlatformIndexRoute,
 }
 export const routeTree = rootRouteImport
