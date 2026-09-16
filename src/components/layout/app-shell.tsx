@@ -11,6 +11,7 @@ import { RoundViewerProvider } from "@/components/games/round-dialog";
 import { GamePreviewProvider } from "@/components/games/guest-game-preview";
 import { SupportWidget } from "@/components/layout/support-widget";
 import { AuthWidgetProvider } from "@/components/auth/auth-widget-provider";
+import { TelegramFrameBoot } from "@/components/telegram/telegram-frame-boot";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AuthWidgetProvider>
       <WalletHubProvider>
       <RightDockProvider>
+        <TelegramFrameBoot />
         <SidebarLeft />
         <SidebarInset className="bg-transparent">
           <SiteHeader />
