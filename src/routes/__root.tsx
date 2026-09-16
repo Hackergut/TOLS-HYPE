@@ -3,6 +3,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { AgeGate } from "@/components/legal/age-gate";
+import { TelegramWebApp } from "@/components/telegram/telegram-webapp";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { skin, skinStyle } from "@/lib/operator/skin";
@@ -31,6 +32,11 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
+    scripts: [
+      {
+        src: "https://telegram.org/js/telegram-web-app.js?56",
+      },
+    ],
   }),
   component: RootComponent,
 });
@@ -50,6 +56,7 @@ function RootComponent() {
               <AgeGate>
                 <Outlet />
               </AgeGate>
+              <TelegramWebApp />
               <Toaster />
             </TooltipProvider>
           </AuthProvider>
