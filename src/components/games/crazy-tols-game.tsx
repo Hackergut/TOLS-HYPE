@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useWallet } from "@/lib/wallet-context";
 import { playInstant } from "@/lib/casino-api";
@@ -13,7 +13,6 @@ import {
   CRAZY_BET_SPOTS,
   CRAZY_WHEEL,
   type CrazyBetSpot,
-  type CrazyResult,
 } from "@/lib/crazy-tols";
 
 export function CrazyTolsGame({ gameId }: { gameId: string }) {
@@ -99,7 +98,7 @@ function CrazyTable({ gameId }: { gameId: string }) {
                     disabled={busy}
                     onClick={() => setSpot(s.id)}
                     className={cn(
-                      "h-10 rounded-lg border text-xs font-bold transition-colors",
+                      "min-h-11 h-11 rounded-lg border text-xs font-bold transition-colors",
                       spot === s.id
                         ? "border-lime bg-lime text-black"
                         : "border-border bg-muted/50 text-foreground hover:border-lime/50",
@@ -198,9 +197,9 @@ function WheelView({ spin, phase, result }: { spin: number; phase: string; resul
               </g>
             );
           })}
-          <circle cx={cx} cy={cy} r={R_IN} fill="#0c0c10" stroke="#e8b84a" strokeWidth="4" />
+          <circle cx={cx} cy={cy} r={R_IN} fill="#0c0618" stroke="#904bf9" strokeWidth="4" />
         </g>
-        <circle cx={cx} cy={cy} r="18" fill="#0c0c10" stroke="var(--lime)" strokeWidth="3" />
+        <circle cx={cx} cy={cy} r="18" fill="#0c0618" stroke="var(--lime)" strokeWidth="3" />
         <text x={cx} y={cy - 1} textAnchor="middle" fontSize="9" fontWeight="bold" fill="var(--lime)" fontFamily="Oswald, sans-serif">
           TOLS
         </text>

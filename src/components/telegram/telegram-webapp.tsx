@@ -1,4 +1,9 @@
 import { useEffect } from "react";
+import {
+  TG_SURFACE,
+  applyTelegramDocumentChrome,
+  shouldHideDesktopChrome,
+} from "@/lib/telegram/chrome";
 
 interface TelegramWebAppSdk {
   initData?: string;
@@ -9,6 +14,7 @@ interface TelegramWebAppSdk {
   disableVerticalSwipes?: () => void;
   enableClosingConfirmation?: () => void;
   version?: string;
+  platform?: string;
 }
 
 declare global {
@@ -17,7 +23,6 @@ declare global {
   }
 }
 
-const SURFACE = "#0c0618";
 const AUTH_FLAG = "tols_tg_session";
 
 function versionAtLeast(client: string | undefined, min: string): boolean {
@@ -40,10 +45,10 @@ function configure(wa: TelegramWebAppSdk): void {
   } catch {}
   if (versionAtLeast(wa.version, "6.1")) {
     try {
-      wa.setHeaderColor?.(SURFACE);
+      wa.setHeaderColor?.(TG_SURFACE);
     } catch {}
     try {
-      wa.setBackgroundColor?.(SURFACE);
+      wa.setBackgroundColor?.(TG_SURFACE);
     } catch {}
   }
   if (versionAtLeast(wa.version, "7.7")) {
@@ -76,18 +81,36 @@ async function authenticate(initData: string): Promise<void> {
   }
 }
 
+function syncChrome(): void {
+  applyTelegramDocumentChrome(shouldHideDesktopChrome());
+}
+
 export function TelegramWebApp() {
   useEffect(() => {
     let cancelled = false;
+    syncChrome();
+    const mq = window.matchMedia("(max-width: 430px)");
+    const onMq = () => syncChrome();
+    mq.addEventListener?.("change", onMq);
+    window.addEventListener("resize", onMq);
+
     const boot = () => {
       if (cancelled) return true;
+      syncChrome();
       const wa = window.Telegram?.WebApp;
       if (!wa) return false;
       configure(wa);
+      syncChrome();
       void authenticate(wa.initData ?? "");
       return true;
     };
-    if (boot()) return;
+    if (boot()) {
+      return () => {
+        cancelled = true;
+        mq.removeEventListener?.("change", onMq);
+        window.removeEventListener("resize", onMq);
+      };
+    }
     let waited = 0;
     const timer = setInterval(() => {
       waited += 200;
@@ -96,6 +119,8 @@ export function TelegramWebApp() {
     return () => {
       cancelled = true;
       clearInterval(timer);
+      mq.removeEventListener?.("change", onMq);
+      window.removeEventListener("resize", onMq);
     };
   }, []);
   return null;

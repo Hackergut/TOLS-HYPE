@@ -82,3 +82,10 @@ test("crazy per-spot RTP stays within calibration band (400k rounds, splitmix64)
     assert.ok(rtp < 100, `spot ${spot}: RTP ${rtp}% must stay under 100%`);
   }
 });
+test("crazy wheel uses HYPE skin fills (no classic Evolution blue/gold)", () => {
+  const colors = new Set(CRAZY_WHEEL.map((s) => s.color));
+  assert.equal(colors.has("#1d63ff"), false);
+  assert.equal(colors.has("#e8b84a"), false);
+  assert.ok(colors.has("#904bf9"), "primary purple present");
+  assert.ok(colors.has("#ea2fd4"), "vip pink on crazy segment");
+});

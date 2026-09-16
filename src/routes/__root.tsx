@@ -10,20 +10,24 @@ import { skin, skinStyle } from "@/lib/operator/skin";
 import appCss from "../styles.css?url";
 
 const APP_NAME = skin.name;
+const HYPE_SURFACE = "#0c0618";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1",
+      },
       { title: APP_NAME },
-      { name: "theme-color", content: "#1c1c22" },
+      { name: "theme-color", content: HYPE_SURFACE },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       {
         name: "description",
         content:
-          "TOLS — originals casino for crash, roulette, blackjack, slots, dice, mines, keno, and hi-lo. Play-money balances.",
+          "TOLS — originals casino for crash, roulette, blackjack, slots, dice, mines, keno, and hi-lo. Play-money balances. 18+ BeGambleAware.",
       },
     ],
     links: [
@@ -48,7 +52,7 @@ function RootComponent() {
         <HeadContent />
         {skinStyle() ? <style dangerouslySetInnerHTML={{ __html: `html{${skinStyle()}}` }} /> : null}
       </head>
-      <body className="min-h-dvh text-foreground">
+      <body className="min-h-dvh bg-background text-foreground pt-[env(safe-area-inset-top)]">
         <PreviewHostBridge />
         <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
           <AuthProvider>
