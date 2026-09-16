@@ -849,14 +849,12 @@
   height: 4.75rem;
   padding: 0;
   border: 0;
-  border-radius: 1.2rem;
-  overflow: hidden;
-  background: #0d0d10;
-  box-shadow: 0 14px 36px rgb(139 92 246 / 0.42);
+  background: transparent;
   cursor: pointer;
+  filter: drop-shadow(0 14px 26px rgb(139 92 246 / 0.45));
 }
 .tols-chat-fab:hover {
-  filter: brightness(1.08);
+  filter: drop-shadow(0 14px 26px rgb(139 92 246 / 0.45)) brightness(1.08);
 }
 
 .tols-auth-glow {
