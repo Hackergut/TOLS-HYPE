@@ -9,3 +9,22 @@
 @import "@fontsource-variable/tektur";
 @import "@fontsource-variable/oswald";
 @import "./tols.css";
+
+.typeset-docs {
+  --typeset-font-body: var(--font-source-sans-3);
+  --typeset-font-heading: var(--font-source-sans-3);
+  --typeset-font-mono: var(--font-roboto);
+  --typeset-size: 16px;
+  --typeset-leading: 1.75;
+  --typeset-flow: 1.25em;
+}
+
+.font-source-sans-3 {
+  --font-source-sans-3: "Source Sans 3", "IBM Plex Sans Variable", ui-sans-serif, sans-serif;
+}
+
+.font-roboto {
+  --font-roboto: "Roboto", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@custom-variant dark (&:is(.dark *));
