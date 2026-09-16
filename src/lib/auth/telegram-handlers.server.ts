@@ -17,6 +17,8 @@ import {
 } from "./telegram-oauth";
 import { syncUserOnSignIn } from "./user-sync.server";
 import { oauthOrigin, requestHost } from "./google-oauth";
+import { env } from "@/lib/env.server";
+import { validateTelegramInitData } from "./telegram-initdata";
 
 /**
  * Telegram Login Widget handlers — mirror google-handlers.server.ts.
@@ -97,8 +99,6 @@ export async function handleTelegramCallback(request: Request): Promise<Response
   const cookieOk = Boolean(decodedCookie && stateParam && decodedCookie === stateParam);
 
   if (!signed && !cookieOk) {
-    // SECURITY: same stance as Google — never accept the payload without a
-    // valid state (login-CSRF).
     console.warn("[telegram-oauth] bad_state — refusing widget payload");
     return withCookies(
       new Response(null, { status: 303, headers: { Location: `${origin}/login?social=error&reason=bad_state` } }),
@@ -119,7 +119,6 @@ export async function handleTelegramCallback(request: Request): Promise<Response
 
   const userId = telegramUserId(profile.id);
 
-  // User creation + wallet seed + Tower sync — the missing piece.
   await syncUserOnSignIn({
     providerAccountId: String(profile.id),
     userId,
@@ -150,5 +149,52 @@ export async function handleTelegramLogout(request: Request): Promise<Response> 
   return withCookies(
     new Response(null, { status: 303, headers: { Location: `${origin}/` } }),
     [...sessionClearCookies(request)],
+  );
+}
+
+/** Mini App initData — different HMAC than the Login Widget. Same tols_session. */
+export async function handleTelegramMiniApp(request: Request): Promise<Response> {
+  if (!telegramEnabled()) {
+    return Response.json({ ok: false, error: "not_configured" }, { status: 503 });
+  }
+  const botToken = env("TELEGRAM_BOT_TOKEN") || "";
+  let initData = "";
+  try {
+    const body = (await request.json()) as { initData?: string };
+    initData = typeof body?.initData === "string" ? body.initData : "";
+  } catch {
+    return Response.json({ ok: false, error: "bad_body" }, { status: 400 });
+  }
+  const parsed = validateTelegramInitData(initData, botToken);
+  if (!parsed) {
+    return Response.json({ ok: false, error: "bad_init_data" }, { status: 401 });
+  }
+
+  const userId = telegramUserId(parsed.user.id);
+  const name =
+    [parsed.user.first_name, parsed.user.last_name].filter(Boolean).join(" ") ||
+    parsed.user.username ||
+    `tg${parsed.user.id}`;
+
+  await syncUserOnSignIn({
+    providerAccountId: String(parsed.user.id),
+    userId,
+    email: parsed.user.username ? `${parsed.user.username}@t.me` : null,
+    name,
+    picture: parsed.user.photo_url ?? null,
+    provider: "telegram",
+  });
+
+  const token = signSession({
+    id: userId,
+    email: parsed.user.username ? `${parsed.user.username}@t.me` : null,
+    name,
+    picture: parsed.user.photo_url ?? null,
+    googleId: `telegram:${parsed.user.id}`,
+  });
+
+  return withCookies(
+    Response.json({ ok: true, provider: "telegram-miniapp" }),
+    sessionSetCookies(token, request),
   );
 }
