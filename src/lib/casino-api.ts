@@ -14,6 +14,9 @@ import { crashPointFromFloat, diceRoll, pickIndex, uniquePicks } from "@/lib/fai
 import { limboFromFloat, plinkoBucket, plinkoMultipliers, towerMultiplier, TOWER_COLS, TOWER_ROWS } from "@/lib/originals";
 import { poolMultiplier, simulateBreak, type PoolDiff } from "@/lib/pool-physics";
 import { crazyRound, type CrazyBetSpot } from "@/lib/crazy-tols";
+import { generateCrazyRound, cashHuntPayout, round2, type CrazyRoundResult } from "@/lib/crazy/server-round";
+import { sealCashHuntClaim, openCashHuntClaim } from "@/lib/crazy/round-token.server";
+import { takeFairRng } from "@/lib/fair.server";
 import {
   credit,
   debit,
@@ -1238,3 +1241,105 @@ export const cashTower = createServerFn({ method: "POST" })
   });
 
 
+
+/* ------------------------------------------------------------------ */
+/* CRAZYTOLS table — server-authoritative rounds (design v3)           */
+/* ------------------------------------------------------------------ */
+
+const CRAZY_SPOT_IDS = [
+  "one",
+  "two",
+  "five",
+  "ten",
+  "coinflip",
+  "pachinko",
+  "cashhunt",
+  "crazytime",
+] as const;
+
+export type CrazyRoundResponse = {
+  round: CrazyRoundResult;
+  token: string | null;
+  balances: Record<Currency, number>;
+  fair: { serverHash: string; clientSeed: string; nonce: number };
+};
+
+export const playCrazy = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      gameId: z.string(),
+      currency: currencySchema,
+      bets: z.record(z.enum(CRAZY_SPOT_IDS), z.number().min(0).max(1_000_000)),
+    }),
+  )
+  .handler(async ({ context, data }): Promise<CrazyRoundResponse> => {
+    const game = getGame(data.gameId);
+    if (!game || game.kind !== "crazy") throw new Error("Unknown game");
+    await ensureWallets(context.userId);
+    const bets = Object.fromEntries(
+      Object.entries(data.bets).filter(([, amount]) => (amount ?? 0) > 0),
+    ) as Partial<Record<(typeof CRAZY_SPOT_IDS)[number], number>>;
+    const total = round2(Object.values(bets).reduce((sum, amount) => sum + (amount ?? 0), 0));
+    if (total <= 0) throw new Error("Place at least one bet before spinning.");
+    for (const amount of Object.values(bets)) assertBet(data.currency, amount ?? 0);
+    await debit(context.userId, data.currency, total, "bet", game.id, game.title);
+
+    const rng = await takeFairRng(context.userId);
+    const round = generateCrazyRound(rng, bets);
+    if (round.totalPayout > 0) {
+      await credit(context.userId, data.currency, round.totalPayout, "win", game.id, game.title);
+    }
+    void pushSettledBet({
+      userId: context.userId,
+      game: game.id,
+      amount: total,
+      payout: round.totalPayout,
+      multiplier: total > 0 ? round.totalPayout / total : 0,
+      won: round.totalPayout > 0,
+    });
+    const token = round.cashhunt
+      ? sealCashHuntClaim({
+          userId: context.userId,
+          gameId: game.id,
+          currency: data.currency,
+          stake: round.cashhunt.stake,
+          topMulti: round.cashhunt.topMulti,
+          tiles: round.cashhunt.tiles,
+        })
+      : null;
+    return { round, token, balances: await snapshot(context.userId), fair: rng.proof() };
+  });
+
+export const settleCrazyCashHunt = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ token: z.string(), cell: z.number().int().min(0).max(21) }))
+  .handler(async ({ context, data }) => {
+    const claim = openCashHuntClaim(data.token);
+    if (!claim || claim.userId !== context.userId) throw new Error("Round expired. Spin again.");
+    const { multiplier, payout } = cashHuntPayout(
+      claim.tiles,
+      data.cell,
+      claim.stake,
+      claim.topMulti,
+    );
+    if (payout > 0) {
+      await credit(
+        context.userId,
+        claim.currency as Currency,
+        payout,
+        "win",
+        claim.gameId,
+        "Crazy Tols",
+      );
+    }
+    void pushSettledBet({
+      userId: context.userId,
+      game: claim.gameId,
+      amount: claim.stake,
+      payout,
+      multiplier,
+      won: payout > 0,
+    });
+    return { payout, multiplier, balances: await snapshot(context.userId) };
+  });
