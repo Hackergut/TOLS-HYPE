@@ -1,5 +1,4 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import Icon from "./Icon";
 
 export default function Dialog({ title, subtitle, children, onClose, wide = false, locked = false }: {
@@ -20,7 +19,7 @@ export default function Dialog({ title, subtitle, children, onClose, wide = fals
       focused?.focus();
     };
   }, []);
-  return createPortal(
+  return (
     <dialog ref={ref} className={`platform-dialog ${wide ? "dialog-wide" : ""}`} onCancel={(event) => {
       event.preventDefault();
       if (!locked) closeRef.current();
@@ -35,7 +34,6 @@ export default function Dialog({ title, subtitle, children, onClose, wide = fals
         <button type="button" className="icon-button" onClick={onClose} disabled={locked} aria-label="Close dialog"><Icon name="close" /></button>
       </div>
       <div className="dialog-content">{children}</div>
-    </dialog>,
-    document.body,
+    </dialog>
   );
 }
