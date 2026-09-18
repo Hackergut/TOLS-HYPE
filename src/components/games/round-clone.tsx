@@ -56,7 +56,37 @@ export function RoundClone({
   if (view.kind === "plinko") return <PlinkoClone view={view} pill={pill} />;
   if (view.kind === "tower") return <TowerClone view={view} pill={pill} />;
   if (view.kind === "crazy") return <CrazyClone view={view} win={win} pill={pill} />;
+  if (view.kind === "derby") return <DerbyClone view={view} pill={pill} />;
   return null;
+}
+
+const DERBY_CLONE_COLORS = ["#e63946", "#3d7bff", "#00ffbd", "#ffb703", "#904bf9", "#f4f4f5"];
+
+function DerbyClone({ view, pill }: { view: Extract<RoundView, { kind: "derby" }>; pill: boolean }) {
+  if (pill) {
+    return (
+      <span className="grid h-8 min-w-10 place-items-center px-1.5 text-[0.7rem] font-heading font-bold tabular-nums bg-muted">
+        🏇{view.winnerId + 1}
+      </span>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {view.order.map((id, i) => (
+        <span
+          key={id}
+          className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[0.7rem] font-semibold"
+          style={{
+            borderColor: `${DERBY_CLONE_COLORS[id] ?? "#fff"}55`,
+            color: DERBY_CLONE_COLORS[id],
+          }}
+        >
+          <span className="font-mono text-[0.6rem] text-muted-foreground">{i + 1}.</span>
+          H{id + 1}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function LimboClone({ view, win, pill }: { view: Extract<RoundView, { kind: "limbo" }>; win: boolean; pill: boolean }) {

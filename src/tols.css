@@ -988,3 +988,30 @@
   }
 }
 
+
+/* ------------------------------------------------------------------ */
+/* TOLS Originals — pop reveal (result chips, countdown, bonus hits)  */
+/* ------------------------------------------------------------------ */
+@keyframes tols-pop {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-pop {
+  animation: tols-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop {
+    animation: none !important;
+  }
+}

@@ -17,7 +17,8 @@ export type RoundView =
   | { kind: "limbo"; roll: number; target: number }
   | { kind: "plinko"; bucket: number; multiplier: number }
   | { kind: "tower"; row: number; boom?: boolean }
-  | { kind: "crazy"; segment: string; topSlot?: number; bonus?: string; multiplier?: number };
+  | { kind: "crazy"; segment: string; topSlot?: number; bonus?: string; multiplier?: number }
+  | { kind: "derby"; order: number[]; winnerId: number; pick?: number; odds?: number };
 
 export type BetRound = {
   id: string;

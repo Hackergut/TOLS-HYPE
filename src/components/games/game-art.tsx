@@ -171,6 +171,39 @@ function CrazyArt({ hue }: { hue: number }) {
   );
 }
 
+function DerbyArt({ hue }: { hue: number }) {
+  const row = [
+    ["#e63946", 44],
+    ["#3d7bff", 52],
+    ["#00ffbd", 60],
+    ["#ffb703", 68],
+    ["#904bf9", 76],
+    ["#f4f4f5", 84],
+  ] as const;
+  return (
+    <svg viewBox="0 0 300 400" className="size-full" aria-hidden>
+      <rect width="300" height="400" fill={`hsl(${hue} 32% 8%)`} />
+      {row.map(([color, y], i) => (
+        <g key={color}>
+          <rect x="16" y={y - 2} width="268" height="7" rx="3.5" fill="#16171b" />
+          <path
+            d={`M ${20 + 0} ${y} Q ${60} ${y - 14} ${96} ${y - 2} L ${96} ${y + 2} Q ${60} ${y - 10} ${20} ${y + 4} Z`}
+            fill={color}
+            opacity="0.9"
+          />
+          <circle cx={92} cy={y - 8} r="3" fill={color} />
+          <line x1="16" y1={y + 8} x2="118" y2={y + 8} stroke={color} strokeWidth="1.4" opacity="0.5" />
+          <text x="230" y={y} textAnchor="middle" fontSize="13" fontWeight="bold" fill="#fff" fontFamily="Outfit, sans-serif">
+            {i + 1}
+          </text>
+        </g>
+      ))}
+      <path d="M168 330 l-20 26 h40 z" fill="var(--lime)" opacity="0.9" />
+      <path d="M178 330 l0 20 M168 336 l0 14 M188 336 l0 14" stroke="#0d0d10" strokeWidth="2.4" />
+    </svg>
+  );
+}
+
 function DiceArt({ hue }: { hue: number }) {
   return (
     <svg viewBox="0 0 300 400" className="size-full" aria-hidden>
@@ -231,6 +264,7 @@ const ART: Record<CatalogGame["kind"], (p: { hue: number }) => ReactNode> = {
   plinko: ({ hue }) => <MinesArt hue={hue} />,
   tower: ({ hue }) => <MinesArt hue={hue} />,
   crazy: ({ hue }) => <CrazyArt hue={hue} />,
+  derby: ({ hue }) => <DerbyArt hue={hue} />,
   iframe: ({ hue }) => <SlotsArt hue={hue} />,
 };
 
