@@ -268,4 +268,6 @@ declare global {
   }
 }
 
-window.CRAZYTOLS = { onEvent, setTransport, createHttpTransport, configurePlatform, getSessionId, getCurrentRound, connectLive: connectLiveRoom, disconnectLive: disconnectLiveRoom };
+if (typeof window !== "undefined") {
+  window.CRAZYTOLS = { onEvent, setTransport, createHttpTransport, configurePlatform, getSessionId, getCurrentRound, connectLive: connectLiveRoom, disconnectLive: disconnectLiveRoom };
+}
