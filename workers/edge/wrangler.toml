@@ -1,0 +1,15 @@
+name = "tols-edge"
+main = "src/index.ts"
+compatibility_date = "2026-09-16"
+
+# Custom domain later: edge.tols.fun → this worker.
+# Until then: <name>.<account>.workers.dev
+
+[vars]
+ORIGIN = "https://www.tols.fun"
+# Never put tokens here. Use `wrangler secret put`.
+
+[[kv_namespaces]]
+binding = "EDGE_CACHE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_PREVIEW_ID"
