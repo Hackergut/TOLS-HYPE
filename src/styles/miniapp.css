@@ -1,0 +1,49 @@
+/* Telegram Mini App + compact mobile casino chrome. Does not restyle desktop. */
+
+html.tg-miniapp,
+html.tg-compact {
+  --tg-safe-top: env(safe-area-inset-top, 0px);
+  --tg-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html.tg-miniapp body,
+html.tg-compact body {
+  overflow-x: hidden;
+  background: #0c0618;
+}
+
+html.tg-miniapp [data-slot="sidebar"],
+html.tg-miniapp [data-sidebar],
+html.tg-miniapp .right-dock,
+html.tg-miniapp [data-right-dock] {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .tg-compact [data-slot="sidebar"] {
+    display: none !important;
+  }
+
+  header {
+    padding-top: var(--tg-safe-top, 0px);
+  }
+
+  .tg-compact [data-hero] {
+    min-height: 10.5rem;
+    border-radius: 1rem;
+  }
+
+  .tg-compact [data-hero] h2 {
+    font-size: 1.35rem;
+    line-height: 1.1;
+  }
+
+  .tg-compact [data-hero] a,
+  .tg-compact [data-hero] button {
+    min-height: 44px;
+  }
+
+  .tg-compact .tols-game-card {
+    min-width: 11.5rem;
+  }
+}
