@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SidebarLeft } from "@/components/sidebar-left";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -11,8 +11,24 @@ import { RoundViewerProvider } from "@/components/games/round-dialog";
 import { GamePreviewProvider } from "@/components/games/guest-game-preview";
 import { SupportWidget } from "@/components/layout/support-widget";
 import { AuthWidgetProvider } from "@/components/auth/auth-widget-provider";
+import { shouldHideDesktopChrome } from "@/lib/telegram/chrome";
+import { cn } from "cn";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const [hideDesktop, setHideDesktop] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setHideDesktop(shouldHideDesktopChrome());
+    sync();
+    const mq = window.matchMedia("(max-width: 430px)");
+    mq.addEventListener?.("change", sync);
+    window.addEventListener("resize", sync);
+    return () => {
+      mq.removeEventListener?.("change", sync);
+      window.removeEventListener("resize", sync);
+    };
+  }, []);
+
   return (
     <SidebarProvider defaultOpen={false}>
       <NotificationProvider>
@@ -21,19 +37,27 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AuthWidgetProvider>
       <WalletHubProvider>
       <RightDockProvider>
-        <SidebarLeft />
+        {!hideDesktop ? <SidebarLeft /> : null}
         <SidebarInset className="bg-transparent">
           <SiteHeader />
-          <div className="flex min-h-[calc(100svh-3.5rem)] flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] md:pb-0">
+          <div
+            className={cn(
+              "mx-auto flex min-h-[calc(100svh-3.5rem)] w-full flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] md:pb-0",
+              hideDesktop && "max-w-[390px]",
+            )}
+            data-lobby-frame={hideDesktop ? "tg" : "desktop"}
+          >
             <div className="flex-1 px-3 py-3 sm:px-4 sm:py-4 lg:px-8 lg:py-6">{children}</div>
-            <div className="hidden md:block">
-              <SiteFooter />
-            </div>
+            {!hideDesktop ? (
+              <div className="hidden md:block" data-desktop-chrome="footer">
+                <SiteFooter />
+              </div>
+            ) : null}
           </div>
           <MobileTabBar />
         </SidebarInset>
-        <RightDock />
-        <SupportWidget />
+        {!hideDesktop ? <RightDock /> : null}
+        {!hideDesktop ? <SupportWidget /> : null}
       </RightDockProvider>
       </WalletHubProvider>
       </AuthWidgetProvider>

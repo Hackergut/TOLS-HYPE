@@ -255,15 +255,15 @@
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Color roles — Solana accents on TOLS chrome
-   canvas    #0d0d10 / cards #16171b
+/* Color roles — HYPE skin on TOLS chrome
+   canvas    #0c0618 / cards #16171b
    primary   #904BF9  CTA / brand / focus
    success   #00FFBD  win / bet / fair
    vip       #EA2FD4 / #9628A1
-   ink on mint = #0d0d10; ink on violet = #fff */
+   ink on mint = #0c0618; ink on violet = #fff */
 
 .dark {
-  --background: #0d0d10;
+  --background: #0c0618;
   --foreground: #fafafa;
   --card: #16171b;
   --card-foreground: #fafafa;
@@ -287,7 +287,7 @@
   --chart-3: #ea2fd4;
   --chart-4: #34edcd;
   --chart-5: #9628a1;
-  --sidebar: #09090c;
+  --sidebar: #0a0414;
   --sidebar-foreground: #fafafa;
   --sidebar-primary: #904bf9;
   --sidebar-primary-foreground: #ffffff;
@@ -331,7 +331,7 @@
   --error: #e1514e;
   --error-text: #f87171;
   --live: #e1514e;
-  --bg-0: #0d0d10;
+  --bg-0: #0c0618;
   --bg-1: #16171b;
   --bg-2: #1c0529;
   --text-1: #fafafa;
@@ -422,4 +422,29 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+
+/* Telegram Mini App / ?tg=1 / narrow lobby — HYPE surface + safe areas */
+html[data-tg-chrome="1"] {
+  background-color: #0c0618;
+}
+html[data-tg-chrome="1"] body {
+  background-color: #0c0618;
+  min-height: 100dvh;
+  min-height: 100svh;
+}
+html[data-tg-chrome="1"] [data-desktop-chrome] {
+  display: none !important;
+}
+/* ≥44px taps in Mini App / narrow lobby */
+html[data-tg-chrome="1"] button,
+html[data-tg-chrome="1"] a[role="button"],
+html[data-tg-chrome="1"] [data-slot="sidebar-trigger"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+html[data-tg-chrome="1"] [data-lobby-frame="tg"] {
+  max-width: 390px;
+  min-height: min(844px, 100dvh);
 }

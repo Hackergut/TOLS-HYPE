@@ -36,15 +36,16 @@ export const CRAZY_BET_SPOTS: { id: CrazyBetSpot; label: string; blurb: string }
   { id: "crazy", label: "Crazy Time", blurb: "bonus · up to 20,000x" },
 ];
 
+/** HYPE skin wheel fills (purple / lime / vip — readable white labels). */
 const SEG_COLOR: Record<CrazySegmentType, string> = {
-  "1": "#1d63ff",
-  "2": "#e8b84a",
-  "5": "#1a8f2c",
-  "10": "#7c3aec",
-  coinflip: "#d4a017",
-  cashhunt: "#0aa3c2",
-  pachinko: "#ff5b79",
-  crazy: "#e11d48",
+  "1": "#2a1550",
+  "2": "#904bf9",
+  "5": "#0b6b5a",
+  "10": "#7c3aed",
+  coinflip: "#c4a35a",
+  cashhunt: "#0e7490",
+  pachinko: "#9628a1",
+  crazy: "#ea2fd4",
 };
 
 const SEG_LABEL: Record<CrazySegmentType, string> = {

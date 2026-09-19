@@ -5,13 +5,16 @@ function vite(key: string): string | undefined {
   return v || undefined;
 }
 
+/** HYPE default surface — operator env can still override. */
+const HYPE_BG = "#0c0618";
+
 export const skin = {
   name: vite("VITE_OPERATOR_NAME") ?? vite("VITE_SKIN_NAME") ?? "TOLS",
   logo: vite("VITE_SKIN_LOGO") ?? "/brand/tols-t.png",
   wordmark: vite("VITE_SKIN_WORDMARK") ?? "/brand/tols-wordmark.png",
   primary: vite("VITE_SKIN_PRIMARY") ?? "",
   lime: vite("VITE_SKIN_LIME") ?? "",
-  background: vite("VITE_SKIN_BACKGROUND") ?? "",
+  background: vite("VITE_SKIN_BACKGROUND") ?? HYPE_BG,
 };
 
 export function skinStyle(): string {
@@ -23,7 +26,7 @@ export function skinStyle(): string {
     rows.push(`--lime-300: ${skin.lime}`, `--primary-foreground: ${skin.lime}`, `--win: ${skin.lime}`);
   }
   if (skin.background) {
-    rows.push(`--background: ${skin.background}`);
+    rows.push(`--background: ${skin.background}`, `--bg-0: ${skin.background}`);
   }
   return rows.join(";");
 }

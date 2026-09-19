@@ -3,26 +3,31 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { AgeGate } from "@/components/legal/age-gate";
+import { TelegramWebApp } from "@/components/telegram/telegram-webapp";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { skin, skinStyle } from "@/lib/operator/skin";
 import appCss from "../styles.css?url";
 
 const APP_NAME = skin.name;
+const HYPE_SURFACE = "#0c0618";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1",
+      },
       { title: APP_NAME },
-      { name: "theme-color", content: "#1c1c22" },
+      { name: "theme-color", content: HYPE_SURFACE },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       {
         name: "description",
         content:
-          "TOLS — originals casino for crash, roulette, blackjack, slots, dice, mines, keno, and hi-lo. Play-money balances.",
+          "TOLS — originals casino for crash, roulette, blackjack, slots, dice, mines, keno, and hi-lo. Play-money balances. 18+ BeGambleAware.",
       },
     ],
     links: [
@@ -30,6 +35,11 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
+    ],
+    scripts: [
+      {
+        src: "https://telegram.org/js/telegram-web-app.js?56",
+      },
     ],
   }),
   component: RootComponent,
@@ -42,7 +52,7 @@ function RootComponent() {
         <HeadContent />
         {skinStyle() ? <style dangerouslySetInnerHTML={{ __html: `html{${skinStyle()}}` }} /> : null}
       </head>
-      <body className="min-h-dvh text-foreground">
+      <body className="min-h-dvh bg-background text-foreground pt-[env(safe-area-inset-top)]">
         <PreviewHostBridge />
         <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
           <AuthProvider>
@@ -50,6 +60,7 @@ function RootComponent() {
               <AgeGate>
                 <Outlet />
               </AgeGate>
+              <TelegramWebApp />
               <Toaster />
             </TooltipProvider>
           </AuthProvider>
