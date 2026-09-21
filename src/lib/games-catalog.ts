@@ -38,6 +38,7 @@ export type GameKind =
   | "plinko"
   | "tower"
   | "crazy"
+  | "derby"
   | "iframe";
 
 export type CatalogGame = {
@@ -286,6 +287,22 @@ export const ORIGINALS: CatalogGame[] = [
     cover: "/brand/games/crash.jpg",
     cta: "Ride",
   },
+  {
+    id: "derby-rush",
+    title: "Derby Rush",
+    provider: "TOLS Originals",
+    category: "originals",
+    kind: "derby",
+    isNew: true,
+    original: true,
+    hot: true,
+    players: 1056,
+    edge: 0.04,
+    rtp: 96,
+    blurb: "Six neon runners. Back a horse, watch the finish.",
+    cover: "/brand/games/derby.jpg",
+    cta: "Race",
+  },
 ];
 
 function operatorGames(): CatalogGame[] {
@@ -350,6 +367,10 @@ const ORIGINAL_ALIASES: Record<string, string> = {
   plinko: "grid-plinko",
   tower: "sky-tower",
   wheel: "midnight-roulette",
+  derby: "derby-rush",
+  horses: "derby-rush",
+  horse: "derby-rush",
+  "horse-race": "derby-rush",
   coinflip: "signal-dice",
   coin: "signal-dice",
   shoot: "grid-mines",

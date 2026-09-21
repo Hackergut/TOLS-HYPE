@@ -9,6 +9,7 @@ import { MinesGame } from "@/components/games/mines-game";
 import { RouletteGame } from "@/components/games/roulette-game";
 import { SlotsGame } from "@/components/games/slots-game";
 import { CrazyTolsGame } from "@/components/games/crazy-tols-game";
+import { DerbyGame } from "@/components/games/derby-game";
 import { PoolGame } from "@/components/games/pool-game";
 import { LimboGame } from "@/components/games/limbo-game";
 import { PlinkoGame } from "@/components/games/plinko-game";
@@ -144,6 +145,8 @@ function GameSwitch({ kind, id }: { kind: string; id: string }) {
       return <PlinkoGame gameId={id} />;
     case "tower":
       return <TowerGame gameId={id} />;
+    case "derby":
+      return <DerbyGame gameId={id} />;
     case "iframe":
       return <AggregatorFrame gameId={id} />;
     default:

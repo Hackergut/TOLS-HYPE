@@ -10,6 +10,36 @@ export type GameLegendCopy = {
 };
 
 export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
+  derby: {
+    summary:
+      "Six runners, one provably-fair finish. Back a horse and it pays a multiplier derived from its declared win probability — odds = RTP ÷ P(win), so every runner returns exactly 96% RTP. The winner is drawn from those probabilities with the server seed, then the race is animated to the scripted order.",
+    what: "Derby Rush is a TOLS Original horse-race original. Pick one of six neon runners before the gates open. Longer odds mean a fatter payout — Crimson Bolt is the 3.00x favourite, Silver Whale the 21.33x long shot.",
+    how: [
+      "Set stake and pick one of the six runners.",
+      "Race. The server commits the finishing order before a single pixel moves.",
+      "Win if your runner crosses first — paid stake × runner odds.",
+      "The full finish order is shown and replayable; the seed is revealed after the round.",
+    ],
+    features: [
+      "96% RTP on every runner, by construction",
+      "Provably fair finish order from the server seed",
+      "Six hand-painted neon runners",
+      "Full-order result chips in your bet history",
+    ],
+    payouts: [
+      { label: "Crimson Bolt", value: "3.00x" },
+      { label: "Azure Rocket", value: "4.00x" },
+      { label: "Lime Ghost", value: "5.33x" },
+      { label: "Solar Flare", value: "7.38x" },
+      { label: "Fluo Phantom", value: "11.29x" },
+      { label: "Silver Whale", value: "21.33x" },
+    ],
+    symbols: [
+      "Six runners — pick the winner before the gates open",
+      "Lime flag rails — the track boundary",
+      "Lime finish numbers — placed horses",
+    ],
+  },
   pool: {
     summary:
       "Fast Break turns the opening pool shot into a three-second provably-fair game. Choose one of four difficulty profiles: hit frequency falls as the top multiplier rises from 1× to 100×, while every profile stays fixed at 96% RTP. The server commits the result before the cue moves; the client reveals it only after the table animation finishes.",

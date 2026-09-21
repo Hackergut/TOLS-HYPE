@@ -14,6 +14,7 @@ import { crashPointFromFloat, diceRoll, pickIndex, uniquePicks } from "@/lib/fai
 import { limboFromFloat, plinkoBucket, plinkoMultipliers, towerMultiplier, TOWER_COLS, TOWER_ROWS } from "@/lib/originals";
 import { poolMultiplier, simulateBreak, type PoolDiff } from "@/lib/pool-physics";
 import { crazyRound, type CrazyBetSpot } from "@/lib/crazy-tols";
+import { derbyOutcome, derbyOdds, DERBY_HORSES, DERBY_TRUE_P } from "@/lib/derby";
 import {
   credit,
   debit,
@@ -94,6 +95,17 @@ function assertBet(currency: Currency, amount: number) {
   if (amount > meta.maxBet) throw new Error(`Maximum bet is ${meta.maxBet} ${currency}`);
 }
 
+export type DerbyDetail = {
+  /** Finish order, first place first. */
+  order: number[];
+  winnerId: number;
+  /** Normalised finishing margins (0 = winner). */
+  margins: number[];
+  photoFinish: boolean;
+  /** Odds + win chance for the exact horse the player bet. */
+  choice: { id: number; name: string; color: string; odds: number; chance: number } | null;
+};
+
 export type CrazyDetail = {
   wheelIndex: number;
   segment: string;
@@ -119,6 +131,7 @@ export type PlayResult = {
     color?: string;
     reels?: string[];
     crazy?: CrazyDetail;
+    derby?: DerbyDetail;
   };
   balances: Record<Currency, number>;
   fair?: { serverHash: string; clientSeed: string; nonce: number };
@@ -229,6 +242,30 @@ export const playInstant = createServerFn({ method: "POST" })
         multiplier: result.multiplier,
         topSlot: result.topSlot,
         bonus: result.bonus,
+      };
+    } else if (game.kind === "derby") {
+      const horseId = Number.isInteger(Number(data.choice))
+        ? Math.min(DERBY_HORSES.length - 1, Math.max(0, Number(data.choice)))
+        : 0;
+      const horse = DERBY_HORSES[horseId]!;
+      const outcome = derbyOutcome(u);
+      const win = outcome.winnerId === horseId;
+      // Stake returned: odds derived from RTP / P(win), so RTP ≡ 96% exactly.
+      const odds = derbyOdds(horseId);
+      multiplier = win ? odds : 0;
+      payout = win ? data.amount * odds : 0;
+      detail.derby = {
+        order: outcome.order,
+        winnerId: outcome.winnerId,
+        margins: outcome.margins,
+        photoFinish: outcome.photoFinish,
+        choice: {
+          id: horse.id,
+          name: horse.name,
+          color: horse.color,
+          odds,
+          chance: Math.round(DERBY_TRUE_P[horseId]! * 100),
+        },
       };
     } else if (game.kind === "crash") {
       throw new Error("Use startCrash for this game");
