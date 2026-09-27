@@ -14,43 +14,42 @@ export function FeltCard({
   rank?: string | number;
   suit?: string;
   hidden?: boolean;
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   stripe?: boolean;
   brand?: boolean;
 }) {
   const dim =
-    size === "lg"
-      ? "h-44 w-32 md:h-52 md:w-36"
-      : size === "sm"
-        ? "h-20 w-14"
-        : size === "xs"
-          ? "h-12 w-9"
-          : "h-28 w-20";
+    size === "xl"
+      ? "h-[250px] w-[167px]"
+      : size === "lg"
+        ? "h-44 w-32 md:h-52 md:w-36"
+        : size === "sm"
+          ? "h-20 w-14"
+          : size === "xs"
+            ? "h-12 w-9"
+            : "h-28 w-20";
   if (hidden) {
     return (
       <div
-        className={`relative flex ${dim} items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-border`}
+        className={`relative flex ${dim} items-center justify-center overflow-hidden rounded-md border border-white bg-[linear-gradient(124deg,#904BF9_50%,#680cec_50%)] shadow-[0_2px_3px_rgb(0_0_0/0.25)]`}
       >
-        <TolsT className={size === "xs" ? "size-5" : "size-10"} />
-        <span className="absolute inset-x-0 bottom-0 h-1.5 bg-lime" />
+        <TolsT className={size === "xs" ? "size-5 text-white" : "size-12 text-white"} />
       </div>
     );
   }
   const face = typeof rank === "number" ? (HILO_FACES[rank - 1] ?? String(rank)) : rank;
   const red = suit === "♥" || suit === "♦";
   const ink = brand ? (red ? "text-purple" : "text-zinc-900") : red ? "text-destructive" : "text-zinc-900";
+  const faceSize = size === "xl" ? "text-[86px] leading-none" : size === "xs" ? "text-sm" : "text-2xl";
   return (
     <div
-      className={`relative flex ${dim} flex-col justify-between overflow-hidden rounded-xl bg-white shadow-lg ${
+      className={`relative flex ${dim} flex-col items-center justify-center gap-3 overflow-hidden rounded-md bg-white shadow-[0_2px_3px_rgb(0_0_0/0.25)] ${
         size === "xs" ? "p-1" : "p-2.5"
       } ${ink}`}
     >
-      <div>
-        <p className={size === "xs" ? "font-heading text-sm leading-none font-bold" : "font-heading text-2xl leading-none font-bold"}>{face}</p>
-        <p className={size === "xs" ? "text-xs leading-none" : "text-lg leading-none"}>{suit}</p>
-      </div>
-      <p className={size === "xs" ? "self-end text-base" : "self-end text-3xl"}>{suit}</p>
-      {stripe ? <span className="absolute inset-x-0 bottom-0 h-1.5 bg-lime" /> : null}
+      <p className={`font-heading font-bold tabular-nums ${faceSize}`}>{face}</p>
+      <p className={size === "xl" ? "text-4xl" : size === "xs" ? "text-xs" : "text-lg"}>{suit}</p>
+      {stripe ? <span className="absolute inset-x-0 bottom-0 h-1 bg-lime" /> : null}
     </div>
   );
 }
@@ -63,7 +62,7 @@ export function FeltFromPlaying({
 }: {
   card?: PlayingCard;
   hidden?: boolean;
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   stripe?: boolean;
 }) {
   if (hidden || !card) return <FeltCard hidden size={size} stripe={stripe} />;
