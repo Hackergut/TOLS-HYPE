@@ -6,20 +6,37 @@ import { cn } from "cn";
 
 export type Promo = (typeof PROMOS)[number];
 
+/**
+ * Lobby promo tile — landscape 16:9 fill-image card.
+ * Shape matches a casino hero banner: the <Link> IS the card,
+ * image covers the frame. Overlay stays as fallback because current
+ * /brand/promo assets do not bake title/copy into the artwork.
+ */
 export function PromoTile({ promo, className }: { promo: Promo; className?: string }) {
   return (
     <Link
       to="/promotions"
       hash={promo.id}
       className={cn(
-        "tols-game-card is-original relative block min-w-64 shrink-0 sm:min-w-80",
+        "group relative block aspect-video min-w-[85%] shrink-0 overflow-hidden rounded-2xl sm:min-w-[46%] lg:min-w-[31%]",
+        "ring-1 ring-white/10 transition duration-300 hover:scale-[1.03] hover:ring-2 hover:ring-lime",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime",
         className,
       )}
     >
-      <img src={promo.image} alt="" className="h-44 w-full object-cover sm:h-48" loading="lazy" decoding="async" width={640} height={192} />
-      <div className="tols-game-card-wash pointer-events-none absolute inset-0" />
+      <img
+        src={promo.image}
+        alt={promo.title}
+        width={1600}
+        height={900}
+        sizes="(max-width: 600px) 90vw, (max-width: 992px) 45vw, 30vw"
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/75 via-black/15 to-transparent" />
       <div className="absolute top-2.5 left-2.5 flex gap-1.5">
-        <span className="tols-badge-original rounded-md px-1.5 py-0.5 text-[0.6rem] tracking-wider uppercase">
+        <span className="rounded-md bg-black/65 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider text-lime uppercase">
           {promo.kicker}
         </span>
         <span className="rounded-md bg-black/65 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider text-white/80 uppercase">
@@ -35,17 +52,22 @@ export function PromoTile({ promo, className }: { promo: Promo; className?: stri
           {promo.badge}
         </span>
       </div>
-      <span className="tols-game-card-bar absolute inset-x-0 bottom-0" />
     </Link>
   );
 }
 
 export function PromoDetail({ promo }: { promo: Promo }) {
   return (
-    <Card id={promo.id} className="tols-game-card is-original scroll-mt-20 gap-0 overflow-hidden rounded-2xl py-0 ring-0">
-      <div className="relative">
-        <img src={promo.image} alt="" className="h-44 w-full object-cover sm:h-48" />
-        <div className="pointer-events-none absolute inset-0 tols-game-card-wash" />
+    <Card id={promo.id} className="scroll-mt-20 gap-0 overflow-hidden rounded-2xl py-0 ring-1 ring-white/10">
+      <div className="relative aspect-video overflow-hidden">
+        <img
+          src={promo.image}
+          alt={promo.title}
+          width={1600}
+          height={900}
+          className="absolute inset-0 size-full object-cover"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/75 via-black/15 to-transparent" />
         <div className="absolute top-2.5 left-2.5 flex gap-1.5">
           <span className="rounded-md bg-black/65 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider text-lime uppercase">
             {promo.kicker}
@@ -82,7 +104,6 @@ export function PromoDetail({ promo }: { promo: Promo }) {
           <Link to={promo.to}>{promo.cta}</Link>
         </Button>
       </CardFooter>
-      <span className="tols-game-card-bar" />
     </Card>
   );
 }

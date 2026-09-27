@@ -22,9 +22,9 @@ export function PromoBanner() {
           All promos
         </Link>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1">
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1">
         {PROMOS.map((p) => (
-          <PromoTile key={p.id} promo={p} />
+          <PromoTile key={p.id} promo={p} className="snap-start" />
         ))}
       </div>
     </section>
