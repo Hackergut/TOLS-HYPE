@@ -2,70 +2,44 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
 
-/** User pack 1–6.jpg + TOLS BANNER. Fallback = same art already in /brand/affiliate. */
+/** Exact user pack: TOLS BANNER + 1–6.jpg (1200×400), no overlay text. */
 const HERO_SLIDES = [
   {
     id: "obsidian-blackjack",
-    image: "/brand/hero/welcome.jpg",
-    fallback: "/brand/affiliate/hero-brand.jpg",
+    image: "/brand/hero/welcome.svg",
     alt: "TOLS official welcome banner",
   },
   {
     id: "neon-crash",
-    image: "/brand/hero/1.jpg",
-    fallback: "/brand/affiliate/banner-income.jpg",
+    image: "/brand/hero/1.svg",
     alt: "TOLS official banner — T mark and paint",
   },
   {
     id: "signal-dice",
-    image: "/brand/hero/2.jpg",
-    fallback: "/brand/affiliate/banner-info.jpg",
+    image: "/brand/hero/2.svg",
     alt: "TOLS official banner — coins and cards",
   },
   {
-    id: "obsidian-blackjack",
-    image: "/brand/hero/3.jpg",
-    fallback: "/brand/affiliate/banner-promote.jpg",
+    id: "obsidian-blackjack-2",
+    image: "/brand/hero/3.svg",
     alt: "TOLS official banner — cards and chips",
   },
   {
     id: "crazy-tols",
-    image: "/brand/hero/4.jpg",
-    fallback: "/brand/affiliate/banner-referrals.jpg",
+    image: "/brand/hero/4.svg",
     alt: "TOLS official banner — hands passing chips",
   },
   {
     id: "pool-rush",
-    image: "/brand/hero/5.jpg",
-    fallback: "/brand/affiliate/banner-rank-win.jpg",
+    image: "/brand/hero/5.svg",
     alt: "TOLS official banner — trophy podium",
   },
   {
     id: "midnight-roulette",
-    image: "/brand/hero/6.jpg",
-    fallback: "/brand/affiliate/banner-pro.jpg",
+    image: "/brand/hero/6.svg",
     alt: "TOLS official banner — aces",
   },
 ] as const;
-
-function BannerImg({ src, fallback, alt, priority }: { src: string; fallback: string; alt: string; priority: boolean }) {
-  const [url, setUrl] = useState(src);
-  return (
-    <img
-      src={url}
-      alt={alt}
-      width={1200}
-      height={400}
-      decoding="async"
-      fetchPriority={priority ? "high" : "low"}
-      loading={priority ? "eager" : "lazy"}
-      onError={() => {
-        if (url !== fallback) setUrl(fallback);
-      }}
-      className="absolute inset-0 size-full object-cover object-center"
-    />
-  );
-}
 
 export function Hero() {
   const [i, setI] = useState(0);
@@ -107,7 +81,16 @@ export function Hero() {
             style={{ opacity: idx === i ? 1 : 0, pointerEvents: idx === i ? "auto" : "none" }}
             aria-hidden={idx !== i}
           >
-            <BannerImg src={s.image} fallback={s.fallback} alt={idx === i ? s.alt : ""} priority={idx === i} />
+            <img
+              src={s.image}
+              alt={idx === i ? s.alt : ""}
+              width={1200}
+              height={400}
+              decoding="async"
+              fetchPriority={idx === i ? "high" : "low"}
+              loading={idx === i ? "eager" : "lazy"}
+              className="absolute inset-0 size-full object-cover object-center"
+            />
           </Link>
         ))}
         <button
