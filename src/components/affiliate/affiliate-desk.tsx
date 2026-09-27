@@ -63,14 +63,14 @@ const TAB_ICONS = {
   pro: RiBriefcase4Line,
 };
 
-/** Hero per tab — the TOLS BANNER pack fills the TOP hero slot, one image per tab. */
+/** Same official TOLS wide pack as lobby Hero — one banner per tab. */
 const TAB_HERO: Record<AffiliateTab, { src: string; alt: string }> = {
-  overview: { src: "/brand/affiliate/banner-income.jpg", alt: "TOLS affiliates — Income That Lasts, 25-30% lifetime revenue share" },
-  users: { src: "/brand/affiliate/banner-referrals.jpg", alt: "TOLS affiliates — Every Referral Counts, real-time tracking" },
-  campaigns: { src: "/brand/affiliate/banner-promote.jpg", alt: "TOLS affiliates — Promote. Track. Convert." },
-  earnings: { src: "/brand/affiliate/banner-rank-win.jpg", alt: "TOLS affiliates — Refer, Rank, Win with leaderboard prizes" },
-  info: { src: "/brand/affiliate/banner-info.jpg", alt: "TOLS affiliates — how the program works" },
-  pro: { src: "/brand/affiliate/banner-pro.jpg", alt: "TOLS affiliates — professional plans" },
+  overview: { src: "/brand/affiliate/hero-brand.jpg", alt: "TOLS official welcome banner" },
+  users: { src: "/brand/affiliate/banner-referrals.jpg", alt: "TOLS official banner — hands passing chips" },
+  campaigns: { src: "/brand/affiliate/banner-promote.jpg", alt: "TOLS official banner — cards and chips" },
+  earnings: { src: "/brand/affiliate/banner-rank-win.jpg", alt: "TOLS official banner — trophy podium" },
+  info: { src: "/brand/affiliate/banner-info.jpg", alt: "TOLS official banner — card fan" },
+  pro: { src: "/brand/affiliate/banner-pro.jpg", alt: "TOLS official banner — aces" },
 };
 
 function readCampaigns(): AffCampaign[] {
@@ -140,17 +140,22 @@ export function AffiliateDesk({ tab }: { tab: AffiliateTab }) {
   const referrals = data?.referrals ?? [];
   const logs = data?.commissionLogs ?? [];
   const ratePct = Math.round((data?.commissionRate ?? 0.25) * 100);
+  const hero = TAB_HERO[tab];
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-glow)]">
-        <img
-          src={TAB_HERO[tab].src}
-          alt={TAB_HERO[tab].alt}
-          className="block w-full object-cover"
-          loading="eager"
-          decoding="async"
-        />
+      <section className="relative overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-glow)]">
+        <div className="relative aspect-[3/1] min-h-28 w-full bg-[#101014]">
+          <img
+            src={hero.src}
+            alt={hero.alt}
+            width={1200}
+            height={400}
+            className="absolute inset-0 size-full object-cover object-center"
+            loading="eager"
+            decoding="async"
+          />
+        </div>
       </section>
       <div
         role="tablist"
