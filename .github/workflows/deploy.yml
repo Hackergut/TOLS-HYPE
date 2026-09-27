@@ -1,18 +1,8 @@
 name: deploy
 
-# Production deploy for the linked Vercel project "tols" (TOLS-TEAM).
-# Builds on the GitHub runner and uploads a prebuilt output, so it does not
-# spend Vercel Hobby build slots and does not depend on the commit author
-# being a member of the Vercel team.
-#
-# Required repository secret:
-#   VERCEL_TOKEN — https://vercel.com/account/tokens
-#   Create it from an account that belongs to team TOLS-TEAM.
-
 on:
-  workflow_run:
-    workflows: [ci]
-    types: [completed]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -21,10 +11,6 @@ concurrency:
 
 jobs:
   production:
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -34,8 +20,6 @@ jobs:
       VERCEL_PROJECT_ID: prj_0gv8LBDVRBslXSiGC4Y6tk36lEQS
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -47,7 +31,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           if [ -z "$VERCEL_TOKEN" ]; then
-            echo "::error::Add the repository secret VERCEL_TOKEN (a token from a member of Vercel team TOLS-TEAM): https://vercel.com/account/tokens"
+            echo "::error::Missing repository secret VERCEL_TOKEN"
             exit 1
           fi
 
