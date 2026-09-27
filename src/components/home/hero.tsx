@@ -2,44 +2,70 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
 
-/** Official TOLS 1200×400 pack — shown as-is, no title overlay. */
+/** User pack 1–6.jpg + TOLS BANNER. Fallback = same art already in /brand/affiliate. */
 const HERO_SLIDES = [
   {
-    href: "/games/obsidian-blackjack",
-    image: "/brand/affiliate/hero-brand.jpg",
+    id: "obsidian-blackjack",
+    image: "/brand/hero/welcome.jpg",
+    fallback: "/brand/affiliate/hero-brand.jpg",
     alt: "TOLS official welcome banner",
   },
   {
-    href: "/games/neon-crash",
-    image: "/brand/affiliate/banner-income.jpg",
+    id: "neon-crash",
+    image: "/brand/hero/1.jpg",
+    fallback: "/brand/affiliate/banner-income.jpg",
     alt: "TOLS official banner — T mark and paint",
   },
   {
-    href: "/games/signal-dice",
-    image: "/brand/affiliate/banner-promote.jpg",
+    id: "signal-dice",
+    image: "/brand/hero/2.jpg",
+    fallback: "/brand/affiliate/banner-info.jpg",
+    alt: "TOLS official banner — coins and cards",
+  },
+  {
+    id: "obsidian-blackjack",
+    image: "/brand/hero/3.jpg",
+    fallback: "/brand/affiliate/banner-promote.jpg",
     alt: "TOLS official banner — cards and chips",
   },
   {
-    href: "/games/crazy-tols",
-    image: "/brand/affiliate/banner-referrals.jpg",
+    id: "crazy-tols",
+    image: "/brand/hero/4.jpg",
+    fallback: "/brand/affiliate/banner-referrals.jpg",
     alt: "TOLS official banner — hands passing chips",
   },
   {
-    href: "/games/pool-rush",
-    image: "/brand/affiliate/banner-rank-win.jpg",
+    id: "pool-rush",
+    image: "/brand/hero/5.jpg",
+    fallback: "/brand/affiliate/banner-rank-win.jpg",
     alt: "TOLS official banner — trophy podium",
   },
   {
-    href: "/games/midnight-roulette",
-    image: "/brand/affiliate/banner-pro.jpg",
+    id: "midnight-roulette",
+    image: "/brand/hero/6.jpg",
+    fallback: "/brand/affiliate/banner-pro.jpg",
     alt: "TOLS official banner — aces",
   },
-  {
-    href: "/games/obsidian-blackjack",
-    image: "/brand/affiliate/banner-info.jpg",
-    alt: "TOLS official banner — card fan",
-  },
 ] as const;
+
+function BannerImg({ src, fallback, alt, priority }: { src: string; fallback: string; alt: string; priority: boolean }) {
+  const [url, setUrl] = useState(src);
+  return (
+    <img
+      src={url}
+      alt={alt}
+      width={1200}
+      height={400}
+      decoding="async"
+      fetchPriority={priority ? "high" : "low"}
+      loading={priority ? "eager" : "lazy"}
+      onError={() => {
+        if (url !== fallback) setUrl(fallback);
+      }}
+      className="absolute inset-0 size-full object-cover object-center"
+    />
+  );
+}
 
 export function Hero() {
   const [i, setI] = useState(0);
@@ -74,23 +100,14 @@ export function Hero() {
         {HERO_SLIDES.map((s, idx) => (
           <Link
             key={`${s.image}-${idx}`}
-            to={s.href as "/games/$id"}
-            params={{ id: s.href.replace("/games/", "") }}
+            to="/games/$id"
+            params={{ id: s.id }}
             tabIndex={idx === i ? 0 : -1}
             className="absolute inset-0 block transition-opacity duration-500"
             style={{ opacity: idx === i ? 1 : 0, pointerEvents: idx === i ? "auto" : "none" }}
             aria-hidden={idx !== i}
           >
-            <img
-              src={s.image}
-              alt={idx === i ? s.alt : ""}
-              width={1200}
-              height={400}
-              decoding="async"
-              fetchPriority={idx === i ? "high" : "low"}
-              loading={idx === i ? "eager" : "lazy"}
-              className="absolute inset-0 size-full object-cover object-center"
-            />
+            <BannerImg src={s.image} fallback={s.fallback} alt={idx === i ? s.alt : ""} priority={idx === i} />
           </Link>
         ))}
         <button
