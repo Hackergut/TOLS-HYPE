@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Hero } from "@/components/home/hero";
+import { LogoLoop } from "@/components/home/logo-loop";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { LobbySection } from "@/components/games/lobby-section";
 import { ProviderShelf } from "@/components/games/provider-shelf";
@@ -78,6 +79,7 @@ function Home() {
         }}
       />
       <Hero />
+      <LogoLoop />
       <PromoBanner />
 
       <LobbySection title="Live Show" cat="live" games={live} loading={loading} limit={12} />
