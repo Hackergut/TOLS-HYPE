@@ -1,93 +1,48 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
-import { Button } from "@/components/ui/button";
 
-/** Official TOLS wide banners (pack 1–6 + welcome). */
+/** Official TOLS 1200×400 pack — shown as-is, no title overlay. */
 const HERO_SLIDES = [
   {
-    id: "obsidian-blackjack",
-    kicker: "TOLS",
-    titleLime: "TOLS",
-    titleRest: "ORIGINALS",
-    subtitle: "House tables · lime · fluo purple",
-    cta: "PLAY",
+    href: "/games/obsidian-blackjack",
     image: "/brand/affiliate/hero-brand.jpg",
-    position: "center",
     alt: "TOLS official welcome banner",
   },
   {
-    id: "neon-crash",
-    kicker: "ORIGINALS",
-    titleLime: "HOUSE",
-    titleRest: "GAMES",
-    subtitle: "Crash · Dice · Mines · Plinko",
-    cta: "PLAY",
+    href: "/games/neon-crash",
     image: "/brand/affiliate/banner-income.jpg",
-    position: "center",
     alt: "TOLS official banner — T mark and paint",
   },
   {
-    id: "obsidian-blackjack",
-    kicker: "TABLE",
-    titleLime: "CARDS",
-    titleRest: "UP",
-    subtitle: "Blackjack · Roulette · Hi-Lo",
-    cta: "DEAL",
+    href: "/games/signal-dice",
     image: "/brand/affiliate/banner-promote.jpg",
-    position: "center",
     alt: "TOLS official banner — cards and chips",
   },
   {
-    id: "signal-dice",
-    kicker: "LIVE",
-    titleLime: "ON",
-    titleRest: "THE FELT",
-    subtitle: "Live show tables and studio wheels",
-    cta: "PLAY",
-    image: "/brand/affiliate/banner-info.jpg",
-    position: "center",
-    alt: "TOLS official banner — card fan",
-  },
-  {
-    id: "crazy-tols",
-    kicker: "VIP",
-    titleLime: "PASS",
-    titleRest: "THE POT",
-    subtitle: "Rakeback and reload on every session",
-    cta: "SPIN",
+    href: "/games/crazy-tols",
     image: "/brand/affiliate/banner-referrals.jpg",
-    position: "center",
     alt: "TOLS official banner — hands passing chips",
   },
   {
-    id: "pool-rush",
-    kicker: "RACE",
-    titleLime: "TAKE",
-    titleRest: "THE CUP",
-    subtitle: "Weekly race · live leaderboard",
-    cta: "BREAK",
+    href: "/games/pool-rush",
     image: "/brand/affiliate/banner-rank-win.jpg",
-    position: "center",
     alt: "TOLS official banner — trophy podium",
   },
   {
-    id: "midnight-roulette",
-    kicker: "TABLE",
-    titleLime: "ACES",
-    titleRest: "HIGH",
-    subtitle: "European wheel · 97.3% RTP",
-    cta: "PLAY",
+    href: "/games/midnight-roulette",
     image: "/brand/affiliate/banner-pro.jpg",
-    position: "center",
     alt: "TOLS official banner — aces",
+  },
+  {
+    href: "/games/obsidian-blackjack",
+    image: "/brand/affiliate/banner-info.jpg",
+    alt: "TOLS official banner — card fan",
   },
 ] as const;
 
 export function Hero() {
   const [i, setI] = useState(0);
-  const slide = HERO_SLIDES[i]!;
-  const label = `${slide.titleLime} ${slide.titleRest}`;
 
   useEffect(() => {
     const tick = () => setI((n) => (n + 1) % HERO_SLIDES.length);
@@ -109,17 +64,24 @@ export function Hero() {
     <section
       aria-roledescription="carousel"
       aria-label="Official TOLS banners"
-      className="relative overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-glow)]"
+      className="relative overflow-hidden rounded-2xl bg-[#101014] shadow-[var(--shadow-glow)]"
     >
       <h1 className="sr-only">
         TOLS casino — originals for crash, dice, roulette, blackjack, mines, keno, pool rush and crazy tols.
         18+ play-money tables.
       </h1>
-      <div className="relative min-h-48 w-full sm:min-h-56 md:min-h-72 lg:min-h-80">
-        {HERO_SLIDES.map((s, idx) =>
-          idx === i || idx === (i + 1) % HERO_SLIDES.length ? (
+      <div className="relative aspect-[3/1] w-full min-h-36 sm:min-h-44 md:min-h-56">
+        {HERO_SLIDES.map((s, idx) => (
+          <Link
+            key={`${s.image}-${idx}`}
+            to={s.href as "/games/$id"}
+            params={{ id: s.href.replace("/games/", "") }}
+            tabIndex={idx === i ? 0 : -1}
+            className="absolute inset-0 block transition-opacity duration-500"
+            style={{ opacity: idx === i ? 1 : 0, pointerEvents: idx === i ? "auto" : "none" }}
+            aria-hidden={idx !== i}
+          >
             <img
-              key={`${s.image}-${idx}`}
               src={s.image}
               alt={idx === i ? s.alt : ""}
               width={1200}
@@ -127,33 +89,10 @@ export function Hero() {
               decoding="async"
               fetchPriority={idx === i ? "high" : "low"}
               loading={idx === i ? "eager" : "lazy"}
-              className="absolute inset-0 size-full object-cover object-center transition-opacity duration-500"
-              style={{ objectPosition: s.position, opacity: idx === i ? 1 : 0 }}
+              className="absolute inset-0 size-full object-cover object-center"
             />
-          ) : null,
-        )}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-black/15 to-transparent md:bg-linear-to-r md:from-black/65 md:via-black/20 md:to-transparent" />
-        <div className="relative z-10 flex h-full min-h-44 items-end justify-between gap-4 p-4 md:min-h-72 md:p-8">
-          <div className="min-w-0 max-w-md">
-            <p className="text-[0.65rem] font-semibold tracking-[0.2em] text-lime uppercase">{slide.kicker}</p>
-            <h2
-              aria-live="polite"
-              className="font-heading text-2xl font-black tracking-tight uppercase drop-shadow-[0_2px_10px_rgb(0_0_0_/_0.85)] md:text-5xl"
-            >
-              <span className="text-lime">{slide.titleLime}</span>{" "}
-              <span className="text-white">{slide.titleRest}</span>
-            </h2>
-            <p className="mt-1 max-w-md text-xs text-white md:text-sm">{slide.subtitle}</p>
-          </div>
-          <Button
-            asChild
-            className="mb-0.5 h-10 shrink-0 rounded-lg border border-lime bg-transparent px-5 font-semibold text-lime hover:bg-lime hover:text-black md:h-11 md:px-6"
-          >
-            <Link to="/games/$id" params={{ id: slide.id }} aria-label={`${slide.cta} ${label}`}>
-              {slide.cta}
-            </Link>
-          </Button>
-        </div>
+          </Link>
+        ))}
         <button
           type="button"
           className="absolute top-1/2 left-2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/50 text-white md:left-3 md:size-10"
@@ -177,8 +116,8 @@ export function Hero() {
               type="button"
               role="tab"
               aria-selected={idx === i}
-              aria-label={`${s.titleLime} ${s.titleRest}`}
-              className={`h-1 rounded-full transition-all ${idx === i ? "w-6 bg-primary" : "w-2 bg-white/40"}`}
+              aria-label={s.alt}
+              className={`h-1 rounded-full transition-all ${idx === i ? "w-6 bg-lime" : "w-2 bg-white/40"}`}
               onClick={() => setI(idx)}
             />
           ))}
