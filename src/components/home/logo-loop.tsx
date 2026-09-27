@@ -1,19 +1,20 @@
 import { cn } from "cn";
 
-/** Paths that actually exist in public/brand/providers/. */
+/** Exact provider SVGs the user sent. White wordmarks on dark. */
 const LOGOS = [
-  { src: "/brand/providers/pragmatic-play.png", name: "Pragmatic Play" },
-  { src: "/brand/providers/evolution-gaming.png", name: "Evolution" },
-  { src: "/brand/providers/hacksaw.png", name: "Hacksaw Gaming" },
-  { src: "/brand/providers/pgsoft.jpg", name: "PG Soft" },
-  { src: "/brand/providers/netent.png", name: "NetEnt" },
-  { src: "/brand/providers/relax-gaming.png", name: "Relax Gaming" },
-  { src: "/brand/providers/playngo.png", name: "Play'n GO" },
-  { src: "/brand/providers/yggdrasil.png", name: "Yggdrasil" },
-  { src: "/brand/providers/redtiger.png", name: "Red Tiger" },
-  { src: "/brand/providers/endorphina.png", name: "Endorphina" },
-  { src: "/brand/providers/habanero.png", name: "Habanero" },
-  { src: "/brand/providers/greentube.png", name: "Greentube" },
+  { src: "/brand/providers/user/01.svg", name: "NetEnt" },
+  { src: "/brand/providers/user/02.svg", name: "Studio 2" },
+  { src: "/brand/providers/user/03.svg", name: "Evolution" },
+  { src: "/brand/providers/user/04.svg", name: "Studio 4" },
+  { src: "/brand/providers/user/05.svg", name: "Studio 5" },
+  { src: "/brand/providers/user/06.svg", name: "Studio 6" },
+  { src: "/brand/providers/user/07.svg", name: "Studio 7" },
+  { src: "/brand/providers/user/08.svg", name: "PG Soft" },
+  { src: "/brand/providers/user/09.svg", name: "Studio 9" },
+  { src: "/brand/providers/user/10.svg", name: "Studio 10" },
+  { src: "/brand/providers/user/11.svg", name: "Studio 11" },
+  { src: "/brand/providers/user/12.svg", name: "Studio 12" },
+  { src: "/brand/providers/user/13.svg", name: "Studio 13" },
 ] as const;
 
 function Track({ ariaHidden = false }: { ariaHidden?: boolean }) {
