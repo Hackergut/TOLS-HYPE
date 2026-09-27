@@ -99,6 +99,16 @@ export async function syncUserOnSignIn(profile: SignInProfile): Promise<void> {
     const existed = await upsertUserRow(profile);
     await upsertAccountRow(profile);
     await ensureWallets(profile.userId);
+    void import("@/lib/governance/presence.server")
+      .then(({ touchPresence }) =>
+        touchPresence({
+          userId: profile.userId,
+          email: profile.email,
+          name: profile.name,
+          place: "lobby",
+        }),
+      )
+      .catch(() => undefined);
     if (!existed) {
       void pushBridgeEvent("casino.player_connected", {
         userId: profile.userId,

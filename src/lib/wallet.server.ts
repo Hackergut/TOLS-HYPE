@@ -40,7 +40,7 @@ export async function debit(
     return money(row?.balance);
   }
   const prisma = await getPrisma();
-  return prisma.$transaction(async (tx) => {
+  const balance = await prisma.$transaction(async (tx) => {
     // Atomic conditional decrement: two concurrent bets can no longer both pass
     // a stale read-then-check and overdraw the wallet (classic TOCTOU race).
     const res = await tx.wallet.updateMany({
@@ -64,6 +64,19 @@ export async function debit(
     });
     return next;
   });
+  if (type === "bet" && gameId) {
+    void import("@/lib/governance/presence.server")
+      .then(({ touchPresence }) =>
+        touchPresence({
+          userId,
+          gameId,
+          place: "game",
+          wager: amount,
+        }),
+      )
+      .catch(() => undefined);
+  }
+  return balance;
 }
 
 export async function credit(

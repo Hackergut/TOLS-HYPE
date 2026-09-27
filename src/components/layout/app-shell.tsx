@@ -10,6 +10,7 @@ import { WalletHubProvider } from "@/components/wallet/wallet-hub";
 import { RoundViewerProvider } from "@/components/games/round-dialog";
 import { GamePreviewProvider } from "@/components/games/guest-game-preview";
 import { SupportWidget } from "@/components/layout/support-widget";
+import { PresenceBeacon } from "@/components/layout/presence-beacon";
 import { AuthWidgetProvider } from "@/components/auth/auth-widget-provider";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -34,6 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </SidebarInset>
         <RightDock />
         <SupportWidget />
+        <PresenceBeacon />
       </RightDockProvider>
       </WalletHubProvider>
       </AuthWidgetProvider>

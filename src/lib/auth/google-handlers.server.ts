@@ -55,6 +55,19 @@ export async function handleGoogleDiag(): Promise<Response> {
 export async function handleGoogleMe(request: Request): Promise<Response> {
   const session = readSessionFromRequest(request);
   if (!session) return Response.json({ ok: true, user: null });
+  const ua = request.headers.get("user-agent") ?? "";
+  const device = /mobile|android|iphone|ipad/i.test(ua) ? "mobile" : "desktop";
+  void import("@/lib/governance/presence.server")
+    .then(({ touchPresence }) =>
+      touchPresence({
+        userId: session.id,
+        email: session.email,
+        name: session.name,
+        device,
+        place: "keep",
+      }),
+    )
+    .catch(() => undefined);
   return Response.json({
     ok: true,
     user: {

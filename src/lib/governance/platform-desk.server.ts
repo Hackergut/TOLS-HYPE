@@ -612,15 +612,18 @@ export async function liveMap() {
     const players = await sql<{
       user_id: string;
       display_name: string | null;
+      email: string | null;
       current_game: string | null;
       current_game_title: string | null;
       status: string | null;
       session_wagered: string | number | null;
       last_seen: string;
+      seen_ms: number | string | null;
       device: string | null;
     }>`
-      select user_id, display_name, current_game, current_game_title, status,
-             session_wagered, last_seen::text as last_seen, device
+      select user_id, display_name, email, current_game, current_game_title, status,
+             session_wagered, last_seen::text as last_seen,
+             (extract(epoch from last_seen) * 1000) as seen_ms, device
       from player_presence
       order by last_seen desc
       limit 250
@@ -641,23 +644,29 @@ export async function liveMap() {
     const byGame = new Map<string, number>();
     let online = 0;
     let wagered = 0;
-    for (const p of players) {
-      const g = p.current_game_title || p.current_game || "lobby";
-      byGame.set(g, (byGame.get(g) ?? 0) + 1);
-      if (p.status === "online") online += 1;
-      wagered += num(p.session_wagered);
-    }
-    return {
-      activeSessions: players.map((p) => ({
+    const now = Date.now();
+    const sessions = players.map((p) => {
+      const seenMs = Number(p.seen_ms);
+      const fresh = Number.isFinite(seenMs) && now - seenMs < 50_000;
+      const game = p.current_game_title || p.current_game || "";
+      if (fresh && game) byGame.set(game, (byGame.get(game) ?? 0) + 1);
+      if (fresh) online += 1;
+      if (fresh) wagered += num(p.session_wagered);
+      return {
         userId: p.user_id,
         displayName: p.display_name,
-        game: p.current_game_title,
-        gameId: p.current_game,
-        status: p.status,
+        email: p.email,
+        game: fresh ? p.current_game_title : null,
+        gameId: fresh ? p.current_game : null,
+        status: fresh ? "online" : "away",
         wagered: num(p.session_wagered),
         lastSeen: p.last_seen,
+        lastSeenMs: Number.isFinite(seenMs) ? seenMs : null,
         device: p.device,
-      })),
+      };
+    });
+    return {
+      activeSessions: sessions,
       liveEvents: events.map((e) => ({
         id: e.id,
         userId: e.user_id,
