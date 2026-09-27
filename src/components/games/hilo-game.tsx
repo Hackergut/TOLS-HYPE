@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { RiArrowDownLine, RiArrowLeftRightLine, RiArrowUpLine } from "@remixicon/react";
-import { Input } from "@/components/ui/input";
 import { PlayGate } from "@/components/games/play-gate";
-import { GameShell, LimeBet } from "@/components/games/game-shell";
+import { GameShell } from "@/components/games/game-shell";
 import { useGameTable } from "@/components/games/game-table";
-import { FieldLabel, StakeField } from "@/components/games/stake-field";
+import { StakeField } from "@/components/games/stake-field";
 import { FeltCard } from "@/components/games/felt-card";
 import { cashOutHilo, playHilo, startHilo } from "@/lib/casino-api";
 import { useWallet } from "@/lib/wallet-context";
-import { CURRENCY_META } from "@/lib/games-catalog";
 import { formatMoney } from "@/lib/format";
 import { playSfx } from "@/lib/game-sound";
 import { sleep, speedDelay } from "@/lib/game-speed";
@@ -29,7 +27,6 @@ export function HiloGame({ gameId }: { gameId: string }) {
 function HiloTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
   const { reportRound } = useGameTable();
-  const meta = CURRENCY_META[currency];
   const [roundId, setRoundId] = useState<string | null>(null);
   const [card, setCard] = useState<Card | null>(null);
   const [prev, setPrev] = useState<Card | null>(null);
@@ -61,8 +58,6 @@ function HiloTable({ gameId }: { gameId: string }) {
   const pLower = card ? hiloChance(card.rank, "lower") : 0.5;
   const hiStep = card ? hiloStep(card.rank, "higher") : 1;
   const loStep = card ? hiloStep(card.rank, "lower") : 1;
-  const nextMult = (dir === "higher" ? hiStep : loStep) * (live ? mult : 1);
-  const profit = amount * (nextMult - 1);
 
   async function pick(next: "higher" | "lower") {
     if (!roundId || busy) return;
@@ -102,7 +97,7 @@ function HiloTable({ gameId }: { gameId: string }) {
         toast.message("Miss");
       } else {
         playSfx("hit");
-        toast.success(`${res.multiplier.toFixed(2)}\u00d7`);
+        toast.success(`${res.multiplier.toFixed(2)}×`);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Bet failed");
@@ -121,7 +116,7 @@ function HiloTable({ gameId }: { gameId: string }) {
       setLive(false);
       reportRound({
         win: true,
-        label: `Cash ${mult.toFixed(2)}\u00d7`,
+        label: `Cash ${mult.toFixed(2)}×`,
         stake: amount,
         payout: res.payout,
         multiplier: res.multiplier,
@@ -139,21 +134,44 @@ function HiloTable({ gameId }: { gameId: string }) {
   return (
     <GameShell
       controls={
-        <>
-          {live ? (
-            <LimeBet disabled={busy} onClick={() => void cash()}>
-              Cash out {mult.toFixed(2)}\u00d7
-            </LimeBet>
-          ) : (
-            <LimeBet disabled={busy || !roundId} onClick={() => void pick(dir)}>
-              Bet
-            </LimeBet>
-          )}
+        <div className="flex flex-col gap-4">
           <StakeField amount={amount} setAmount={setAmount} disabled={live} />
-          <FieldLabel label="Profit on next" hint={`${formatMoney(Math.max(0, profit), currency)} ${currency}`}>
-            <Input readOnly value={Math.max(0, profit).toFixed(4)} className="h-12 tabular-nums" />
-          </FieldLabel>
-        </>
+          <CallRow
+            label="Higher"
+            pct={pHigher * 100}
+            disabled={busy || !roundId}
+            active={dir === "higher"}
+            onClick={() => void pick("higher")}
+          />
+          <CallRow
+            label="Lower"
+            pct={pLower * 100}
+            disabled={busy || !roundId}
+            active={dir === "lower"}
+            onClick={() => void pick("lower")}
+          />
+          <button
+            type="button"
+            disabled={live || busy}
+            onClick={() => void dealFresh()}
+            className="flex h-[54px] w-full items-center justify-center rounded-md border border-white text-sm font-medium hover:border-lime hover:text-lime disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Skip card
+          </button>
+          <button
+            type="button"
+            disabled={!live || busy}
+            onClick={() => void cash()}
+            className={cn(
+              "flex h-[54px] w-full items-center justify-center rounded-md text-sm font-medium",
+              live
+                ? "bg-lime text-black hover:bg-lime-400"
+                : "cursor-not-allowed bg-[#9ba5b4] text-[#121418]",
+            )}
+          >
+            Cash out {live ? `${formatMoney(amount * mult, currency)} ${currency}` : "0.00"}
+          </button>
+        </div>
       }
       play={
         <div className="flex w-full flex-col items-center gap-4">
@@ -200,7 +218,7 @@ function HiloTable({ gameId }: { gameId: string }) {
             />
           </div>
           {live ? (
-            <p className="font-heading text-lg font-semibold text-lime tabular-nums">{mult.toFixed(2)}\u00d7 streak</p>
+            <p className="font-heading text-lg font-semibold text-lime tabular-nums">{mult.toFixed(2)}× streak</p>
           ) : null}
           {prev ? (
             <div className="opacity-70">
@@ -210,6 +228,38 @@ function HiloTable({ gameId }: { gameId: string }) {
         </div>
       }
     />
+  );
+}
+
+function CallRow({
+  label,
+  pct,
+  disabled,
+  active,
+  onClick,
+}: {
+  label: string;
+  pct: number;
+  disabled?: boolean;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "flex h-12 w-full items-center justify-between rounded-md bg-[#202329] px-4 text-sm font-medium",
+        active && "ring-1 ring-lime",
+        "hover:bg-[#2a2e38] disabled:cursor-not-allowed disabled:opacity-60",
+      )}
+    >
+      <span>{label}</span>
+      <span className="flex h-8 min-w-[76px] items-center justify-center gap-1 rounded-md bg-[#2a2e38] px-2 text-xs tabular-nums">
+        {pct.toFixed(2)}%
+      </span>
+    </button>
   );
 }
 
@@ -228,7 +278,7 @@ function ChoiceTile({
   disabled?: boolean;
   active?: boolean;
   onClick: () => void;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }) {
   return (
     <div className="flex w-[140px] shrink-0 flex-col items-center">
