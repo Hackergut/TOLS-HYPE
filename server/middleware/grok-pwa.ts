@@ -1,4 +1,3 @@
-import "tslib";
 /**
  * Deployed-app (Nitro) half of the platform PWA chrome. Auto-registered as
  * global h3 middleware because vite.config.ts sets `serverDir: "./server"` —

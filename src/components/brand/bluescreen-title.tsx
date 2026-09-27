@@ -1,9 +1,6 @@
 import { cn } from "cn"
 
-/**
- * TT Bluescreens display title. The O is a tall oval, matching the official
- * TOLS wordmark (narrower, slightly taller than a round O).
- */
+/** Section titles in Oswald. No per-letter scale — that stretched the O. */
 export function BluescreenTitle({
   children,
   as: Tag = "h2",
@@ -14,19 +11,8 @@ export function BluescreenTitle({
   className?: string
 }) {
   return (
-    <Tag className={cn("font-bluescreens tracking-[0.1em] uppercase", className)}>
-      <span className="sr-only">{children}</span>
-      <span aria-hidden="true">
-        {Array.from(children).map((ch, i) =>
-          ch === "O" || ch === "o" ? (
-            <span key={`${ch}-${i}`} className="inline-block origin-center scale-x-[0.78] scale-y-[1.12]">
-              {ch}
-            </span>
-          ) : (
-            <span key={`${ch}-${i}`}>{ch}</span>
-          ),
-        )}
-      </span>
+    <Tag className={cn("font-bluescreens font-semibold uppercase tracking-[0.04em]", className)}>
+      {children}
     </Tag>
   )
 }

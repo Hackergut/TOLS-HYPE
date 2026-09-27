@@ -13,6 +13,7 @@ import { PoolGame } from "@/components/games/pool-game";
 import { LimboGame } from "@/components/games/limbo-game";
 import { PlinkoGame } from "@/components/games/plinko-game";
 import { TowerGame } from "@/components/games/tower-game";
+import { HorseRaceGame } from "@/components/games/horse-race-game";
 import { AggregatorFrame } from "@/components/games/aggregator-frame";
 import { GameLegend } from "@/components/games/game-legend";
 import { HiloInfo } from "@/components/games/hilo-info";
@@ -146,6 +147,8 @@ function GameSwitch({ kind, id }: { kind: string; id: string }) {
       return <PlinkoGame gameId={id} />;
     case "tower":
       return <TowerGame gameId={id} />;
+    case "horse":
+      return <HorseRaceGame gameId={id} />;
     case "iframe":
       return <AggregatorFrame gameId={id} />;
     default:

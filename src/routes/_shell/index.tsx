@@ -64,7 +64,7 @@ function Home() {
   const hubDown = Boolean(flexrix.error) && studio.length === 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 md:gap-10">
+    <main className="tols-lobby mx-auto w-full max-w-6xl">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -89,7 +89,7 @@ function Home() {
       <LobbySection title="Most Played" games={mostPlayed} loading={loading} limit={14} />
       <LobbySection title="New" games={news} loading={loading} limit={14} />
 
-      <section aria-label="Providers" className="flex flex-col gap-4">
+      <section aria-label="Providers" className="flex flex-col gap-2.5">
         <div className="flex items-end gap-3">
           <BluescreenTitle as="h2" className="text-lg font-bold md:text-xl">
             Providers

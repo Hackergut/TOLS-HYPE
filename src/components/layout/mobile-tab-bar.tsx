@@ -61,7 +61,7 @@ export function MobileTabBar() {
     <>
       <nav
         aria-label="Mobile"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/80 backdrop-blur-xl md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[#0d0d10]/95 md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <ul className="grid h-14 grid-cols-5">

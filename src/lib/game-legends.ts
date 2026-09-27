@@ -307,6 +307,34 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
       "Diamond — mid",
     ],
   },
+  horse: {
+    summary:
+      "A six-runner derby. Pick one horse, the field runs, and the winner is drawn before the animation from a committed server seed. Every runner pays 96% RTP.",
+    what: "Horse Race is a TOLS Original. Six named runners with fixed odds. A streak bonus of up to ×1.30 applies on consecutive wins and is shown on top of the base price.",
+    how: [
+      "Choose a stake and a runner.",
+      "The server commits the seed, then the track plays the scripted order.",
+      "If your horse wins, you are paid its odds. Misses pay 0×.",
+    ],
+    features: [
+      "HMAC-SHA256 commit-reveal",
+      "Fixed paytable, 96% RTP per runner",
+      "Streak promo disclosed on consecutive wins",
+    ],
+    payouts: [
+      { label: "Crimson Bolt", value: "3.00×" },
+      { label: "Azure Rocket", value: "4.00×" },
+      { label: "Lime Ghost", value: "5.33×" },
+      { label: "Solar Flare", value: "7.38×" },
+      { label: "Fluo Phantom", value: "11.29×" },
+      { label: "Silver Whale", value: "21.33×" },
+    ],
+    symbols: [
+      "Six runners — pick one",
+      "Track — the race is the reveal",
+      "Streak — consecutive wins, up to ×1.30",
+    ],
+  },
   iframe: {
     summary:
       "This table is served by a connected aggregator or studio. TOLS holds the wallet; the provider holds the math.",

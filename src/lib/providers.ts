@@ -28,6 +28,29 @@ const ALIAS: Record<string, string> = {
   "three-oaks": "3-oaks",
   "fa-chai": "fachai",
   "pascal-gaming": "pascal",
+  "big-time-gaming": "btg",
+  "elk-studios": "elk",
+  "7rings": "trings",
+  "7rings-gaming": "trings",
+  "trings-gaming": "trings",
+  "pocket-games-soft": "pgsoft",
+  push: "push-gaming",
+};
+
+const OFFICIAL: Record<string, string> = {
+  "shady-lady": "/brand/providers/shady-lady.svg",
+  betsoft: "/brand/providers/betsoft.svg",
+  thunderkick: "/brand/providers/thunderkick.svg",
+  avatarux: "/brand/providers/avatarux.svg",
+  btg: "/brand/providers/btg.svg",
+  redtiger: "/brand/providers/red-tiger.svg",
+  pgsoft: "/brand/providers/pgsoft.svg",
+  netent: "/brand/providers/netent.svg",
+  trings: "/brand/providers/trings.svg",
+  "push-gaming": "/brand/providers/push-gaming.svg",
+  bgaming: "/brand/providers/bgaming.svg",
+  elk: "/brand/providers/elk.svg",
+  "pragmatic-play-live": "/brand/providers/pragmatic-live.svg",
 };
 
 type CuratedLogo = { src: string; tone: "light" | "dark" | "mono" };
@@ -92,6 +115,14 @@ const DISPLAY: Record<string, string> = {
   "relax-gaming": "Relax Gaming",
   "evolution-gaming": "Evolution",
   "pragmatic-play": "Pragmatic Play",
+  "shady-lady": "Shady Lady",
+  betsoft: "Betsoft",
+  thunderkick: "Thunderkick",
+  avatarux: "AvatarUX",
+  btg: "Big Time Gaming",
+  trings: "7Rings Gaming",
+  "push-gaming": "Push Gaming",
+  elk: "ELK Studios",
 };
 
 const PREMIUM_RANK: Record<string, number> = {
@@ -137,7 +168,10 @@ export function providerDisplayName(name: string): string {
 }
 
 export function providerLogoFor(name: string, hubLogo?: string | null): CuratedLogo | null {
-  const curated = CURATED[providerSlug(name)];
+  const slug = providerSlug(name);
+  const official = OFFICIAL[slug];
+  if (official) return { src: official, tone: "mono" };
+  const curated = CURATED[slug];
   if (curated) return curated;
   if (hubLogo && hubLogo.length > 8) return { src: hubLogo, tone: "light" };
   return null;

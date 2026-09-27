@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ReferralIconRow } from "@/components/brand/referral-icon-row";
+import { PromoCardFace } from "@/components/home/promo-card";
+import { PROMOS } from "@/lib/games-catalog";
 import { AFFILIATE_SECTIONS, type AffiliateTab } from "@/lib/nav";
 import { isRealPlayer, useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "cn";
@@ -63,14 +65,14 @@ const TAB_ICONS = {
   pro: RiBriefcase4Line,
 };
 
-/** Same official TOLS wide pack as lobby Hero — one banner per tab. */
-const TAB_HERO: Record<AffiliateTab, { src: string; alt: string }> = {
-  overview: { src: "/brand/affiliate/hero-brand.jpg", alt: "TOLS official welcome banner" },
-  users: { src: "/brand/affiliate/banner-referrals.jpg", alt: "TOLS official banner — hands passing chips" },
-  campaigns: { src: "/brand/affiliate/banner-promote.jpg", alt: "TOLS official banner — cards and chips" },
-  earnings: { src: "/brand/affiliate/banner-rank-win.jpg", alt: "TOLS official banner — trophy podium" },
-  info: { src: "/brand/affiliate/banner-info.jpg", alt: "TOLS official banner — card fan" },
-  pro: { src: "/brand/affiliate/banner-pro.jpg", alt: "TOLS official banner — aces" },
+/** Same card banners as the lobby promo shelf — one per tab. */
+const TAB_CARD: Record<AffiliateTab, string> = {
+  overview: "referral",
+  users: "affiliate-referrals",
+  campaigns: "affiliate-promote",
+  earnings: "affiliate-rank-win",
+  info: "affiliate-info",
+  pro: "affiliate-pro",
 };
 
 function readCampaigns(): AffCampaign[] {
@@ -140,23 +142,11 @@ export function AffiliateDesk({ tab }: { tab: AffiliateTab }) {
   const referrals = data?.referrals ?? [];
   const logs = data?.commissionLogs ?? [];
   const ratePct = Math.round((data?.commissionRate ?? 0.25) * 100);
-  const hero = TAB_HERO[tab];
+  const promo = PROMOS.find((p) => p.id === TAB_CARD[tab]) ?? PROMOS[0];
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="relative overflow-hidden rounded-2xl border border-white/6 shadow-[var(--shadow-glow)]">
-        <div className="relative aspect-[3/1] min-h-28 w-full bg-[#101014]">
-          <img
-            src={hero.src}
-            alt={hero.alt}
-            width={1200}
-            height={400}
-            className="absolute inset-0 size-full object-cover object-center"
-            loading="eager"
-            decoding="async"
-          />
-        </div>
-      </section>
+    <div className="flex flex-col gap-4">
+      <PromoCardFace promo={promo} heading="h1" />
       <div
         role="tablist"
         aria-label="Affiliate sections"

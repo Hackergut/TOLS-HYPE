@@ -6,21 +6,21 @@ import { cn } from "cn";
 
 export type Promo = (typeof PROMOS)[number];
 
-/**
- * Lobby promo tile — landscape 16:9 fill-image card.
- * Shape matches a casino hero banner: the <Link> IS the card,
- * image covers the frame. Overlay stays as fallback because current
- * /brand/promo assets do not bake title/copy into the artwork.
- */
-export function PromoTile({ promo, className }: { promo: Promo; className?: string }) {
+/** Same artwork card as the lobby promo shelf. */
+export function PromoCardFace({
+  promo,
+  className,
+  heading = "h3",
+}: {
+  promo: Promo;
+  className?: string;
+  heading?: "h1" | "h3";
+}) {
+  const Title = heading;
   return (
-    <Link
-      to="/promotions"
-      hash={promo.id}
+    <div
       className={cn(
-        "group relative block aspect-video min-w-[85%] shrink-0 overflow-hidden rounded-2xl sm:min-w-[46%] lg:min-w-[31%]",
-        "ring-1 ring-white/10 transition duration-300 hover:scale-[1.03] hover:ring-2 hover:ring-lime",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime",
+        "relative aspect-video w-full min-w-0 overflow-hidden rounded-2xl ring-1 ring-white/10",
         className,
       )}
     >
@@ -30,7 +30,6 @@ export function PromoTile({ promo, className }: { promo: Promo; className?: stri
         width={1600}
         height={900}
         sizes="(max-width: 600px) 90vw, (max-width: 992px) 45vw, 30vw"
-        loading="lazy"
         decoding="async"
         className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
       />
@@ -44,14 +43,30 @@ export function PromoTile({ promo, className }: { promo: Promo; className?: stri
         </span>
       </div>
       <div className="absolute inset-x-0 bottom-0 p-3 pb-4">
-        <h3 className="font-bluescreens text-base font-semibold tracking-wide text-white uppercase sm:text-lg">
+        <Title className="font-bluescreens text-sm leading-tight font-semibold tracking-wide text-white uppercase sm:text-lg">
           {promo.title}
-        </h3>
+        </Title>
         <p className="mt-0.5 line-clamp-1 text-xs text-white/70">{promo.copy}</p>
         <span className="mt-2 inline-flex rounded-full bg-lime px-2 py-0.5 text-[0.65rem] font-bold text-[#0d0d10]">
           {promo.badge}
         </span>
       </div>
+    </div>
+  );
+}
+
+export function PromoTile({ promo, className }: { promo: Promo; className?: string }) {
+  return (
+    <Link
+      to="/promotions"
+      hash={promo.id}
+      className={cn(
+        "group block w-full min-w-0 transition duration-300 hover:scale-[1.03]",
+        "focus-visible:rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime",
+        className,
+      )}
+    >
+      <PromoCardFace promo={promo} className="group-hover:ring-2 group-hover:ring-lime" />
     </Link>
   );
 }
@@ -77,7 +92,7 @@ export function PromoDetail({ promo }: { promo: Promo }) {
           </span>
         </div>
         <div className="absolute inset-x-0 bottom-0 p-3 pb-4">
-          <h3 className="font-bluescreens text-base font-semibold tracking-wide text-white uppercase sm:text-lg">
+          <h3 className="font-bluescreens text-sm leading-tight font-semibold tracking-wide text-white uppercase sm:text-lg">
             {promo.title}
           </h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-white/70">{promo.copy}</p>

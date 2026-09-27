@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { RiPlayFill } from "@remixicon/react";
-import { TolsT } from "@/components/brand/tols-mark";
 import { useGamePreviewOptional } from "@/components/games/guest-game-preview";
+import { TolsT } from "@/components/brand/tols-mark";
 import type { CatalogGame } from "@/lib/games-catalog";
 import { cn } from "cn";
 
@@ -30,22 +29,14 @@ export function GameCard({ game, priority = false }: { game: CatalogGame; priori
   );
 }
 
-function rimClass(game: CatalogGame): string {
-  if (game.live) return "border-[#e1514e]";
-  if (game.kind === "crazy") return "border-[#904bf9]";
-  if (game.kind === "crash" || game.hot) return "border-[#ff8904]";
-  if (game.original) return "border-lime/80";
-  return "border-white/12";
-}
-
 function GameCardFace({ game, priority }: { game: CatalogGame; priority: boolean }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const kicker = game.original ? "TOLS Originals" : game.live ? "Live" : "Casino";
+  const kicker = game.original ? "TOLS Originals" : game.live ? "Live" : game.provider;
 
   return (
     <article className={cn("tols-game-card relative", game.original && "is-original", game.live && "is-live")}>
-      <span className="relative block w-full overflow-hidden rounded-2xl bg-[#101014] pb-[140%]">
+      <span className="relative block w-full overflow-hidden bg-[#0c0c10] pb-[140%]">
         {!loaded && !failed ? <div className="tols-card-shimmer absolute inset-0" aria-hidden /> : null}
         {!failed ? (
           <img
@@ -64,30 +55,22 @@ function GameCardFace({ game, priority }: { game: CatalogGame; priority: boolean
             )}
           />
         ) : (
-          <div className="absolute inset-0 grid place-items-center bg-[#16171b]">
-            <TolsT className="size-10 opacity-30" />
+          <div className="absolute inset-0 grid place-items-center bg-[#101014]">
+            <TolsT className="size-12 opacity-30" />
           </div>
         )}
-        <span className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent" />
-        <span className={cn("pointer-events-none absolute inset-0 rounded-2xl border", rimClass(game))} />
+        <span className="tols-game-card-wash pointer-events-none absolute inset-0" />
 
-        <span className="absolute top-2.5 left-2.5 z-1 grid size-8 place-items-center rounded-lg bg-black/55 ring-1 ring-white/10">
-          <TolsT className="size-5" />
-        </span>
-        {game.hot ? (
-          <span className="absolute top-2.5 right-2.5 z-1 text-base leading-none" aria-label="Hot">
-            🔥
-          </span>
-        ) : null}
+        <TolsT className="absolute top-2 left-2 z-1 size-5 sm:top-3 sm:left-3 sm:size-6" />
 
-        <span className="absolute inset-x-0 bottom-0 z-1 p-3">
-          <h3 className="font-heading text-[15px] font-bold tracking-wide text-white uppercase">{game.title}</h3>
-          <p className="mt-0.5 text-[11px] font-medium text-white/70">{kicker}</p>
+        <span className="absolute inset-x-0 bottom-0 z-1 px-2 pt-6 pb-2 sm:px-3 sm:pt-10 sm:pb-3.5">
+          <h3 className="font-bluescreens line-clamp-2 text-[12px] leading-[1.05] font-bold tracking-[0.03em] text-white uppercase sm:text-[15px] sm:tracking-[0.04em]">
+            {game.title}
+          </h3>
+          <p className="mt-1 text-[10px] leading-none font-medium text-white/75 sm:mt-1.5 sm:text-[11px]">{kicker}</p>
         </span>
 
-        <span className="absolute right-2 bottom-12 z-1 grid size-9 place-items-center rounded-md bg-black/70 text-white opacity-0 transition duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
-          <RiPlayFill className="size-4 translate-x-px" />
-        </span>
+        <span className="tols-game-card-bar absolute inset-x-0 bottom-0 z-2" />
       </span>
     </article>
   );

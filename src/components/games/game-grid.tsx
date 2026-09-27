@@ -35,7 +35,7 @@ export function GameGrid({ games, loading = false }: { games: CatalogGame[]; loa
   if (loading && games.length === 0) {
     return (
       <div
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+        className="tols-mosaic"
         aria-label="Loading games"
       >
         {Array.from({ length: 12 }, (_, i) => (
@@ -67,7 +67,7 @@ export function GameGrid({ games, loading = false }: { games: CatalogGame[]; loa
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      <div className="tols-mosaic">
         {slice.map((game, i) => (
           <GameCard key={game.id} game={game} priority={i < 6} />
         ))}

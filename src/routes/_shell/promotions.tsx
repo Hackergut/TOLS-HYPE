@@ -15,12 +15,12 @@ function PromotionsPage() {
       <TolsBreadcrumb items={[{ label: "Lobby", to: "/" }, { label: "Promotions" }]} />
       <header>
         <p className="text-xs font-medium tracking-[0.18em] text-lime uppercase">{PROMOS.length} offers</p>
-        <BluescreenTitle as="h1" className="mt-1 text-3xl font-bold tracking-tight">
+        <BluescreenTitle as="h1" className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
           Promotions
         </BluescreenTitle>
         <p className="mt-1 text-sm text-muted-foreground">Every official TOLS promotion, in one place</p>
       </header>
-      <ul className="grid gap-4 md:grid-cols-2">
+      <ul className="grid gap-3 md:grid-cols-2 md:gap-4">
         {PROMOS.map((p) => (
           <li key={p.id}>
             <PromoDetail promo={p} />

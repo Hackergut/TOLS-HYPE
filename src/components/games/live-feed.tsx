@@ -111,9 +111,9 @@ function MyBets({ rows, onOpen }: { rows: BetRound[]; onOpen: (r: BetRound) => v
           rows.slice(0, 12).map((r) => (
             <TableRow key={r.id} className="cursor-pointer" onClick={() => onOpen(r)}>
               <TableCell>
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex max-w-36 items-center gap-2">
                   <PlayerShot handle={handle} />
-                  <span className="font-medium">{handle}</span>
+                  <span className="truncate font-medium">{handle}</span>
                 </span>
               </TableCell>
               <TableCell>
@@ -155,7 +155,7 @@ function WeeklyRace() {
         {RACE.map((r) => (
           <li key={r.rank} className="bet-player">
             <PlayerShot handle={r.user} />
-            <div className="flex min-w-0 items-center justify-between gap-3 px-3 py-2">
+            <div className="flex min-w-0 items-center justify-between gap-3 py-1.5 pr-3 pl-2">
               <div className="min-w-0">
                 <p className="font-sub text-[0.65rem] tracking-[0.14em] text-lime uppercase">#{r.rank}</p>
                 <p className="truncate font-medium">{r.user}</p>

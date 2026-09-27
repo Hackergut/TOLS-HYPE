@@ -35,7 +35,7 @@ export function BetPlayerCard({
   return (
     <article className="bet-player">
       <PlayerShot handle={user} />
-      <div className="flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2">
+      <div className="flex min-w-0 flex-col justify-center gap-0.5 py-2 pr-3 pl-2">
         <p className="truncate font-medium">{user}</p>
         <p className="truncate text-xs text-muted-foreground">{game}</p>
         {typeof mult === "number" ? (

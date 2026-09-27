@@ -19,7 +19,7 @@ export function SiteHeader() {
   const { openTab } = useWalletHub();
 
   return (
-    <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/70 px-2 backdrop-blur-xl md:h-16 md:gap-3 md:px-5">
+    <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-[#0d0d10]/95 px-2 md:h-16 md:gap-3 md:px-5">
       <SidebarTrigger className="size-11 md:hidden" />
       <TolsMark />
       <div className="hidden flex-1 md:block">

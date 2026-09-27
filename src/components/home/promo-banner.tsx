@@ -5,10 +5,10 @@ import { PROMOS } from "@/lib/games-catalog";
 
 export function PromoBanner() {
   return (
-    <section className="flex flex-col gap-3">
+    <section className="tols-promo">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <BluescreenTitle as="h2" className="flex items-center gap-2 text-xl font-bold">
+          <BluescreenTitle as="h2" className="flex items-center gap-2 text-base font-bold md:text-xl">
             Promotions
           </BluescreenTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -22,9 +22,9 @@ export function PromoBanner() {
           All promos
         </Link>
       </div>
-      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1">
+      <div className="tols-promo-grid no-scrollbar">
         {PROMOS.map((p) => (
-          <PromoTile key={p.id} promo={p} className="snap-start" />
+          <PromoTile key={p.id} promo={p} />
         ))}
       </div>
     </section>

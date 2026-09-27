@@ -13,7 +13,7 @@ export function TolsSvg3DIcon({
   return (
     <div className={cn("tols-ref-icon relative overflow-hidden pointer-events-none", className)} aria-hidden>
       <span
-        className="grid size-full place-items-center p-[22%]"
+        className="grid size-full place-items-center p-1.5"
         style={{ color: spec.color }}
         dangerouslySetInnerHTML={{ __html: spec.svg }}
       />

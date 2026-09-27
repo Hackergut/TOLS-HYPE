@@ -99,7 +99,7 @@ export function Hero() {
         TOLS casino — originals for crash, dice, roulette, blackjack, mines, keno, pool rush and crazy tols.
         18+ play-money tables.
       </h1>
-      <div className="relative aspect-[3/1] w-full min-h-36 sm:min-h-44 md:min-h-56">
+      <div className="relative aspect-[2.15/1] w-full sm:aspect-[3/1] sm:min-h-44 md:min-h-56">
         {HERO_SLIDES.map((s, idx) => (
           <Link
             key={`${s.image}-${idx}`}
@@ -123,21 +123,21 @@ export function Hero() {
           </Link>
         ))}
         <div className="pointer-events-none absolute inset-0 z-10 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-4 md:p-6">
-          <p className="text-[0.65rem] font-semibold tracking-[0.18em] text-lime uppercase md:text-xs">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4 md:p-6">
+          <p className="text-[0.6rem] font-semibold tracking-[0.16em] text-lime uppercase md:text-xs">
             {current.kicker}
           </p>
-          <p className="font-bluescreens mt-1 text-2xl font-bold tracking-wide text-white uppercase sm:text-3xl md:text-4xl">
+          <p className="font-bluescreens mt-0.5 text-xl leading-none font-bold tracking-wide text-white uppercase sm:mt-1 sm:text-3xl md:text-4xl">
             {current.title}
           </p>
-          <p className="mt-1 max-w-xl text-xs text-white/75 sm:text-sm">{current.subtitle}</p>
-          <span className="mt-3 inline-flex rounded-full bg-lime px-3 py-1 text-[0.7rem] font-bold tracking-wide text-[#0d0d10] uppercase">
+          <p className="mt-1 line-clamp-1 max-w-xl text-[11px] text-white/75 sm:text-sm">{current.subtitle}</p>
+          <span className="mt-2 inline-flex rounded-full bg-lime px-2.5 py-1 text-[0.65rem] font-bold tracking-wide text-[#0d0d10] uppercase sm:mt-3 sm:px-3">
             {current.cta}
           </span>
         </div>
         <button
           type="button"
-          className="absolute top-1/2 left-2 z-30 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/50 text-white md:left-3 md:size-10"
+          className="absolute right-11 bottom-2 z-30 grid size-7 place-items-center rounded-full bg-black/50 text-white sm:top-1/2 sm:right-auto sm:bottom-auto sm:left-2 sm:size-9 sm:-translate-y-1/2 md:left-3 md:size-10"
           onClick={() => setI((n) => (n + HERO_SLIDES.length - 1) % HERO_SLIDES.length)}
           aria-label="Previous banner"
         >
@@ -145,13 +145,13 @@ export function Hero() {
         </button>
         <button
           type="button"
-          className="absolute top-1/2 right-2 z-30 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/50 text-white md:right-3 md:size-10"
+          className="absolute right-2 bottom-2 z-30 grid size-7 place-items-center rounded-full bg-black/50 text-white sm:top-1/2 sm:bottom-auto sm:size-9 sm:-translate-y-1/2 md:right-3 md:size-10"
           onClick={() => setI((n) => (n + 1) % HERO_SLIDES.length)}
           aria-label="Next banner"
         >
           <RiArrowRightSLine />
         </button>
-        <div className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 gap-1.5" role="tablist" aria-label="Hero banners">
+        <div className="absolute bottom-2.5 left-1/2 z-30 hidden -translate-x-1/2 gap-1.5 sm:flex" role="tablist" aria-label="Hero banners">
           {HERO_SLIDES.map((s, idx) => (
             <button
               key={`${s.image}-${idx}`}

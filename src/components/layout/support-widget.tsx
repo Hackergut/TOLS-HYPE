@@ -38,35 +38,35 @@ export function SupportWidget() {
   }
 
   return (
-    <div className="pointer-events-none fixed right-4 z-[60] max-md:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:bottom-6">
+    <div className="pointer-events-none fixed right-3 z-[60] max-md:bottom-[calc(4.6rem+env(safe-area-inset-bottom))] md:right-5 md:bottom-5">
       {open ? (
-        <div className="pointer-events-auto flex h-[min(34rem,calc(100dvh-7.5rem))] w-[min(22.5rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#0f1116] shadow-[0_24px_80px_rgb(0_0_0/0.55)]">
-          <header className="relative shrink-0 bg-[linear-gradient(165deg,#904bf9_0%,#5b21b6_42%,#0f1116_100%)] px-5 pb-10 pt-4">
+        <div className="pointer-events-auto flex h-[min(26rem,calc(100dvh-8.25rem))] w-[min(19rem,calc(100vw-1.25rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f1116] shadow-[0_16px_48px_rgb(0_0_0/0.5)] md:h-[min(30rem,calc(100dvh-5.5rem))] md:w-80">
+          <header className="relative shrink-0 bg-[linear-gradient(165deg,#904bf9_0%,#5b21b6_42%,#0f1116_100%)] px-4 pt-3 pb-7">
             <div className="flex items-center justify-between">
-              <TolsWordmark className="h-6 brightness-0 invert" />
+              <TolsWordmark className="h-5 brightness-0 invert" />
               <button
                 type="button"
                 aria-label="Close support"
                 onClick={() => setOpen(false)}
-                className="grid size-8 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"
+                className="grid size-7 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"
               >
-                <RiCloseLine className="size-5" />
+                <RiCloseLine className="size-4" />
               </button>
             </div>
             {tab === "home" && !article ? (
-              <h2 className="font-heading mt-6 text-[1.55rem] leading-tight font-semibold tracking-wide text-white uppercase">
+              <h2 className="font-heading mt-4 text-xl leading-tight font-semibold tracking-wide text-white uppercase">
                 Hey there!
                 <br />
                 How can we help?
               </h2>
             ) : (
-              <h2 className="font-heading mt-6 text-lg font-semibold tracking-wide text-white uppercase">
+              <h2 className="font-heading mt-4 text-base font-semibold tracking-wide text-white uppercase">
                 {tab === "messages" ? "Messages" : tab === "help" ? "Help" : "Support"}
               </h2>
             )}
           </header>
 
-          <div className="-mt-6 flex min-h-0 flex-1 flex-col px-3 pb-2">
+          <div className="-mt-5 flex min-h-0 flex-1 flex-col px-2.5 pb-2">
             {tab === "home" ? (
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#16171b]">
                 {article ? (
@@ -95,7 +95,7 @@ export function SupportWidget() {
                           <button
                             type="button"
                             onClick={() => setArticle(f)}
-                            className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left text-[0.82rem] text-white/80 hover:bg-white/5"
+                            className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-[0.78rem] text-white/80 hover:bg-white/5"
                           >
                             {f.q}
                             <span className="text-white/30">›</span>
@@ -155,7 +155,7 @@ export function SupportWidget() {
             ) : null}
           </div>
 
-          <nav className="grid shrink-0 grid-cols-3 border-t border-white/10 bg-[#0f1116] py-1">
+          <nav className="grid shrink-0 grid-cols-3 border-t border-white/10 bg-[#0f1116]">
             {(
               [
                 { id: "home", label: "Home", Icon: RiHome5Line },
@@ -171,11 +171,11 @@ export function SupportWidget() {
                   setArticle(null);
                 }}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 py-2 text-[0.65rem] font-medium",
+                  "flex flex-col items-center gap-0.5 py-1.5 text-[0.6rem] font-medium",
                   tab === t.id ? "text-[#c4b5fd]" : "text-white/40",
                 )}
               >
-                <t.Icon className="size-5" />
+                <t.Icon className="size-4" />
                 {t.label}
               </button>
             ))}

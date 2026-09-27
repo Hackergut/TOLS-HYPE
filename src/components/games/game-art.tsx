@@ -217,6 +217,24 @@ function MinesArt({ hue }: { hue: number }) {
   );
 }
 
+function HorseArt({ hue }: { hue: number }) {
+  return (
+    <svg viewBox="0 0 300 400" className="size-full" aria-hidden>
+      <rect width="300" height="400" fill={`hsl(${hue} 32% 7%)`} />
+      <path d="M20 250h260" stroke="#00ffbd" strokeWidth="3" opacity="0.5" />
+      <path d="M20 278h260" stroke="#904bf9" strokeWidth="2" opacity="0.45" />
+      <path
+        d="M70 230c18-28 36-34 52-18l14 10 22-26 8 6-16 28 18 8-10 12-22-6-8 16h-18l6-14-20 4c-16 2-28-6-26-20z"
+        fill="#00ffbd"
+      />
+      <path
+        d="M150 214c16-24 34-28 46-14l12 8 18-22 7 5-12 24 16 7-8 10-18-5-6 14h-16l4-12-16 3c-14 2-24-4-23-16z"
+        fill="#904bf9"
+      />
+    </svg>
+  );
+}
+
 const ART: Record<CatalogGame["kind"], (p: { hue: number }) => ReactNode> = {
   crash: ({ hue }) => <CrashArt hue={hue} />,
   roulette: ({ hue }) => <RouletteArt hue={hue} />,
@@ -231,6 +249,7 @@ const ART: Record<CatalogGame["kind"], (p: { hue: number }) => ReactNode> = {
   plinko: ({ hue }) => <MinesArt hue={hue} />,
   tower: ({ hue }) => <MinesArt hue={hue} />,
   crazy: ({ hue }) => <CrazyArt hue={hue} />,
+  horse: ({ hue }) => <HorseArt hue={hue} />,
   iframe: ({ hue }) => <SlotsArt hue={hue} />,
 };
 

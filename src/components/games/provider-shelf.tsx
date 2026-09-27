@@ -11,8 +11,8 @@ export function ProviderShelf({ group, limit = 12 }: { group: ProviderGroup; lim
   const games = group.games.slice(0, cap);
   if (games.length === 0) return null;
   return (
-    <section aria-label={`${group.name} games`}>
-      <div className="mb-3 flex items-center gap-3">
+    <section aria-label={`${group.name} games`} className="tols-shelf">
+      <div className="flex items-center gap-3">
         <ProviderMark
           name={group.name}
           logo={group.logo}
@@ -21,7 +21,7 @@ export function ProviderShelf({ group, limit = 12 }: { group: ProviderGroup; lim
         />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <BluescreenTitle as="h2" className="truncate text-lg font-bold md:text-xl">
+            <BluescreenTitle as="h2" className="truncate text-base font-bold md:text-xl">
               {group.name}
             </BluescreenTitle>
             {group.premium ? (
@@ -44,12 +44,15 @@ export function ProviderShelf({ group, limit = 12 }: { group: ProviderGroup; lim
           <RiArrowRightLine className="size-3.5" />
         </Link>
       </div>
-      <div className="no-scrollbar -mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 md:mx-0 md:gap-3 md:px-0">
-        {games.map((game, i) => (
-          <div key={game.id} className="w-36 shrink-0 snap-start sm:w-40 md:w-44">
-            <GameCard game={game} priority={i < 4} />
-          </div>
-        ))}
+      <div className="tols-shelf-scroll no-scrollbar">
+        <div
+          className="tols-shelf-grid"
+          style={{ ["--shelf-count" as string]: String(Math.max(1, Math.ceil(games.length / 2))) }}
+        >
+          {games.map((game, i) => (
+            <GameCard key={game.id} game={game} priority={i < 4} />
+          ))}
+        </div>
       </div>
     </section>
   );
