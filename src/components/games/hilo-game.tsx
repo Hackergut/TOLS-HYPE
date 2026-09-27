@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { RiArrowDownLine, RiArrowUpLine, RiRefreshLine } from "@remixicon/react";
+import { RiArrowDownLine, RiArrowLeftRightLine, RiArrowUpLine } from "@remixicon/react";
 import { Input } from "@/components/ui/input";
 import { PlayGate } from "@/components/games/play-gate";
 import { GameShell, LimeBet } from "@/components/games/game-shell";
@@ -14,6 +14,7 @@ import { formatMoney } from "@/lib/format";
 import { playSfx } from "@/lib/game-sound";
 import { sleep, speedDelay } from "@/lib/game-speed";
 import { hiloChance, hiloStep } from "@/lib/originals";
+import { cn } from "cn";
 
 type Card = { rank: number; suit: string };
 
@@ -101,7 +102,7 @@ function HiloTable({ gameId }: { gameId: string }) {
         toast.message("Miss");
       } else {
         playSfx("hit");
-        toast.success(`${res.multiplier.toFixed(2)}×`);
+        toast.success(`${res.multiplier.toFixed(2)}\u00d7`);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Bet failed");
@@ -120,7 +121,7 @@ function HiloTable({ gameId }: { gameId: string }) {
       setLive(false);
       reportRound({
         win: true,
-        label: `Cash ${mult.toFixed(2)}×`,
+        label: `Cash ${mult.toFixed(2)}\u00d7`,
         stake: amount,
         payout: res.payout,
         multiplier: res.multiplier,
@@ -141,7 +142,7 @@ function HiloTable({ gameId }: { gameId: string }) {
         <>
           {live ? (
             <LimeBet disabled={busy} onClick={() => void cash()}>
-              Cash out {mult.toFixed(2)}×
+              Cash out {mult.toFixed(2)}\u00d7
             </LimeBet>
           ) : (
             <LimeBet disabled={busy || !roundId} onClick={() => void pick(dir)}>
@@ -150,89 +151,106 @@ function HiloTable({ gameId }: { gameId: string }) {
           )}
           <StakeField amount={amount} setAmount={setAmount} disabled={live} />
           <FieldLabel label="Profit on next" hint={`${formatMoney(Math.max(0, profit), currency)} ${currency}`}>
-            <Input readOnly value={Math.max(0, profit).toFixed(4)} className="h-11 tabular-nums" />
+            <Input readOnly value={Math.max(0, profit).toFixed(4)} className="h-12 tabular-nums" />
           </FieldLabel>
         </>
       }
       play={
-        <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
-          <div className="grid grid-cols-[auto_1.5rem_minmax(0,1fr)] items-stretch gap-3">
-            <div className="relative">
-              {card ? (
-                <FeltCard rank={card.rank} suit={card.suit} size="lg" stripe brand />
-              ) : (
-                <FeltCard hidden size="lg" stripe />
-              )}
+        <div className="flex w-full flex-col items-center gap-4">
+          <div className="flex w-full items-center justify-center gap-6 px-2 md:px-12">
+            <ChoiceTile
+              label="Higher"
+              hint="King is highest"
+              mult={hiStep}
+              disabled={busy || !roundId}
+              active={dir === "higher"}
+              onClick={() => void pick("higher")}
+              icon={<RiArrowUpLine className="size-7" />}
+            />
+            <div className="relative h-[250px] w-[167px] shrink-0">
+              <span className="absolute top-[18px] left-0 h-[250px] w-full rounded-md bg-uva/80" />
+              <span className="absolute top-[12px] left-0 h-[250px] w-full rounded-md bg-uva" />
+              <span className="absolute top-[6px] left-0 h-[250px] w-full rounded-md border border-white/40 bg-linear-to-br from-purple to-uva" />
+              <div className="relative z-1 h-[250px] w-full">
+                {card ? (
+                  <FeltCard rank={card.rank} suit={card.suit} size="lg" stripe brand />
+                ) : (
+                  <FeltCard hidden size="lg" stripe />
+                )}
+              </div>
               <button
                 type="button"
+                name="skip-card"
                 aria-label="Skip card"
-                className="absolute top-2 right-2 grid size-8 place-items-center rounded-md bg-black/50 text-white hover:bg-black/70 disabled:opacity-40"
+                className="absolute -top-2.5 -right-2.5 z-2 grid size-9 place-items-center rounded-md bg-[#343843] text-white hover:bg-[#4d5361] disabled:opacity-40"
                 onClick={() => void dealFresh()}
                 disabled={live || busy}
               >
-                <RiRefreshLine className="size-4" />
+                <RiArrowLeftRightLine className="size-4" />
               </button>
             </div>
-            <div className="flex flex-col items-center py-1 text-[0.65rem] font-semibold text-muted-foreground">
-              <span>K</span>
-              <span className="relative my-1 w-px flex-1 bg-border">
-                {card ? (
-                  <span
-                    className="absolute left-1/2 size-2 -translate-x-1/2 rounded-full bg-lime"
-                    style={{ bottom: `${((card.rank - 1) / 12) * 100}%` }}
-                  />
-                ) : null}
-              </span>
-              <span>A</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                disabled={busy || !roundId}
-                onClick={() => void pick("higher")}
-                className="flex min-h-20 flex-1 flex-col items-start justify-center rounded-xl border border-border bg-muted/40 px-3 py-2 text-left hover:border-lime hover:bg-lime/10 disabled:opacity-50"
-              >
-                <span className="text-xs text-muted-foreground">Higher or Same</span>
-                <span className="mt-1 flex items-center gap-1 text-sm font-semibold text-lime">
-                  <RiArrowUpLine className="size-4" />
-                  {(pHigher * 100).toFixed(2)}%
-                </span>
-                <span className="text-[0.65rem] tabular-nums text-muted-foreground">{hiStep.toFixed(2)}×</span>
-              </button>
-              <button
-                type="button"
-                disabled={busy || !roundId}
-                onClick={() => void pick("lower")}
-                className="flex min-h-20 flex-1 flex-col items-start justify-center rounded-xl border border-border bg-muted/40 px-3 py-2 text-left hover:border-purple hover:bg-purple/15 disabled:opacity-50"
-              >
-                <span className="text-xs text-muted-foreground">Lower or Same</span>
-                <span className="mt-1 flex items-center gap-1 text-sm font-semibold text-purple">
-                  <RiArrowDownLine className="size-4" />
-                  {(pLower * 100).toFixed(2)}%
-                </span>
-                <span className="text-[0.65rem] tabular-nums text-muted-foreground">{loStep.toFixed(2)}×</span>
-              </button>
-            </div>
-          </div>
-          <div className="relative w-fit">
-            {prev ? (
-              <FeltCard rank={prev.rank} suit={prev.suit} size="sm" stripe brand />
-            ) : card ? (
-              <>
-                <FeltCard rank={card.rank} suit={card.suit} size="sm" stripe brand />
-                <span className="absolute inset-x-1 bottom-1 rounded bg-white px-1 text-center text-[0.6rem] font-semibold text-zinc-900">
-                  Start
-                </span>
-              </>
-            ) : (
-              <FeltCard hidden size="sm" stripe />
-            )}
+            <ChoiceTile
+              label="Lower"
+              hint="Ace is lowest"
+              mult={loStep}
+              disabled={busy || !roundId}
+              active={dir === "lower"}
+              onClick={() => void pick("lower")}
+              icon={<RiArrowDownLine className="size-7" />}
+            />
           </div>
           {live ? (
-            <p className="text-center font-heading text-lg font-semibold text-lime tabular-nums">{mult.toFixed(2)}× streak</p>
+            <p className="font-heading text-lg font-semibold text-lime tabular-nums">{mult.toFixed(2)}\u00d7 streak</p>
+          ) : null}
+          {prev ? (
+            <div className="opacity-70">
+              <FeltCard rank={prev.rank} suit={prev.suit} size="sm" stripe brand />
+            </div>
           ) : null}
         </div>
       }
     />
+  );
+}
+
+function ChoiceTile({
+  label,
+  hint,
+  mult,
+  disabled,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string;
+  hint: string;
+  mult: number;
+  disabled?: boolean;
+  active?: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="flex w-[140px] shrink-0 flex-col items-center">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={cn(
+          "flex aspect-[1/1.5] w-full flex-col items-center justify-between rounded-md border-2 py-[30px] uppercase transition duration-75",
+          active ? "border-lime text-lime" : "border-[#2a2e38] text-[#4d5361]",
+          "hover:border-lime hover:text-lime disabled:cursor-not-allowed disabled:opacity-60",
+        )}
+      >
+        <span className="grid justify-items-center gap-1 text-[14px] font-light tracking-wide">
+          {icon}
+          {label}
+        </span>
+        <span className="grid h-12 w-[calc(100%-40px)] place-items-center rounded-md border border-[#2a2e38] text-sm text-[#828998]">
+          x{mult.toFixed(2)}
+        </span>
+      </button>
+      <p className="mt-2.5 text-center text-xs leading-[18px] text-[#828998]">{hint}</p>
+    </div>
   );
 }
