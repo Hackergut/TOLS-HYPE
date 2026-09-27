@@ -1,20 +1,20 @@
 import { cn } from "cn";
 
-/** Exact provider SVGs the user sent. White wordmarks on dark. */
+/** Exact SVGs the operator attached — white/color wordmarks for the dark lobby. */
 const LOGOS = [
-  { src: "/brand/providers/user/01.svg", name: "NetEnt" },
-  { src: "/brand/providers/user/02.svg", name: "Studio 2" },
-  { src: "/brand/providers/user/03.svg", name: "Evolution" },
-  { src: "/brand/providers/user/04.svg", name: "Studio 4" },
-  { src: "/brand/providers/user/05.svg", name: "Studio 5" },
-  { src: "/brand/providers/user/06.svg", name: "Studio 6" },
-  { src: "/brand/providers/user/07.svg", name: "Studio 7" },
-  { src: "/brand/providers/user/08.svg", name: "PG Soft" },
-  { src: "/brand/providers/user/09.svg", name: "Studio 9" },
-  { src: "/brand/providers/user/10.svg", name: "Studio 10" },
-  { src: "/brand/providers/user/11.svg", name: "Studio 11" },
-  { src: "/brand/providers/user/12.svg", name: "Studio 12" },
-  { src: "/brand/providers/user/13.svg", name: "Studio 13" },
+  { src: "/brand/providers/hacksaw.svg", name: "Hacksaw Gaming" },
+  { src: "/brand/providers/thunderkick.svg", name: "Thunderkick" },
+  { src: "/brand/providers/avatarux.svg", name: "AvatarUX" },
+  { src: "/brand/providers/btg.svg", name: "Big Time Gaming" },
+  { src: "/brand/providers/red-tiger.svg", name: "Red Tiger" },
+  { src: "/brand/providers/pgsoft.svg", name: "PG Soft" },
+  { src: "/brand/providers/netent.svg", name: "NetEnt" },
+  { src: "/brand/providers/trings.svg", name: "Trings Gaming" },
+  { src: "/brand/providers/push-gaming.svg", name: "Push Gaming" },
+  { src: "/brand/providers/bgaming.svg", name: "BGaming" },
+  { src: "/brand/providers/evolution.svg", name: "Evolution" },
+  { src: "/brand/providers/pragmatic-live.svg", name: "Pragmatic Live" },
+  { src: "/brand/providers/shady-lady.svg", name: "Shady Lady" },
 ] as const;
 
 function Track({ ariaHidden = false }: { ariaHidden?: boolean }) {
@@ -32,10 +32,7 @@ function Track({ ariaHidden = false }: { ariaHidden?: boolean }) {
             loading="lazy"
             decoding="async"
             draggable={false}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-            className="h-8 w-auto max-w-[148px] object-contain object-center opacity-90 transition duration-200 hover:opacity-100 md:h-9"
+            className="h-8 w-auto max-w-[160px] object-contain object-center opacity-95 transition duration-200 hover:opacity-100 md:h-9"
           />
         </li>
       ))}
