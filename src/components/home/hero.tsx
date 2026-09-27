@@ -2,41 +2,41 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
 
-/** Exact user pack: TOLS BANNER + 1–6.jpg (1200×400), no overlay text. */
+/** Exact user pack (1200×400). Hosted until GitHub UI drops the JPGs into public/brand/hero/. */
 const HERO_SLIDES = [
   {
     id: "obsidian-blackjack",
-    image: "/brand/hero/welcome.svg",
+    image: "https://i.imgur.com/3WS292W.jpeg",
     alt: "TOLS official welcome banner",
   },
   {
     id: "neon-crash",
-    image: "/brand/hero/1.svg",
+    image: "https://i.imgur.com/XSrb45H.jpeg",
     alt: "TOLS official banner — T mark and paint",
   },
   {
     id: "signal-dice",
-    image: "/brand/hero/2.svg",
+    image: "https://i.imgur.com/oc8QKer.jpeg",
     alt: "TOLS official banner — coins and cards",
   },
   {
     id: "obsidian-blackjack-2",
-    image: "/brand/hero/3.svg",
+    image: "https://i.imgur.com/TYL209h.jpeg",
     alt: "TOLS official banner — cards and chips",
   },
   {
     id: "crazy-tols",
-    image: "/brand/hero/4.svg",
+    image: "https://i.imgur.com/Rp8qmiu.jpeg",
     alt: "TOLS official banner — hands passing chips",
   },
   {
     id: "pool-rush",
-    image: "/brand/hero/5.svg",
+    image: "https://i.imgur.com/i7Mf7Ki.jpeg",
     alt: "TOLS official banner — trophy podium",
   },
   {
     id: "midnight-roulette",
-    image: "/brand/hero/6.svg",
+    image: "https://i.imgur.com/3APlAxH.jpeg",
     alt: "TOLS official banner — aces",
   },
 ] as const;
