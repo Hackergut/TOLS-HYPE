@@ -37,6 +37,14 @@ export function sectionTableGames(pool: CatalogGame[]): CatalogGame[] {
   );
 }
 
+export function sectionSlots(pool: CatalogGame[]): CatalogGame[] {
+  return pool.filter((g) => g.category === "slots" || g.kind === "slots" || g.kind === "crazy");
+}
+
+export function sectionCrash(pool: CatalogGame[]): CatalogGame[] {
+  return pool.filter((g) => g.category === "crash" || g.kind === "crash" || g.kind === "limbo");
+}
+
 export function sectionMostPlayed(pool: CatalogGame[], limit = 18): CatalogGame[] {
   return [...pool]
     .sort((a, b) => {

@@ -1,8 +1,88 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
-import { HERO_SLIDES } from "@/lib/games-catalog";
 import { Button } from "@/components/ui/button";
+
+/** Official TOLS wide banners (pack 1–6 + welcome). */
+const HERO_SLIDES = [
+  {
+    id: "obsidian-blackjack",
+    kicker: "TOLS",
+    titleLime: "TOLS",
+    titleRest: "ORIGINALS",
+    subtitle: "House tables · lime · fluo purple",
+    cta: "PLAY",
+    image: "/brand/affiliate/hero-brand.jpg",
+    position: "center",
+    alt: "TOLS official welcome banner",
+  },
+  {
+    id: "neon-crash",
+    kicker: "ORIGINALS",
+    titleLime: "HOUSE",
+    titleRest: "GAMES",
+    subtitle: "Crash · Dice · Mines · Plinko",
+    cta: "PLAY",
+    image: "/brand/affiliate/banner-income.jpg",
+    position: "center",
+    alt: "TOLS official banner — T mark and paint",
+  },
+  {
+    id: "obsidian-blackjack",
+    kicker: "TABLE",
+    titleLime: "CARDS",
+    titleRest: "UP",
+    subtitle: "Blackjack · Roulette · Hi-Lo",
+    cta: "DEAL",
+    image: "/brand/affiliate/banner-promote.jpg",
+    position: "center",
+    alt: "TOLS official banner — cards and chips",
+  },
+  {
+    id: "signal-dice",
+    kicker: "LIVE",
+    titleLime: "ON",
+    titleRest: "THE FELT",
+    subtitle: "Live show tables and studio wheels",
+    cta: "PLAY",
+    image: "/brand/affiliate/banner-info.jpg",
+    position: "center",
+    alt: "TOLS official banner — card fan",
+  },
+  {
+    id: "crazy-tols",
+    kicker: "VIP",
+    titleLime: "PASS",
+    titleRest: "THE POT",
+    subtitle: "Rakeback and reload on every session",
+    cta: "SPIN",
+    image: "/brand/affiliate/banner-referrals.jpg",
+    position: "center",
+    alt: "TOLS official banner — hands passing chips",
+  },
+  {
+    id: "pool-rush",
+    kicker: "RACE",
+    titleLime: "TAKE",
+    titleRest: "THE CUP",
+    subtitle: "Weekly race · live leaderboard",
+    cta: "BREAK",
+    image: "/brand/affiliate/banner-rank-win.jpg",
+    position: "center",
+    alt: "TOLS official banner — trophy podium",
+  },
+  {
+    id: "midnight-roulette",
+    kicker: "TABLE",
+    titleLime: "ACES",
+    titleRest: "HIGH",
+    subtitle: "European wheel · 97.3% RTP",
+    cta: "PLAY",
+    image: "/brand/affiliate/banner-pro.jpg",
+    position: "center",
+    alt: "TOLS official banner — aces",
+  },
+] as const;
 
 export function Hero() {
   const [i, setI] = useState(0);
@@ -28,7 +108,7 @@ export function Hero() {
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="Featured TOLS originals"
+      aria-label="Official TOLS banners"
       className="relative overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-glow)]"
     >
       <h1 className="sr-only">
@@ -39,20 +119,20 @@ export function Hero() {
         {HERO_SLIDES.map((s, idx) =>
           idx === i || idx === (i + 1) % HERO_SLIDES.length ? (
             <img
-              key={s.id}
+              key={`${s.image}-${idx}`}
               src={s.image}
               alt={idx === i ? s.alt : ""}
-              width={1280}
-              height={720}
-              decoding={idx === i ? "async" : "async"}
+              width={1200}
+              height={400}
+              decoding="async"
               fetchPriority={idx === i ? "high" : "low"}
               loading={idx === i ? "eager" : "lazy"}
-              className="absolute inset-0 size-full object-cover transition-opacity duration-500"
+              className="absolute inset-0 size-full object-cover object-center transition-opacity duration-500"
               style={{ objectPosition: s.position, opacity: idx === i ? 1 : 0 }}
             />
           ) : null,
         )}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/75 via-black/25 to-transparent md:bg-linear-to-r md:from-black/80 md:via-black/35 md:to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-black/15 to-transparent md:bg-linear-to-r md:from-black/65 md:via-black/20 md:to-transparent" />
         <div className="relative z-10 flex h-full min-h-44 items-end justify-between gap-4 p-4 md:min-h-72 md:p-8">
           <div className="min-w-0 max-w-md">
             <p className="text-[0.65rem] font-semibold tracking-[0.2em] text-lime uppercase">{slide.kicker}</p>
@@ -78,7 +158,7 @@ export function Hero() {
           type="button"
           className="absolute top-1/2 left-2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/50 text-white md:left-3 md:size-10"
           onClick={() => setI((n) => (n + HERO_SLIDES.length - 1) % HERO_SLIDES.length)}
-          aria-label="Previous featured game"
+          aria-label="Previous banner"
         >
           <RiArrowLeftSLine />
         </button>
@@ -86,14 +166,14 @@ export function Hero() {
           type="button"
           className="absolute top-1/2 right-2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/50 text-white md:right-3 md:size-10"
           onClick={() => setI((n) => (n + 1) % HERO_SLIDES.length)}
-          aria-label="Next featured game"
+          aria-label="Next banner"
         >
           <RiArrowRightSLine />
         </button>
-        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5" role="tablist" aria-label="Hero slides">
+        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5" role="tablist" aria-label="Hero banners">
           {HERO_SLIDES.map((s, idx) => (
             <button
-              key={s.id}
+              key={`${s.image}-${idx}`}
               type="button"
               role="tab"
               aria-selected={idx === i}

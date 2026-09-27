@@ -9,10 +9,12 @@ import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import { groupByProvider } from "@/lib/providers";
 import {
   lobbyPool,
+  sectionCrash,
   sectionLiveShow,
   sectionMostPlayed,
   sectionNew,
   sectionOriginals,
+  sectionSlots,
   sectionTableGames,
 } from "@/lib/lobby-sections";
 import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
@@ -52,6 +54,8 @@ function Home() {
   const mostPlayed = useMemo(() => sectionMostPlayed(pool, 18), [pool]);
   const news = useMemo(() => sectionNew(pool, 18), [pool]);
   const tables = useMemo(() => sectionTableGames(pool), [pool]);
+  const slots = useMemo(() => sectionSlots(pool), [pool]);
+  const crash = useMemo(() => sectionCrash(pool), [pool]);
   const providers = useMemo(() => groupByProvider(studio), [studio]);
   const premium = providers.filter((p) => p.premium).slice(0, 8);
   const rest = providers.filter((p) => !p.premium).slice(0, 10);
@@ -78,6 +82,8 @@ function Home() {
 
       <LobbySection title="Live Show" cat="live" games={live} loading={loading} limit={12} />
       <LobbySection title="Originals" cat="originals" games={originals} limit={14} />
+      <LobbySection title="Slots" cat="slots" games={slots} loading={loading} limit={14} />
+      <LobbySection title="Crash" cat="crash" games={crash} limit={12} />
       <LobbySection title="Most Played" games={mostPlayed} loading={loading} limit={14} />
       <LobbySection title="New" games={news} loading={loading} limit={14} />
 
