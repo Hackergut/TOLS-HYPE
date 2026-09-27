@@ -1,18 +1,19 @@
 import { cn } from "cn";
 
+/** Paths that actually exist in public/brand/providers/. */
 const LOGOS = [
-  { src: "/brand/providers/pragmatic-play.svg", name: "Pragmatic Play" },
-  { src: "/brand/providers/evolution.svg", name: "Evolution" },
-  { src: "/brand/providers/hacksaw.svg", name: "Hacksaw Gaming" },
-  { src: "/brand/providers/pgsoft.svg", name: "PG Soft" },
-  { src: "/brand/providers/playson.svg", name: "Playson" },
-  { src: "/brand/providers/relax.svg", name: "Relax Gaming" },
-  { src: "/brand/providers/netent.svg", name: "NetEnt" },
-  { src: "/brand/providers/nolimit.svg", name: "Nolimit City" },
-  { src: "/brand/providers/playngo.svg", name: "Play'n GO" },
-  { src: "/brand/providers/push-gaming.svg", name: "Push Gaming" },
-  { src: "/brand/providers/novomatic.svg", name: "Novomatic" },
-  { src: "/brand/providers/evolution-mark.svg", name: "Evolution Live" },
+  { src: "/brand/providers/pragmatic-play.png", name: "Pragmatic Play" },
+  { src: "/brand/providers/evolution-gaming.png", name: "Evolution" },
+  { src: "/brand/providers/hacksaw.png", name: "Hacksaw Gaming" },
+  { src: "/brand/providers/pgsoft.jpg", name: "PG Soft" },
+  { src: "/brand/providers/netent.png", name: "NetEnt" },
+  { src: "/brand/providers/relax-gaming.png", name: "Relax Gaming" },
+  { src: "/brand/providers/playngo.png", name: "Play'n GO" },
+  { src: "/brand/providers/yggdrasil.png", name: "Yggdrasil" },
+  { src: "/brand/providers/redtiger.png", name: "Red Tiger" },
+  { src: "/brand/providers/endorphina.png", name: "Endorphina" },
+  { src: "/brand/providers/habanero.png", name: "Habanero" },
+  { src: "/brand/providers/greentube.png", name: "Greentube" },
 ] as const;
 
 function Track({ ariaHidden = false }: { ariaHidden?: boolean }) {
@@ -22,7 +23,7 @@ function Track({ ariaHidden = false }: { ariaHidden?: boolean }) {
       aria-hidden={ariaHidden || undefined}
     >
       {LOGOS.map((logo) => (
-        <li key={`${logo.src}-${ariaHidden ? "b" : "a"}`} className="shrink-0">
+        <li key={`${logo.src}-${ariaHidden ? "b" : "a"}`} className="flex h-10 shrink-0 items-center">
           <img
             src={logo.src}
             alt={ariaHidden ? "" : logo.name}
@@ -30,7 +31,10 @@ function Track({ ariaHidden = false }: { ariaHidden?: boolean }) {
             loading="lazy"
             decoding="async"
             draggable={false}
-            className="h-7 w-auto max-w-[140px] object-contain object-center opacity-70 grayscale transition duration-200 hover:opacity-100 hover:grayscale-0 md:h-8"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+            className="h-8 w-auto max-w-[148px] object-contain object-center opacity-90 transition duration-200 hover:opacity-100 md:h-9"
           />
         </li>
       ))}
