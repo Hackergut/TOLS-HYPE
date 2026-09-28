@@ -74,6 +74,11 @@ function PoolTable({ gameId }: { gameId: string }) {
   const [striking, setStriking] = useState(0);
   const svgRef = useRef<SVGSVGElement>(null);
   const raf = useRef(0);
+  const autoRef = useRef(false);
+  const stopAuto = useRef(false);
+  autoRef.current = tab === "auto";
+
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
 
   const cue = useMemo(() => {
     const c = frame[0];
@@ -166,6 +171,11 @@ function PoolTable({ gameId }: { gameId: string }) {
       toast.error(err instanceof Error ? err.message : "Break failed");
     } finally {
       setBusy(false);
+      if (autoRef.current && !stopAuto.current) {
+        window.setTimeout(() => {
+          if (autoRef.current && !stopAuto.current) void breakShot();
+        }, 500);
+      }
     }
   }
 
@@ -204,11 +214,18 @@ function PoolTable({ gameId }: { gameId: string }) {
           </Tabs>
           <button
             type="button"
-            disabled={busy}
-            onClick={() => void breakShot()}
+            disabled={busy && tab !== "auto"}
+            onClick={() => {
+              if (tab === "auto" && busy) {
+                stopAuto.current = true;
+                return;
+              }
+              stopAuto.current = false;
+              void breakShot();
+            }}
             className="h-12 w-full rounded-lg bg-lime text-base font-bold text-black hover:bg-lime/90 disabled:opacity-50"
           >
-            Break
+            {tab === "auto" && busy ? "Stop" : "Break"}
           </button>
           <StakeField amount={amount} setAmount={setAmount} disabled={busy} />
           <p className="text-[0.65rem] text-muted-foreground">Space to break · 96% RTP</p>

@@ -81,17 +81,77 @@ export function plinkoMultipliers(rows: 8 | 12 | 16, risk: "low" | "medium" | "h
   return PLINKO[risk][rows];
 }
 
-/** Tower: 8 floors, 3 tiles, 1 death. Each safe step × RTP / (2/3). */
-export const TOWER_ROWS = 8;
+/** Tower floors. Easy → master changes columns and bombs. Patterns only move the bombs. */
+export const TOWER_ROWS = 9;
 export const TOWER_COLS = 3;
 
-export function towerStepMult(): number {
-  return Math.floor((ORIGINALS_RTP / ((TOWER_COLS - 1) / TOWER_COLS)) * 100) / 100;
+export const TOWER_SETUPS = {
+  easy: { cols: 4, bombs: 1, rows: 9 },
+  medium: { cols: 3, bombs: 1, rows: 9 },
+  hard: { cols: 2, bombs: 1, rows: 9 },
+  expert: { cols: 3, bombs: 2, rows: 8 },
+  master: { cols: 4, bombs: 3, rows: 8 },
+} as const;
+
+export type TowerMode = keyof typeof TOWER_SETUPS;
+export type TowerPattern = "classic" | "snake" | "mirror" | "edges";
+
+export function towerStepMult(cols = TOWER_COLS, bombs = 1): number {
+  const safe = Math.max(1, cols - bombs) / cols;
+  return Math.floor((ORIGINALS_RTP / safe) * 100) / 100;
 }
 
-export function towerMultiplier(safeRows: number): number {
-  const s = towerStepMult();
+export function towerMultiplier(safeRows: number, cols = TOWER_COLS, bombs = 1): number {
+  const s = towerStepMult(cols, bombs);
   let m = 1;
   for (let i = 0; i < safeRows; i += 1) m *= s;
   return Math.floor(m * 100) / 100;
+}
+
+/** Provably placed bombs. Classic is random; the other patterns are readable shapes. */
+export function towerBombs(
+  floats: number[],
+  cols: number,
+  bombs: number,
+  rows: number,
+  pattern: TowerPattern,
+): number[][] {
+  const grid: number[][] = [];
+  for (let r = 0; r < rows; r += 1) {
+    const picked: number[] = [];
+    const take = (c: number) => {
+      const col = ((c % cols) + cols) % cols;
+      if (!picked.includes(col) && picked.length < bombs) picked.push(col);
+    };
+    if (pattern === "snake") {
+      const start = Math.floor((floats[0] ?? 0.5) * cols);
+      for (let b = 0; b < bombs; b += 1) take(start + r + b);
+    } else if (pattern === "mirror") {
+      if (bombs === 1) take(r % 2 === 0 ? 0 : cols - 1);
+      else {
+        take(0);
+        take(cols - 1);
+        let k = 0;
+        while (picked.length < bombs && k < cols) {
+          take(Math.floor(cols / 2) + (k % 2 === 0 ? k / 2 : -Math.ceil(k / 2)));
+          k += 1;
+        }
+      }
+    } else if (pattern === "edges") {
+      const order = [0, cols - 1, 1, Math.max(0, cols - 2)];
+      for (let b = 0; b < bombs; b += 1) take(order[b % order.length]!);
+    } else {
+      let fi = r;
+      let guard = 0;
+      while (picked.length < bombs && guard < cols * 3) {
+        const u = floats[fi] ?? floats[fi % Math.max(1, floats.length)] ?? 0.5;
+        take(Math.floor(u * cols) + guard);
+        fi += rows;
+        guard += 1;
+      }
+    }
+    while (picked.length < bombs) take(picked.length);
+    grid.push(picked);
+  }
+  return grid;
 }

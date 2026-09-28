@@ -86,6 +86,33 @@ function pickWeighted(weights: number[], r: number): number {
   return weights.length - 1;
 }
 
+export function orderFromFloats(floats: number[], runners = TRUE_P.length): RoundOutcome {
+  const pool = Array.from({ length: runners }, (_, i) => i);
+  const weights = pool.map((i) => TRUE_P[i] ?? 0);
+  const order: number[] = [];
+
+  for (let place = 0; place < runners; place++) {
+    const w = weights.map((x) => (place === 0 ? x : Math.pow(x, PLACE_BIAS)));
+    const k = pickWeighted(w, floats[place] ?? 0);
+    order.push(pool[k]!);
+    pool.splice(k, 1);
+    weights.splice(k, 1);
+  }
+
+  const tight = floats[runners] ?? 0.5;
+  const photoFinish = tight < 0.18;
+  const spread = photoFinish ? 0.1 + tight : 0.35 + tight * 0.65;
+  const margins = order.map((_, i) => (i === 0 ? 0 : spread * (i / runners) + tight * 0.05 * i));
+
+  return {
+    order,
+    winnerId: order[0] ?? 0,
+    floats: floats.slice(0, runners + 1),
+    margins,
+    photoFinish,
+  };
+}
+
 /**
  * Derive a full finishing order from the provably-fair stream.
  *
@@ -99,28 +126,8 @@ export function resolveRound(
   nonce: number,
   runners = TRUE_P.length,
 ): RoundOutcome {
-  // runners floats for the order + 1 for margins
   const floats = fairFloats(serverSeed, clientSeed, nonce, runners + 1);
-
-  const pool = Array.from({ length: runners }, (_, i) => i);
-  const weights = pool.map((i) => TRUE_P[i]);
-  const order: number[] = [];
-
-  for (let place = 0; place < runners; place++) {
-    const w = weights.map((x) => (place === 0 ? x : Math.pow(x, PLACE_BIAS)));
-    const k = pickWeighted(w, floats[place]);
-    order.push(pool[k]);
-    pool.splice(k, 1);
-    weights.splice(k, 1);
-  }
-
-  // Margin profile: how tight the finish is.
-  const tight = floats[runners];
-  const photoFinish = tight < 0.18;
-  const spread = photoFinish ? 0.1 + tight : 0.35 + tight * 0.65;
-  const margins = order.map((_, i) => (i === 0 ? 0 : spread * (i / runners) + tight * 0.05 * i));
-
-  return { order, winnerId: order[0], floats, margins, photoFinish };
+  return orderFromFloats(floats, runners);
 }
 
 /** Everything the fairness panel needs to show. */

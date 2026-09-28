@@ -1,19 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useWallet } from "@/lib/wallet-context";
-import { playInstant } from "@/lib/casino-api";
+import { playCrazyLive } from "@/lib/casino-api";
 import { PlayGate } from "@/components/games/play-gate";
 import { GameShell, LimeBet } from "@/components/games/game-shell";
+import { useGameTable } from "@/components/games/game-table";
 import { FieldLabel, StakeField } from "@/components/games/stake-field";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatMultiplier } from "@/lib/format";
 import { playSfx } from "@/lib/game-sound";
-import { sleep, speedDelay } from "@/lib/game-speed";
+import { liveCrazyRound } from "@/lib/live-table";
 import { cn } from "cn";
 import {
   CRAZY_BET_SPOTS,
   CRAZY_WHEEL,
   type CrazyBetSpot,
-  type CrazyResult,
 } from "@/lib/crazy-tols";
 
 export function CrazyTolsGame({ gameId }: { gameId: string }) {
@@ -24,69 +24,88 @@ export function CrazyTolsGame({ gameId }: { gameId: string }) {
   );
 }
 
-type ServerCrazy = NonNullable<Awaited<ReturnType<typeof playInstant>>["detail"]["crazy"]>;
+type ServerCrazy = NonNullable<Awaited<ReturnType<typeof playCrazyLive>>["result"]>;
 
 function CrazyTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
+  const { reportRound } = useGameTable();
   const [spot, setSpot] = useState<CrazyBetSpot>("1");
   const [amount, setAmount] = useState(0);
-  const [busy, setBusy] = useState(false);
+  const [armed, setArmed] = useState(true);
+  const [left, setLeft] = useState(8);
   const [spin, setSpin] = useState(0);
   const [result, setResult] = useState<ServerCrazy | null>(null);
-  const [phase, setPhase] = useState<"idle" | "top" | "wheel" | "bonus" | "done">("idle");
+  const [phase, setPhase] = useState<"betting" | "spin" | "result">("betting");
+  const spotRef = useRef(spot);
+  const amountRef = useRef(amount);
+  const armedRef = useRef(armed);
+  const currencyRef = useRef(currency);
+  const joined = useRef(-1);
+  const joining = useRef(false);
+  spotRef.current = spot;
+  amountRef.current = amount;
+  armedRef.current = armed;
+  currencyRef.current = currency;
 
-  const wheel = CRAZY_WHEEL;
-  const segAngle = 360 / wheel.length;
-
-  async function onBet() {
-    if (busy) return;
-    setBusy(true);
-    setResult(null);
-    setPhase("top");
-    try {
-      const res = await playInstant({ data: { gameId, currency, amount, choice: spot } });
-      const crazy = res.detail.crazy;
-      if (!crazy) throw new Error("Round failed");
-      applyBalances(res.balances);
-
-      const step = speedDelay("step");
-      // 1) Top Slot animation
-      if (step > 0) {
-        for (let i = 0; i < 5; i += 1) {
-          setSpin(Math.random() * 360);
-          playSfx("tick");
-          await sleep(step);
-        }
-      }
-      // 2) Wheel spin: rotate to the winning segment (animated with CSS transition)
-      const targetAngle = 360 * 5 + (360 - crazy.wheelIndex * segAngle);
-      setSpin(targetAngle);
-      setPhase("wheel");
-      await sleep(Math.max(1400, step * 24));
-      playSfx("win");
-      setResult(crazy);
-      setPhase(crazy.bonus ? "bonus" : "done");
-      if (crazy.win && res.payout > 0) {
-        toast.success(`Won ${formatMoney(res.payout, currency)} ${currency} · ${crazy.multiplier}×`);
-      } else if (crazy.win && res.payout === 0) {
-        toast.message("Top slot missed");
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      const live = liveCrazyRound(Date.now(), spotRef.current);
+      setLeft(Math.max(0, Math.ceil(live.left / 1000)));
+      setPhase(live.phase);
+      const seg = 360 / CRAZY_WHEEL.length;
+      if (live.phase === "spin" || live.phase === "result") {
+        setSpin(360 * 5 + (360 - live.result.wheelIndex * seg));
+        setResult(live.result);
       } else {
-        toast.message(`Wheel landed on ${crazy.segmentLabel}`);
+        setSpin(0);
+        setResult(null);
       }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Bet failed");
-      setPhase("idle");
-    } finally {
-      setBusy(false);
-    }
-  }
+      if (live.phase !== "betting" && armedRef.current && joined.current !== live.slot && !joining.current) {
+        joining.current = true;
+        const stake = amountRef.current;
+        const chosen = spotRef.current;
+        void playCrazyLive({
+          data: { gameId, currency: currencyRef.current, amount: stake, spot: chosen, slot: live.slot },
+        })
+          .then((res) => {
+            joined.current = live.slot;
+            applyBalances(res.balances);
+            if (stake > 0) {
+              reportRound({
+                win: res.payout > 0,
+                label: res.result.segmentLabel,
+                stake,
+                payout: res.payout,
+                multiplier: res.multiplier,
+                view: { kind: "crazy", segment: res.result.segmentLabel },
+              });
+              if (res.payout > 0) {
+                playSfx("win");
+                toast.success(`Won ${formatMoney(res.payout, currencyRef.current)} · ${formatMultiplier(res.multiplier)}`);
+              }
+            }
+          })
+          .catch((err) => {
+            joined.current = live.slot;
+            if (stake > 0) toast.error(err instanceof Error ? err.message : "Bet missed the wheel");
+          })
+          .finally(() => {
+            joining.current = false;
+          });
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [applyBalances, gameId, reportRound]);
 
   return (
     <GameShell
       controls={
         <>
-          <LimeBet disabled={busy} onClick={() => void onBet()}>
-            Spin
+          <LimeBet disabled={phase !== "betting"} onClick={() => setArmed((v) => !v)}>
+            {phase === "betting" ? (armed ? `In · ${left}s` : `Sit out · ${left}s`) : phase === "spin" ? "Live spin" : "Result"}
           </LimeBet>
           <div className="space-y-3">
             <StakeField amount={amount} setAmount={setAmount} />
@@ -96,7 +115,7 @@ function CrazyTable({ gameId }: { gameId: string }) {
                   <button
                     key={s.id}
                     type="button"
-                    disabled={busy}
+                    disabled={phase !== "betting"}
                     onClick={() => setSpot(s.id)}
                     className={cn(
                       "h-10 rounded-lg border text-xs font-bold transition-colors",
@@ -140,7 +159,7 @@ function TopSlot({ result, phase }: { result: ServerCrazy | null; phase: string 
         <span className="font-heading text-sm font-bold text-lime">
           {result.topSlot.segment} · {result.topSlot.multiplier}×
         </span>
-      ) : phase === "top" || phase === "wheel" ? (
+      ) : phase === "spin" ? (
         <span className="font-heading text-sm font-bold animate-pulse text-lime">…</span>
       ) : (
         <span className="text-xs text-muted-foreground">—</span>
@@ -166,7 +185,7 @@ function WheelView({ spin, phase, result }: { spin: number; phase: string; resul
           style={{
             transform: `rotate(${spin}deg)`,
             transformOrigin: "150px 150px",
-            transition: phase === "idle" ? "none" : "transform 2.4s cubic-bezier(0.12, 0.8, 0.16, 1)",
+            transition: phase === "betting" ? "none" : "transform 2.4s cubic-bezier(0.12, 0.8, 0.16, 1)",
           }}
         >
           {wheel.map((s, i) => {

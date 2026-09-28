@@ -15,7 +15,7 @@ import { AuthWidgetProvider } from "@/components/auth/auth-widget-provider";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen>
       <NotificationProvider>
       <RoundViewerProvider>
       <GamePreviewProvider>

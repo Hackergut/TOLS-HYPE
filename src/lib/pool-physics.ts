@@ -125,13 +125,14 @@ function collide(a: PoolBall, b: PoolBall) {
 }
 
 function cushions(b: PoolBall, diff: PoolDiff) {
-  if (inPocket(b, diff)) return;
+  if (b.pocketed) return;
+  if (inPocket(b, diff)) {
+    b.pocketed = true;
+    b.vx = 0;
+    b.vy = 0;
+    return;
+  }
   const e = 0.72;
-  const nearSide =
-    Math.abs(b.x - PLAY_W / 2) < 28 && (b.y < BALL_R * 1.6 || b.y > PLAY_H - BALL_R * 1.6);
-  const nearCorner =
-    (b.x < 28 || b.x > PLAY_W - 28) && (b.y < 28 || b.y > PLAY_H - 28);
-  if (nearSide || nearCorner) return;
   if (b.x < BALL_R) {
     b.x = BALL_R;
     b.vx = Math.abs(b.vx) * e;
@@ -188,7 +189,7 @@ export function simulateBreak(input: BreakInput): BreakResult {
   function crack(hit: PoolBall) {
     cracked = true;
     collide(cue, hit);
-    const kick = 220 + power * 380;
+    const kick = 90 + power * 160;
     for (const b of balls) {
       if (b.id === 0 || b.pocketed) continue;
       const dx = b.x - hit.x;
@@ -210,11 +211,13 @@ export function simulateBreak(input: BreakInput): BreakResult {
     for (const b of balls) {
       if (b.pocketed) continue;
       const sp = Math.hypot(b.vx, b.vy);
-      if (sp > 1.2) {
+      const capped = Math.min(sp, 1100);
+      if (capped > 1.2) {
         moving = true;
-        const ns = Math.max(0, sp - mu * dt);
-        b.vx *= ns / sp;
-        b.vy *= ns / sp;
+        const ns = Math.max(0, capped - mu * dt);
+        const scale = sp > 0 ? ns / sp : 0;
+        b.vx *= scale;
+        b.vy *= scale;
       } else {
         b.vx = 0;
         b.vy = 0;

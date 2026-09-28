@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiChat3Fill, RiCloseLine, RiHome5Line, RiQuestionLine, RiSearchLine, RiSendPlaneFill } from "@remixicon/react";
 import { TolsWordmark } from "@/components/brand/tols-mark";
 import { TolsChatIcon } from "@/components/brand/tols-chat-icon";
+import { useRightDock } from "@/components/layout/right-dock";
 import { cn } from "cn";
 
 const FAQS = [
@@ -17,12 +18,22 @@ const FAQS = [
 type Tab = "home" | "messages" | "help";
 
 export function SupportWidget() {
+  const { tab: dockTab, mobileOpen } = useRightDock();
+  const chatOpen = dockTab === "chat";
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("home");
   const [q, setQ] = useState("");
   const [draft, setDraft] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [article, setArticle] = useState<(typeof FAQS)[number] | null>(null);
+
+  useEffect(() => {
+    function openFromNav() {
+      setOpen(true);
+    }
+    window.addEventListener("tols-support-open", openFromNav);
+    return () => window.removeEventListener("tols-support-open", openFromNav);
+  }, []);
 
   const hits = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -38,7 +49,13 @@ export function SupportWidget() {
   }
 
   return (
-    <div className="pointer-events-none fixed right-3 z-[60] max-md:bottom-[calc(4.6rem+env(safe-area-inset-bottom))] md:right-5 md:bottom-5">
+    <div
+      className={cn(
+        "pointer-events-none fixed z-[60] transition-[right] duration-200 max-md:bottom-[calc(4.6rem+env(safe-area-inset-bottom))] md:bottom-5",
+        mobileOpen && "max-md:hidden",
+        chatOpen ? "right-3 md:right-[calc(20rem+1.25rem)]" : "right-3 md:right-5",
+      )}
+    >
       {open ? (
         <div className="pointer-events-auto flex h-[min(26rem,calc(100dvh-8.25rem))] w-[min(19rem,calc(100vw-1.25rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f1116] shadow-[0_16px_48px_rgb(0_0_0/0.5)] md:h-[min(30rem,calc(100dvh-5.5rem))] md:w-80">
           <header className="relative shrink-0 bg-[linear-gradient(165deg,#904bf9_0%,#5b21b6_42%,#0f1116_100%)] px-4 pt-3 pb-7">

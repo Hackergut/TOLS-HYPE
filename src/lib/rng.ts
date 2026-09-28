@@ -7,14 +7,14 @@ export function crashPoint(edge = 0.04, u = Math.random()): number {
 
 const CRASH_GROWTH = 0.08;
 
-export function crashMultiplierAt(elapsedMs: number): number {
+export function crashMultiplierAt(elapsedMs: number, growth = CRASH_GROWTH): number {
   const t = Math.max(0, elapsedMs) / 1000;
-  return Math.floor(100 * Math.exp(CRASH_GROWTH * t)) / 100;
+  return Math.floor(100 * Math.exp(growth * t)) / 100;
 }
 
-export function crashElapsedFor(multiplier: number): number {
+export function crashElapsedFor(multiplier: number, growth = CRASH_GROWTH): number {
   if (multiplier <= 1) return 0;
-  return (Math.log(multiplier) / CRASH_GROWTH) * 1000;
+  return (Math.log(multiplier) / growth) * 1000;
 }
 
 export function newRoundId(): string {

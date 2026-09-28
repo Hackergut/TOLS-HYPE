@@ -3,19 +3,18 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type ReactNode,
 } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  RiChat3Line,
+  RiArrowDownSLine,
   RiCloseLine,
-  RiGiftLine,
+  RiEmotionHappyLine,
+  RiQuestionLine,
   RiSendPlane2Line,
-  RiSettings3Line,
-  RiUser3Line,
-  RiStarLine,
 } from "@remixicon/react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
@@ -24,9 +23,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -36,13 +32,8 @@ import { useWallet } from "@/lib/wallet-context";
 import { shortHash, subscribeChatShare, type BetRound } from "@/lib/bet-history";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
 import { RoundClone } from "@/components/games/round-clone";
-import { PlayerShot } from "@/components/players/player-shot";
 
 export type DockTab = "chat";
-
-const TABS: { id: DockTab; label: string; icon: typeof RiChat3Line }[] = [
-  { id: "chat", label: "Chat", icon: RiChat3Line },
-];
 
 type DockCtx = {
   tab: DockTab | null;
@@ -82,8 +73,7 @@ export function RightDockProvider({ children }: { children: ReactNode }) {
 }
 
 export function RightDock() {
-  const { tab, toggle, setTab, mobileOpen, setMobileOpen } = useRightDock();
-  const active = TABS.find((t) => t.id === tab);
+  const { tab, setTab, mobileOpen, setMobileOpen } = useRightDock();
 
   return (
     <>
@@ -97,14 +87,8 @@ export function RightDock() {
         >
           {tab ? (
             <>
-              <header className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
-                <p className="font-sub text-sm font-medium">{active?.label}</p>
-                <Button variant="ghost" size="icon-sm" aria-label="Collapse" onClick={() => setTab(null)}>
-                  <RiCloseLine className="size-4" />
-                </Button>
-              </header>
               <div className="min-h-0 flex-1">
-                <DockBody tab={tab} />
+                <DockBody tab={tab} onClose={() => setTab(null)} />
               </div>
             </>
           ) : null}
@@ -114,35 +98,8 @@ export function RightDock() {
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="right" showCloseButton={false} className="flex h-dvh w-full max-w-none flex-col p-0 md:hidden">
-          <SheetHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border px-4 py-3">
-            <SheetTitle>{active?.label ?? "Chat"}</SheetTitle>
-            <SheetDescription className="sr-only">Live chat</SheetDescription>
-            <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => setMobileOpen(false)}>
-              <RiCloseLine className="size-4" />
-            </Button>
-          </SheetHeader>
-          <div className="flex gap-1 overflow-x-auto border-b border-border px-2 py-2">
-            {TABS.map((item) => {
-              const Icon = item.icon;
-              const on = tab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setTab(item.id)}
-                  className={cn(
-                    "grid size-10 shrink-0 place-items-center rounded-lg",
-                    on ? "bg-muted text-lime" : "text-muted-foreground",
-                  )}
-                  aria-label={item.label}
-                >
-                  <Icon className="size-5" />
-                </button>
-              );
-            })}
-          </div>
           <div className="min-h-0 flex-1">
-            {tab ? <DockBody tab={tab} /> : null}
+            {tab ? <DockBody tab={tab} onClose={() => setMobileOpen(false)} /> : null}
           </div>
         </SheetContent>
       </Sheet>
@@ -150,95 +107,242 @@ export function RightDock() {
   );
 }
 
-function DockBody({ tab }: { tab: DockTab }) {
-  return <ChatPanel />;
+function DockBody({ onClose }: { tab: DockTab; onClose: () => void }) {
+  return <ChatPanel onClose={onClose} />;
 }
 
-type ChatMsg = { id: number; user: string; text: string; vip: string; round?: BetRound };
+type ChatMsg = {
+  id: number;
+  user: string;
+  text: string;
+  vip: string;
+  round?: BetRound;
+  tip?: { to: string; amount: string; asset: string };
+};
+
+const ROOMS = [
+  { id: "en", label: "English", flag: "🇬🇧" },
+  { id: "sports", label: "Sports", flag: "🏟️" },
+  { id: "it", label: "Italiano", flag: "🇮🇹" },
+] as const;
+
+const VIP_COLOR: Record<string, string> = {
+  Member: "#9aa3b2",
+  Silver: "#c5ced9",
+  Gold: "#f5c542",
+  Platinum: "#e8eef6",
+  Jade: "#34d399",
+  Diamond: "#7dd3fc",
+  Ruby: "#fb7185",
+  Obsidian: "#c084fc",
+};
+
+const QUICK_EMOJI = ["😂", "🔥", "💎", "🏇", "💥", "🟢", "👑", "🍀"];
 
 const SEED: ChatMsg[] = [
-  { id: 1, user: "nova", text: "500× on dice", vip: "Diamond" },
-  { id: 2, user: "hex", text: "Mines 24 cleared", vip: "Gold" },
-  { id: 3, user: "lido", text: "Who is running the weekly race?", vip: "Member" },
-  { id: 4, user: "kite", text: "Hi-Lo streak is cooked", vip: "Obsidian" },
-  { id: 5, user: "ash", text: "greened the last 8 rolls", vip: "Gold" },
+  { id: 1, user: "nova", text: "500× on dice", vip: "Gold" },
+  { id: 2, user: "hex", text: "Mines 24 cleared", vip: "Silver" },
+  { id: 3, user: "lido", text: "Who is running the weekly race?", vip: "Platinum" },
+  { id: 4, user: "kite", text: "Horse race just paid the long one", vip: "Jade" },
+  {
+    id: 5,
+    user: "ash",
+    text: "",
+    vip: "Silver",
+    tip: { to: "nova", amount: "10.00", asset: "USDC" },
+  },
+  { id: 6, user: "yard", text: "gl", vip: "Gold" },
 ];
 
-function ChatPanel() {
+function ChatPanel({ onClose }: { onClose: () => void }) {
   const { user } = useCurrentUserState();
   const [msgs, setMsgs] = useState(SEED);
   const [text, setText] = useState("");
+  const [room, setRoom] = useState<(typeof ROOMS)[number]["id"]>("en");
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const viewer = useRoundViewerOptional();
+  const scroller = useRef<HTMLDivElement>(null);
+  const current = ROOMS.find((r) => r.id === room) ?? ROOMS[0];
 
   useEffect(() => {
     return subscribeChatShare((msg) => {
       setMsgs((m) => [
         ...m,
-        { id: Date.now(), user: msg.user, text: msg.text, vip: "Member", round: msg.round },
+        { id: Date.now(), user: msg.user, text: msg.text, vip: "Gold", round: msg.round },
       ]);
     });
   }, []);
 
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [msgs]);
+
   function send(e: FormEvent) {
     e.preventDefault();
     const next = text.trim();
-    if (!next) return;
+    if (!next || !user) return;
     setMsgs((m) => [
       ...m,
-      {
-        id: Date.now(),
-        user: user?.displayName ?? "you",
-        text: next,
-        vip: "Member",
-      },
+      { id: Date.now(), user: user.displayName ?? "you", text: next, vip: "Member" },
     ]);
     setText("");
+    setEmojiOpen(false);
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <ScrollArea className="min-h-0 flex-1 px-3 py-3">
-        <ul className="grid gap-2.5">
+    <div className="flex h-full flex-col bg-[#121418]">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-white/10 px-3">
+        <h3 className="font-heading text-sm font-semibold text-white">Chat</h3>
+        <div className="flex items-center gap-1">
+          <label className="relative">
+            <span className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-sm">{current.flag}</span>
+            <select
+              aria-label="Chat room"
+              value={room}
+              onChange={(e) => setRoom(e.target.value as (typeof ROOMS)[number]["id"])}
+              className="h-8 appearance-none rounded-md bg-white/5 pr-7 pl-8 text-xs font-medium text-white outline-none"
+            >
+              {ROOMS.map((r) => (
+                <option key={r.id} value={r.id} className="bg-[#121418]">
+                  {r.label}
+                </option>
+              ))}
+            </select>
+            <RiArrowDownSLine className="pointer-events-none absolute top-1/2 right-1.5 size-4 -translate-y-1/2 text-white/50" />
+          </label>
+          <Button variant="ghost" size="icon-sm" aria-label="Close chat" onClick={onClose}>
+            <RiCloseLine className="size-4" />
+          </Button>
+        </div>
+      </header>
+
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+        <ul className="grid gap-1.5">
           {msgs.map((m) => (
-            <li key={m.id} className="flex gap-2 text-sm">
-              <PlayerShot handle={m.user} className="mt-0.5 size-8 shrink-0 rounded-md" />
-              <div className="min-w-0 flex-1">
-              <span className="text-[0.65rem] font-semibold tracking-wider text-primary uppercase">
-                {m.vip}
-              </span>{" "}
-              <span className="font-medium text-foreground">{m.user}</span>
-              <p className="text-muted-foreground">{m.text}</p>
+            <li key={m.id}>
+              {m.tip ? (
+                <div className="rounded-lg bg-white/[0.04] px-2.5 py-2 ring-1 ring-white/10">
+                  <p className="flex flex-wrap items-center gap-1 text-xs">
+                    <VipMark name={m.vip} />
+                    <span className="font-semibold text-white">{m.user}</span>
+                    <span className="text-lime">tipped</span>
+                    <span className="font-semibold text-white">{m.tip.to}</span>
+                  </p>
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-black/40 px-2 py-1 text-xs font-semibold tabular-nums text-white">
+                    <span className="grid size-4 place-items-center rounded-full bg-[#2775ca] text-[8px] font-bold">$</span>
+                    ${m.tip.amount}
+                    <span className="text-[10px] text-white/50">{m.tip.asset}</span>
+                  </p>
+                </div>
+              ) : (
+                <p className="text-[13px] leading-5">
+                  <VipMark name={m.vip} />
+                  <button type="button" className="font-semibold text-white hover:underline">
+                    {m.user}
+                  </button>
+                  <span className="text-white/35">: </span>
+                  <span className="text-white/85">{renderChatText(m.text)}</span>
+                </p>
+              )}
               {m.round ? (
                 <button
                   type="button"
                   onClick={() => viewer?.open(m.round!)}
-                  className="mt-1 w-full rounded-lg bg-muted/70 p-1.5 text-left"
+                  className="mt-1 w-full rounded-lg bg-white/[0.04] p-1.5 text-left ring-1 ring-white/10"
                 >
                   <RoundClone view={m.round.view} win={m.round.win} label={m.round.label} size="card" />
-                  <p className="mt-1 text-[0.65rem] font-semibold tabular-nums text-muted-foreground">
+                  <p className="mt-1 text-[0.65rem] font-semibold tabular-nums text-white/50">
                     {m.round.win ? "WIN" : "LOSE"} · {m.round.label}
                     {m.round.fair ? ` #${shortHash(m.round.fair.serverHash)}` : ""}
                   </p>
                 </button>
               ) : null}
-              </div>
             </li>
           ))}
         </ul>
-      </ScrollArea>
-      <form onSubmit={send} className="flex gap-2 border-t border-sidebar-border p-3">
-        <Input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={user ? "Say something…" : "Sign in to chat"}
-          disabled={!user}
-          className="h-10"
-        />
-        <Button type="submit" size="icon" className="size-10 shrink-0" disabled={!user || !text.trim()}>
-          <RiSendPlane2Line className="size-4" />
-        </Button>
-      </form>
+      </div>
+
+      <footer className="shrink-0 border-t border-white/10 px-3 pt-2 pb-3">
+        <form onSubmit={send} className="relative">
+          {emojiOpen ? (
+            <div className="absolute right-0 bottom-12 z-10 grid grid-cols-4 gap-1 rounded-lg bg-[#1c1f27] p-2 ring-1 ring-white/10">
+              {QUICK_EMOJI.map((emo) => (
+                <button
+                  key={emo}
+                  type="button"
+                  className="grid size-8 place-items-center rounded-md text-base hover:bg-white/10"
+                  onClick={() => {
+                    setText((t) => `${t}${emo}`);
+                    setEmojiOpen(false);
+                  }}
+                >
+                  {emo}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={user ? "Your message" : "Sign in to chat"}
+            disabled={!user}
+            className="h-10 rounded-lg border-white/10 bg-black/30 pr-20"
+          />
+          <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
+            <button
+              type="button"
+              aria-label="Emoji"
+              className="grid size-8 place-items-center text-white/60 hover:text-white"
+              onClick={() => setEmojiOpen((v) => !v)}
+            >
+              <RiEmotionHappyLine className="size-4" />
+            </button>
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={!user || !text.trim()}
+              className="grid size-8 place-items-center text-lime disabled:text-white/25"
+            >
+              <RiSendPlane2Line className="size-4" />
+            </button>
+          </div>
+        </form>
+        <div className="mt-2 flex items-center justify-between text-[11px] text-white/45">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-lime" />
+            {180 + msgs.length} online
+          </span>
+          <Link to="/terms" className="inline-flex items-center gap-1 hover:text-white">
+            <RiQuestionLine className="size-3.5" />
+            Chat rules
+          </Link>
+        </div>
+      </footer>
     </div>
+  );
+}
+
+function VipMark({ name }: { name: string }) {
+  const color = VIP_COLOR[name] ?? VIP_COLOR.Member;
+  return (
+    <span
+      className="mr-1 inline-block size-2 translate-y-[-1px] rounded-full align-middle"
+      style={{ background: color }}
+      title={name}
+    />
+  );
+}
+
+function renderChatText(text: string) {
+  return text.split(/(\s+)/).map((part, i) =>
+    part.startsWith("@") ? (
+      <span key={i} className="font-semibold text-lime">
+        {part}
+      </span>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
   );
 }
 

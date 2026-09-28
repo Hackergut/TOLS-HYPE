@@ -11,9 +11,11 @@ import {
 import { asNumber } from "./format";
 import { takeFair } from "@/lib/fair.server";
 import { crashPointFromFloat, diceRoll, pickIndex, uniquePicks } from "@/lib/fair";
-import { limboFromFloat, plinkoBucket, plinkoMultipliers, towerMultiplier, TOWER_COLS, TOWER_ROWS } from "@/lib/originals";
+import { limboFromFloat, plinkoBucket, plinkoMultipliers, towerBombs, towerMultiplier, TOWER_SETUPS, type TowerMode, type TowerPattern } from "@/lib/originals";
+import { liveCrashRound, liveCrazyRound } from "@/lib/live-table";
 import { poolMultiplier, simulateBreak, type PoolDiff } from "@/lib/pool-physics";
 import { crazyRound, type CrazyBetSpot } from "@/lib/crazy-tols";
+import { oddsFor, orderFromFloats } from "@/games/horse-race/game/rtp";
 import {
   credit,
   debit,
@@ -21,7 +23,7 @@ import {
   readWallet,
   snapshotBalances,
 } from "@/lib/wallet.server";
-import { pushSettledBet } from "@/lib/governance/bridge";
+import { pushBridgeEvent, pushSettledBet } from "@/lib/governance/bridge";
 import { comboOdds, systemCombos, vigPrice } from "@/lib/odds";
 import { resolveOutcome, type MarketKind } from "@/lib/sports-book";
 import {
@@ -81,8 +83,18 @@ export const cashier = createServerFn({ method: "POST" })
     if (data.amount > cap) throw new Error(`Max ${data.action} is ${cap} ${data.currency}`);
     if (data.action === "deposit") {
       await credit(context.userId, data.currency, data.amount, "deposit");
+      void pushBridgeEvent("casino.deposit_confirmed", {
+        userId: context.userId,
+        amount: data.amount,
+        currency: data.currency,
+      });
     } else {
       await debit(context.userId, data.currency, data.amount, "withdrawal");
+      void pushBridgeEvent("casino.withdrawal_pending", {
+        userId: context.userId,
+        amount: data.amount,
+        currency: data.currency,
+      });
     }
     return { balances: await snapshotBalances(context.userId) };
   });
@@ -234,7 +246,7 @@ export const playInstant = createServerFn({ method: "POST" })
       throw new Error("Use startCrash for this game");
     } else if (game.kind === "blackjack") {
       throw new Error("Use dealBlackjack for this game");
-    } else if (game.kind === "mines" || game.kind === "keno" || game.kind === "hilo" || game.kind === "pool" || game.kind === "tower") {
+    } else if (game.kind === "mines" || game.kind === "keno" || game.kind === "hilo" || game.kind === "pool" || game.kind === "tower" || game.kind === "horse") {
       throw new Error("Use the dedicated play function for this game");
     }
 
@@ -385,12 +397,17 @@ export const startCrash = createServerFn({ method: "POST" })
     if (!game || game.kind !== "crash") throw new Error("Not a crash game");
     assertBet(data.currency, data.amount);
     await ensureWallets(context.userId);
-    await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
+    const live = liveCrashRound(Date.now(), game.id, game.edge);
+    if (live.phase === "crashed" || (live.phase === "running" && live.elapsed > 2500)) {
+      throw new Error("Round already flying");
+    }
+    if (data.amount > 0) {
+      await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
+    }
     const id = newRoundId();
-    const fair = await takeFair(context.userId, 1);
     const payload: CrashPayload = {
-      crashAt: crashPointFromFloat(fair.floats[0]!, game.edge),
-      startedAt: Date.now(),
+      crashAt: live.crashAt,
+      startedAt: live.startedAt,
     };
     const sql = await getSql();
     await sql`
@@ -446,6 +463,16 @@ export const cashOutCrash = createServerFn({ method: "POST" })
       payout = bet * current;
       await credit(context.userId, currency, payout, "win", round.game_id, "crash cash out");
     }
+    if (bet > 0) {
+      void pushSettledBet({
+        userId: context.userId,
+        game: round.game_id,
+        amount: bet,
+        payout,
+        multiplier,
+        won: payout > 0,
+      });
+    }
     return {
       crashed,
       crashAt: payload.crashAt,
@@ -460,8 +487,14 @@ export const peekCrash = createServerFn({ method: "POST" })
   .validator(z.object({ roundId: z.string() }))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const rows = await sql<{ payload: string; status: string }>`
-      select payload, status from game_rounds
+    const rows = await sql<{
+      payload: string;
+      status: string;
+      bet_amount: string;
+      game_id: string;
+      user_id: string;
+    }>`
+      select payload, status, bet_amount, game_id, user_id from game_rounds
       where id = ${data.roundId} and user_id = ${context.userId}
     `;
     const round = rows[0];
@@ -471,14 +504,117 @@ export const peekCrash = createServerFn({ method: "POST" })
     const current = crashMultiplierAt(elapsed);
     if (current >= payload.crashAt) {
       if (round.status === "open") {
-        await sql`
+        const claimed = await sql<{ ok: number }>`
           update game_rounds set status = 'settled'
           where id = ${data.roundId} and user_id = ${context.userId} and status = 'open'
+          returning 1 as ok
         `;
+        const bet = asNumber(round.bet_amount);
+        if (claimed.length > 0 && bet > 0) {
+          void pushSettledBet({
+            userId: round.user_id,
+            game: round.game_id,
+            amount: bet,
+            payout: 0,
+            multiplier: 0,
+            won: false,
+          });
+        }
       }
       return { crashed: true, crashAt: payload.crashAt };
     }
     return { crashed: false, crashAt: null };
+  });
+
+export const playCrazyLive = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      gameId: z.string(),
+      currency: currencySchema,
+      amount: z.number().min(0),
+      spot: z.string(),
+      slot: z.number().int(),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const game = getGame(data.gameId);
+    if (!game || game.kind !== "crazy") throw new Error("Not crazy tols");
+    const live = liveCrazyRound(Date.now(), data.spot as "1");
+    if (live.slot !== data.slot || live.phase === "result") throw new Error("Round closed");
+    assertBet(data.currency, data.amount);
+    await ensureWallets(context.userId);
+    if (data.amount > 0) {
+      await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
+    }
+    const result = liveCrazyRound(Date.now(), data.spot as "1").result;
+    const multiplier = result.win ? result.multiplier : 0;
+    const payout = data.amount * multiplier;
+    if (payout > 0 && data.amount > 0) {
+      await credit(context.userId, data.currency, payout, "win", game.id, game.title);
+    }
+    if (data.amount > 0) {
+      void pushSettledBet({
+        userId: context.userId,
+        game: game.id,
+        amount: data.amount,
+        payout,
+        multiplier,
+        won: payout > 0,
+      });
+    }
+    return { result, payout, multiplier, balances: await snapshot(context.userId), slot: live.slot };
+  });
+
+export const playHorse = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      gameId: z.string(),
+      currency: currencySchema,
+      amount: z.number().min(0),
+      horseId: z.number().int().min(0).max(5),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const game = getGame(data.gameId);
+    if (!game || game.kind !== "horse") throw new Error("Not a horse race");
+    assertBet(data.currency, data.amount);
+    await ensureWallets(context.userId);
+    if (data.amount > 0) {
+      await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
+    }
+    const fair = await takeFair(context.userId, 8);
+    const outcome = orderFromFloats(fair.floats, 6);
+    const odds = oddsFor(data.horseId);
+    const win = data.amount > 0 && outcome.winnerId === data.horseId;
+    const multiplier = win ? odds : 0;
+    const payout = win ? data.amount * odds : 0;
+    if (payout > 0) {
+      await credit(context.userId, data.currency, payout, "win", game.id, game.title);
+    }
+    if (data.amount > 0) {
+      void pushSettledBet({
+        userId: context.userId,
+        game: game.id,
+        amount: data.amount,
+        payout,
+        multiplier,
+        won: payout > 0,
+      });
+    }
+    return {
+      winnerId: outcome.winnerId,
+      order: outcome.order,
+      margins: outcome.margins,
+      photoFinish: outcome.photoFinish,
+      horseId: data.horseId,
+      odds,
+      payout,
+      multiplier,
+      balances: await snapshot(context.userId),
+      fair: { serverHash: fair.serverHash, clientSeed: fair.clientSeed, nonce: fair.nonce },
+    };
   });
 
 type MinesPayload = {
@@ -1066,6 +1202,16 @@ export const playPool = createServerFn({ method: "POST" })
     if (payout > 0) {
       await credit(context.userId, data.currency, payout, "win", game.id, game.title);
     }
+    if (data.amount > 0) {
+      void pushSettledBet({
+        userId: context.userId,
+        game: game.id,
+        amount: data.amount,
+        payout,
+        multiplier,
+        won: payout > 0,
+      });
+    }
     return {
       balls: sim.balls,
       pocketed: sim.pocketed,
@@ -1123,7 +1269,14 @@ export const listGameWins = createServerFn({ method: "GET" })
     }));
   });
 
-type TowerPayload = { deaths: number[]; row: number; cols: number; rows: number };
+type TowerPayload = {
+  bombs: number[][];
+  row: number;
+  cols: number;
+  rows: number;
+  mode: TowerMode;
+  pattern: TowerPattern;
+};
 
 export const startTower = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -1132,6 +1285,8 @@ export const startTower = createServerFn({ method: "POST" })
       gameId: z.string(),
       currency: currencySchema,
       amount: z.number().min(0),
+      mode: z.enum(["easy", "medium", "hard", "expert", "master"]).default("medium"),
+      pattern: z.enum(["classic", "snake", "mirror", "edges"]).default("classic"),
     }),
   )
   .handler(async ({ context, data }) => {
@@ -1139,19 +1294,27 @@ export const startTower = createServerFn({ method: "POST" })
     if (!game || game.kind !== "tower") throw new Error("Not a tower game");
     assertBet(data.currency, data.amount);
     await ensureWallets(context.userId);
+    const setup = TOWER_SETUPS[data.mode];
     if (data.amount > 0) {
       await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
     }
-    const fair = await takeFair(context.userId, TOWER_ROWS);
-    const deaths = Array.from({ length: TOWER_ROWS }, (_, i) => pickIndex(fair.floats[i] ?? 0.5, TOWER_COLS));
-    const payload: TowerPayload = { deaths, row: 0, cols: TOWER_COLS, rows: TOWER_ROWS };
+    const fair = await takeFair(context.userId, setup.rows * setup.bombs + 2);
+    const bombs = towerBombs(fair.floats, setup.cols, setup.bombs, setup.rows, data.pattern);
+    const payload: TowerPayload = {
+      bombs,
+      row: 0,
+      cols: setup.cols,
+      rows: setup.rows,
+      mode: data.mode,
+      pattern: data.pattern,
+    };
     const id = newRoundId();
     const sql = await getSql();
     await sql`
       insert into game_rounds (id, user_id, game_id, status, bet_amount, currency, payload)
       values (${id}, ${context.userId}, ${game.id}, 'open', ${data.amount}, ${data.currency}, ${JSON.stringify(payload)})
     `;
-    return { roundId: id, rows: TOWER_ROWS, cols: TOWER_COLS, multiplier: 1 };
+    return { roundId: id, rows: setup.rows, cols: setup.cols, multiplier: 1 };
   });
 
 export const pickTower = createServerFn({ method: "POST" })
@@ -1173,28 +1336,47 @@ export const pickTower = createServerFn({ method: "POST" })
     const round = rows[0];
     if (!round || round.status !== "open") throw new Error("Round not open");
     const payload = JSON.parse(round.payload) as TowerPayload;
-    const death = payload.deaths[payload.row] ?? 0;
-    const hit = data.col === death;
+    const rowBombs = payload.bombs[payload.row] ?? [];
+    const hit = rowBombs.includes(data.col);
     const nextRow = payload.row + 1;
-    // Serialize picks on the row we read: a racing pick (or replay) can't
-    // advance the row twice, probe several columns, or double-credit the top.
+    const bombsN = payload.bombs[0]?.length || 1;
     const claimed = await sql<{ ok: number }>`
-      update game_rounds set status = ${hit ? "settled" : "open"}, payload = ${JSON.stringify({ ...payload, row: nextRow })}
+      update game_rounds set status = ${hit || nextRow >= payload.rows ? "settled" : "open"}, payload = ${JSON.stringify({ ...payload, row: nextRow })}
       where id = ${data.roundId} and user_id = ${context.userId}
         and status = 'open' and payload::jsonb->>'row' = ${String(payload.row)}
       returning 1 as ok
     `;
     if (claimed.length === 0) throw new Error("Round state changed — reload");
+    const amount = asNumber(round.bet_amount);
     if (hit) {
-      return { boom: true, row: payload.row, deaths: payload.deaths, multiplier: 0, payout: 0 };
+      if (amount > 0) {
+        void pushSettledBet({
+          userId: context.userId,
+          game: round.game_id,
+          amount,
+          payout: 0,
+          multiplier: 0,
+          won: false,
+        });
+      }
+      return { boom: true, row: payload.row, deaths: payload.bombs.map((b) => b[0] ?? 0), bombs: payload.bombs, multiplier: 0, payout: 0 };
     }
-    const multiplier = towerMultiplier(nextRow);
+    const multiplier = towerMultiplier(nextRow, payload.cols, bombsN);
     const done = nextRow >= payload.rows;
     if (done) {
-      const amount = asNumber(round.bet_amount);
       const payout = amount * multiplier;
       if (payout > 0 && amount > 0) {
         await credit(context.userId, parseCurrency(round.currency), payout, "win", round.game_id, "Tower");
+      }
+      if (amount > 0) {
+        void pushSettledBet({
+          userId: context.userId,
+          game: round.game_id,
+          amount,
+          payout,
+          multiplier,
+          won: payout > 0,
+        });
       }
       return { boom: false, row: nextRow, multiplier, payout, done: true, balances: await snapshot(context.userId) };
     }
@@ -1228,11 +1410,22 @@ export const cashTower = createServerFn({ method: "POST" })
     `;
     if (claimed.length === 0) throw new Error("Round already settled");
     const payload = JSON.parse(round.payload) as TowerPayload;
-    const multiplier = towerMultiplier(payload.row);
+    const bombsN = payload.bombs[0]?.length || 1;
+    const multiplier = towerMultiplier(payload.row, payload.cols, bombsN);
     const amount = asNumber(round.bet_amount);
     const payout = amount * multiplier;
     if (payout > 0 && amount > 0) {
       await credit(context.userId, parseCurrency(round.currency), payout, "win", round.game_id, "Tower");
+    }
+    if (amount > 0) {
+      void pushSettledBet({
+        userId: context.userId,
+        game: round.game_id,
+        amount,
+        payout,
+        multiplier,
+        won: payout > 0,
+      });
     }
     return { payout, multiplier, balances: await snapshot(context.userId) };
   });

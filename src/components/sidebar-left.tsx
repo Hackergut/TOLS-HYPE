@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
+import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   RiHome5Line,
@@ -33,6 +34,9 @@ import {
   RiTrophyLine,
   RiFileList3Line,
   RiBookOpenLine,
+  RiCustomerService2Line,
+  RiSafe2Line,
+  RiSettings3Line,
 } from "@remixicon/react";
 import {
   Sidebar,
@@ -49,7 +53,8 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { TolsT, TolsWordmark } from "@/components/brand/tols-mark";
+import { TolsT } from "@/components/brand/tols-mark";
+import { useWalletHub } from "@/components/wallet/wallet-hub";
 import { AFFILIATE_SECTIONS, BROWSE_FOOT, BROWSE_NAV, CASINO_SECTIONS, ORIGINAL_SECTIONS, SPORT_SECTIONS, SPORT_TABS } from "@/lib/nav";
 
 const ICONS = {
@@ -105,7 +110,10 @@ const AFF_ICONS = {
 export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.search });
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, toggleSidebar, state } = useSidebar();
+  const { openTab } = useWalletHub();
+  const [railPick, setRail] = useState<"casino" | "sport" | null>(null);
+  const rail = railPick ?? (pathname.startsWith("/sports") ? "sport" : "casino");
 
   function closeIfMobile() {
     if (isMobile) setOpenMobile(false);
@@ -118,14 +126,42 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="flex flex-row items-center gap-2 px-3 py-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-3">
-        <Link to="/" aria-label="TOLS home" className="flex items-center gap-2" onClick={closeIfMobile}>
-          <TolsT className="size-7 shrink-0" />
-          <TolsWordmark className="h-6 group-data-[collapsible=icon]:hidden" />
-        </Link>
+      <SidebarHeader className="gap-3 border-b border-sidebar-border px-3 py-3 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-3">
+        <button
+          type="button"
+          aria-label={state === "collapsed" ? "Open menu" : "Close menu"}
+          onClick={toggleSidebar}
+          className="grid size-12 shrink-0 place-items-center self-center rounded-md transition-transform duration-200 hover:bg-white/5 active:scale-95"
+        >
+          <TolsT className="size-7" />
+        </button>
+        <div className="flex h-12 w-full overflow-hidden rounded-md bg-[#202329] group-data-[collapsible=icon]:hidden">
+          <button
+            type="button"
+            onClick={() => setRail("casino")}
+            className={
+              rail === "casino"
+                ? "flex-1 rounded-l-md border border-[#7717ff] text-sm font-bold text-white [text-shadow:0_1px_0_#000]"
+                : "flex-1 rounded-l-md border border-[#343843] border-r-0 text-sm font-medium text-white/70"
+            }
+          >
+            Casino
+          </button>
+          <button
+            type="button"
+            onClick={() => setRail("sport")}
+            className={
+              rail === "sport"
+                ? "flex-1 rounded-r-md border border-[#7717ff] text-sm font-bold text-white [text-shadow:0_1px_0_#000]"
+                : "flex-1 rounded-r-md border border-[#343843] border-l-0 text-sm font-medium text-white/70"
+            }
+          >
+            Sport
+          </button>
+        </div>
       </SidebarHeader>
       <SidebarContent className="px-0">
-        <SidebarGroup>
+        <SidebarGroup className={rail === "sport" ? "hidden group-data-[collapsible=icon]:flex" : undefined}>
           <SidebarGroupLabel className="font-sub text-[0.65rem] tracking-[0.12em] text-lime uppercase">Browse</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
@@ -152,6 +188,8 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {rail === "casino" ? (
+          <>
         <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
 
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -226,9 +264,8 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
-
+          </>
+        ) : (
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="font-sub text-[0.65rem] tracking-[0.12em] text-lime uppercase">Sports</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -278,7 +315,10 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
+        {rail === "casino" ? (
+        <>
         <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
 
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -312,9 +352,29 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        </>
+        ) : null}
       </SidebarContent>
       <SidebarFooter className="px-2 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
-        <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
+        <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
+          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+            <SidebarMenuButton className="h-12 w-full justify-start gap-2.5 px-4 text-sm" tooltip="Vault" onClick={() => { closeIfMobile(); openTab("vault"); }}>
+              <RiSafe2Line />
+              <span>Vault</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+            <SidebarMenuButton className="h-12 w-full justify-start gap-2.5 px-4 text-sm" tooltip="Transactions" onClick={() => { closeIfMobile(); openTab("tx"); }}>
+              <RiFileList3Line />
+              <span>Transactions</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+            <SidebarMenuButton className="h-12 w-full justify-start gap-2.5 px-4 text-sm" tooltip="Settings" onClick={() => { closeIfMobile(); openTab("settings"); }}>
+              <RiSettings3Line />
+              <span>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {BROWSE_FOOT.map((item) => {
             const Icon = ICONS[item.icon as keyof typeof ICONS];
             return (
@@ -333,6 +393,19 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
               </SidebarMenuItem>
             );
           })}
+          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+            <SidebarMenuButton
+              className="h-12 w-full justify-start gap-2.5 px-4 text-sm"
+              tooltip="Live support"
+              onClick={() => {
+                closeIfMobile();
+                window.dispatchEvent(new Event("tols-support-open"));
+              }}
+            >
+              <RiCustomerService2Line />
+              <span>Live support</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />

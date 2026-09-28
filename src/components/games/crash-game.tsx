@@ -5,14 +5,13 @@ import { GameShell, LimeBet } from "@/components/games/game-shell";
 import { useGameTable } from "@/components/games/game-table";
 import { StakeField } from "@/components/games/stake-field";
 import { crashMultiplierAt } from "@/lib/rng";
+import { crashGrowth, liveCrashRound } from "@/lib/live-table";
 import { formatMultiplier } from "@/lib/format";
 import { useWallet } from "@/lib/wallet-context";
-import { cashOutCrash, peekCrash, startCrash } from "@/lib/casino-api";
-import { CURRENCY_META } from "@/lib/games-catalog";
+import { cashOutCrash, startCrash } from "@/lib/casino-api";
 import { playSfx } from "@/lib/game-sound";
-import { effectiveSpeed } from "@/lib/game-speed";
 
-type Phase = "idle" | "running" | "crashed" | "cashed";
+type Phase = "betting" | "running" | "crashed" | "cashed";
 
 export function CrashGame({ gameId }: { gameId: string }) {
   return (
@@ -25,118 +24,119 @@ export function CrashGame({ gameId }: { gameId: string }) {
 function CrashTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
   const { reportRound } = useGameTable();
-  const meta = CURRENCY_META[currency];
-  const [phase, setPhase] = useState<Phase>("idle");
+  const growth = crashGrowth(gameId);
+  const orbit = gameId === "orbit-crash";
+  const [phase, setPhase] = useState<Phase>("betting");
   const [display, setDisplay] = useState(1);
   const [crashAt, setCrashAt] = useState<number | null>(null);
   const [amount, setAmount] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
-  const startedAt = useRef(0);
-  const raf = useRef(0);
+  const [left, setLeft] = useState(6);
+  const [armed, setArmed] = useState(true);
+  const [inRound, setInRound] = useState(false);
   const roundRef = useRef<string | null>(null);
-  const phaseRef = useRef<Phase>("idle");
-  const lastTick = useRef(0);
+  const phaseRef = useRef<Phase>("betting");
+  const stakeRef = useRef(0);
+  const amountRef = useRef(0);
+  const armedRef = useRef(true);
+  const currencyRef = useRef(currency);
+  const joined = useRef(-1);
+  const joining = useRef(false);
+  const seenBust = useRef(-1);
 
-  useEffect(() => {
-    phaseRef.current = phase;
-  }, [phase]);
+  phaseRef.current = phase;
+  amountRef.current = amount;
+  armedRef.current = armed;
+  currencyRef.current = currency;
 
-  useEffect(() => {
-    return () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
-    };
-  }, []);
-
-  function tick() {
-    const elapsed = Date.now() - startedAt.current;
-    setDisplay(crashMultiplierAt(elapsed));
-    const gap = effectiveSpeed() === "fast" ? 180 : effectiveSpeed() === "instant" ? 0 : 420;
-    if (gap && Date.now() - lastTick.current > gap) {
-      lastTick.current = Date.now();
-      playSfx("tick");
-    }
-    raf.current = requestAnimationFrame(tick);
-  }
-
-  async function play() {
+  async function join(n: number) {
+    const stake = amountRef.current;
     try {
-      const res = await startCrash({ data: { gameId, currency, amount } });
+      const res = await startCrash({ data: { gameId, currency: currencyRef.current, amount: stake } });
+      joined.current = n;
+      stakeRef.current = stake;
       roundRef.current = res.roundId;
-      startedAt.current = res.startedAt;
-      setCrashAt(null);
-      setDisplay(1);
-      setPhase("running");
-      raf.current = requestAnimationFrame(tick);
-      void watchCrash(res.roundId);
+      setInRound(stake > 0);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Bet failed");
+      joined.current = n;
+      roundRef.current = null;
+      stakeRef.current = 0;
+      setInRound(false);
+      if (stake > 0) toast.error(err instanceof Error ? err.message : "Bet missed the round");
+    } finally {
+      joining.current = false;
     }
   }
 
-  async function watchCrash(id: string) {
-    while (phaseRef.current === "running" && roundRef.current === id) {
-      try {
-        const peek = await peekCrash({ data: { roundId: id } });
-        if (peek.crashed && phaseRef.current === "running") {
-          if (raf.current) cancelAnimationFrame(raf.current);
-          setPhase("crashed");
-          setCrashAt(peek.crashAt);
-          setDisplay(peek.crashAt ?? 1);
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      const live = liveCrashRound(Date.now(), gameId, 0.04, growth);
+      setDisplay(live.phase === "running" ? crashMultiplierAt(Date.now() - live.startedAt, growth) : live.display);
+      setLeft(Math.max(0, Math.ceil(live.left / 1000)));
+      setPhase(live.phase === "running" ? "running" : live.phase === "crashed" ? "crashed" : "betting");
+      if (live.phase === "betting") {
+        roundRef.current = null;
+        setCrashAt(null);
+      }
+      if (live.phase === "running" && armedRef.current && joined.current !== live.n && !joining.current) {
+        joining.current = true;
+        void join(live.n);
+      }
+      if (live.phase === "crashed" && seenBust.current !== live.n) {
+        seenBust.current = live.n;
+        setCrashAt(live.crashAt);
+        setHistory((h) => [live.crashAt, ...h].slice(0, 16));
+        const stake = stakeRef.current;
+        if (stake > 0 && roundRef.current) {
           reportRound({
             win: false,
-            label: `Crash ${formatMultiplier(peek.crashAt ?? 1)}`,
-            stake: amount,
+            label: `Crash ${formatMultiplier(live.crashAt)}`,
+            stake,
             payout: 0,
             multiplier: 0,
-            view: { kind: "crash", crashAt: peek.crashAt ?? 1 },
+            view: { kind: "crash", crashAt: live.crashAt },
           });
-          toast.error(`Crashed at ${formatMultiplier(peek.crashAt ?? 1)}`);
           playSfx("boom");
-          setHistory((h) => [peek.crashAt ?? 1, ...h].slice(0, 16));
-          return;
         }
-      } catch {
-        return;
+        stakeRef.current = 0;
+        roundRef.current = null;
+        setInRound(false);
       }
-      await new Promise((r) => setTimeout(r, 120));
-    }
-  }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [gameId, growth, reportRound]);
 
   async function cash() {
     if (!roundRef.current || phaseRef.current !== "running") return;
+    const id = roundRef.current;
+    const stake = stakeRef.current;
+    roundRef.current = null;
     try {
-      const res = await cashOutCrash({ data: { roundId: roundRef.current } });
-      if (raf.current) cancelAnimationFrame(raf.current);
+      const res = await cashOutCrash({ data: { roundId: id } });
       applyBalances(res.balances);
+      stakeRef.current = 0;
+      setInRound(false);
       if (res.crashed) {
-        setPhase("crashed");
-        setCrashAt(res.crashAt);
-        setDisplay(res.crashAt);
         playSfx("boom");
-        reportRound({
-          win: false,
-          label: `Crash ${formatMultiplier(res.crashAt)}`,
-          stake: amount,
-          payout: 0,
-          multiplier: 0,
-          view: { kind: "crash", crashAt: res.crashAt },
-        });
-        toast.error(`Crashed at ${formatMultiplier(res.crashAt)}`);
-        setHistory((h) => [res.crashAt, ...h].slice(0, 16));
+        if (stake > 0) toast.error(`Crashed at ${formatMultiplier(res.crashAt)}`);
       } else {
         setPhase("cashed");
         setDisplay(res.multiplier);
         playSfx("cash");
-        setHistory((h) => [res.multiplier, ...h].slice(0, 16));
-        reportRound({
-          win: true,
-          label: `Cash ${formatMultiplier(res.multiplier)}`,
-          stake: amount,
-          payout: amount * res.multiplier,
-          multiplier: res.multiplier,
-          view: { kind: "crash", cashAt: res.multiplier, crashAt: res.crashAt },
-        });
-        toast.success(`Cashed out at ${formatMultiplier(res.multiplier)}`);
+        if (stake > 0) {
+          reportRound({
+            win: true,
+            label: `Cash ${formatMultiplier(res.multiplier)}`,
+            stake,
+            payout: res.payout,
+            multiplier: res.multiplier,
+            view: { kind: "crash", cashAt: res.multiplier, crashAt: res.crashAt },
+          });
+          toast.success(`Cashed out at ${formatMultiplier(res.multiplier)}`);
+        }
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Cash out failed");
@@ -148,20 +148,23 @@ function CrashTable({ gameId }: { gameId: string }) {
       controls={
         <>
           <StakeField amount={amount} setAmount={setAmount} disabled={phase === "running"} />
-          {phase === "running" ? (
+          {phase === "running" && inRound ? (
             <LimeBet onClick={() => void cash()}>Cash out {formatMultiplier(display)}</LimeBet>
+          ) : phase === "betting" ? (
+            <LimeBet onClick={() => setArmed((v) => !v)}>
+              {armed ? `In · ${left}s` : `Sit out · ${left}s`}
+            </LimeBet>
           ) : (
-            <LimeBet onClick={() => void play()}>Bet (next round)</LimeBet>
+            <LimeBet disabled>{orbit ? "Orbit live" : "Live"}</LimeBet>
           )}
         </>
       }
       play={
-        <CrashBoard
-          display={display}
-          phase={phase}
-          crashAt={crashAt}
-          history={history}
-        />
+        orbit ? (
+          <OrbitBoard display={display} phase={phase === "betting" ? "idle" : phase} crashAt={crashAt} history={history} />
+        ) : (
+          <CrashBoard display={display} phase={phase === "betting" ? "idle" : phase} crashAt={crashAt} history={history} />
+        )
       }
     />
   );
@@ -187,7 +190,7 @@ function CrashBoard({
   history,
 }: {
   display: number;
-  phase: Phase;
+  phase: "idle" | "running" | "crashed" | "cashed";
   crashAt: number | null;
   history: number[];
 }) {
@@ -239,6 +242,53 @@ function CrashBoard({
         <span className="mr-1 inline-block size-1.5 rounded-full bg-lime" />
         {phase === "running" ? "Live" : phase === "crashed" ? `Bust ${formatMultiplier(crashAt ?? display)}` : "Next round"}
       </p>
+    </div>
+  );
+}
+
+function OrbitBoard({
+  display,
+  phase,
+  crashAt,
+  history,
+}: {
+  display: number;
+  phase: "idle" | "running" | "crashed" | "cashed";
+  crashAt: number | null;
+  history: number[];
+}) {
+  const turn = Math.min(0.92, Math.log(Math.max(1, display)) / 4);
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-wrap justify-center gap-1.5">
+        {history.slice(0, 8).map((n, i) => (
+          <span
+            key={`${n}-${i}`}
+            className={`rounded-md px-2 py-1 text-[0.7rem] font-bold tabular-nums ${
+              n >= 2 ? "bg-lime text-black" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {formatMultiplier(n)}
+          </span>
+        ))}
+      </div>
+      <div className="relative grid size-64 place-items-center">
+        <div
+          className={`absolute inset-3 rounded-full border-2 border-dashed ${phase === "crashed" ? "border-purple" : "border-lime/70"}`}
+          style={{ transform: `rotate(${turn * 360}deg)` }}
+        />
+        <div className={`absolute inset-10 rounded-full border ${phase === "crashed" ? "border-purple" : "border-lime/40"}`} />
+        <div
+          className="absolute size-3 rounded-full bg-lime shadow-[0_0_12px_#b6ff3b]"
+          style={{
+            transform: `rotate(${turn * 360}deg) translateY(-92px)`,
+          }}
+        />
+        <p className={`font-heading text-4xl font-bold tabular-nums ${phase === "crashed" ? "text-purple" : "text-lime"}`}>
+          {formatMultiplier(phase === "crashed" ? (crashAt ?? display) : display)}
+        </p>
+      </div>
+      <p className="text-xs text-muted-foreground">Slower orbit · same cash-out</p>
     </div>
   );
 }
