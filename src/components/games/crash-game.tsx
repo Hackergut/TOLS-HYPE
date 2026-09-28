@@ -5,10 +5,11 @@ import { GameShell, LimeBet } from "@/components/games/game-shell";
 import { useGameTable } from "@/components/games/game-table";
 import { StakeField } from "@/components/games/stake-field";
 import { crashMultiplierAt } from "@/lib/rng";
-import { crashGrowth, liveCrashRound } from "@/lib/live-table";
+import { crashGrowth } from "@/lib/live-table";
 import { formatMultiplier } from "@/lib/format";
 import { useWallet } from "@/lib/wallet-context";
-import { cashOutCrash, startCrash } from "@/lib/casino-api";
+import { cashLive, liveTable, placeLiveBet, type LiveSnap } from "@/lib/live-room";
+import { LiveTape } from "@/components/games/live-tape";
 import { playSfx } from "@/lib/game-sound";
 
 type Phase = "betting" | "running" | "crashed" | "cashed";
@@ -34,6 +35,8 @@ function CrashTable({ gameId }: { gameId: string }) {
   const [left, setLeft] = useState(6);
   const [armed, setArmed] = useState(true);
   const [inRound, setInRound] = useState(false);
+  const [tape, setTape] = useState<LiveSnap["bets"]>([]);
+  const [hash, setHash] = useState("");
   const roundRef = useRef<string | null>(null);
   const phaseRef = useRef<Phase>("betting");
   const stakeRef = useRef(0);
@@ -43,6 +46,7 @@ function CrashTable({ gameId }: { gameId: string }) {
   const joined = useRef(-1);
   const joining = useRef(false);
   const seenBust = useRef(-1);
+  const clock = useRef({ startsAt: 0, offset: 0, phase: "betting" as Phase });
 
   phaseRef.current = phase;
   amountRef.current = amount;
@@ -51,77 +55,128 @@ function CrashTable({ gameId }: { gameId: string }) {
 
   async function join(n: number) {
     const stake = amountRef.current;
+    if (stake <= 0) {
+      joined.current = n;
+      joining.current = false;
+      return;
+    }
     try {
-      const res = await startCrash({ data: { gameId, currency: currencyRef.current, amount: stake } });
+      const res = await placeLiveBet({
+        data: { gameId, currency: currencyRef.current, amount: stake, pick: "" },
+      });
       joined.current = n;
       stakeRef.current = stake;
-      roundRef.current = res.roundId;
-      setInRound(stake > 0);
+      roundRef.current = String(res.snap.n);
+      setInRound(true);
+      applyBalances(res.balances);
     } catch (err) {
       joined.current = n;
       roundRef.current = null;
       stakeRef.current = 0;
       setInRound(false);
-      if (stake > 0) toast.error(err instanceof Error ? err.message : "Bet missed the round");
+      toast.error(err instanceof Error ? err.message : "Bet missed the round");
     } finally {
       joining.current = false;
     }
   }
 
   useEffect(() => {
-    let raf = 0;
-    const loop = () => {
-      const live = liveCrashRound(Date.now(), gameId, 0.04, growth);
-      setDisplay(live.phase === "running" ? crashMultiplierAt(Date.now() - live.startedAt, growth) : live.display);
-      setLeft(Math.max(0, Math.ceil(live.left / 1000)));
-      setPhase(live.phase === "running" ? "running" : live.phase === "crashed" ? "crashed" : "betting");
-      if (live.phase === "betting") {
-        roundRef.current = null;
-        setCrashAt(null);
-      }
-      if (live.phase === "running" && armedRef.current && joined.current !== live.n && !joining.current) {
-        joining.current = true;
-        void join(live.n);
-      }
-      if (live.phase === "crashed" && seenBust.current !== live.n) {
-        seenBust.current = live.n;
-        setCrashAt(live.crashAt);
-        setHistory((h) => [live.crashAt, ...h].slice(0, 16));
-        const stake = stakeRef.current;
-        if (stake > 0 && roundRef.current) {
-          reportRound({
-            win: false,
-            label: `Crash ${formatMultiplier(live.crashAt)}`,
-            stake,
-            payout: 0,
-            multiplier: 0,
-            view: { kind: "crash", crashAt: live.crashAt },
-          });
-          playSfx("boom");
+    let stop = false;
+    let timer = 0;
+    const pull = async () => {
+      try {
+        const snap = await liveTable({ data: { gameId } });
+        if (stop) return;
+        const offset = snap.serverNow - Date.now();
+        clock.current = {
+          startsAt: snap.startsAt,
+          offset,
+          phase: snap.phase === "running" ? "running" : snap.phase === "result" ? "crashed" : "betting",
+        };
+        setLeft(Math.max(0, Math.ceil(snap.left / 1000)));
+        setTape(snap.bets);
+        setHash(snap.hash);
+        setHistory(snap.history.map((h) => Number.parseFloat(h.label)).filter((n) => Number.isFinite(n)));
+        if (snap.phase === "betting") {
+          setCrashAt(null);
+          setPhase("betting");
+          setDisplay(1);
+          if (snap.you) {
+            joined.current = snap.n;
+            setInRound(snap.you.status === "open");
+            stakeRef.current = snap.you.amount;
+            roundRef.current = String(snap.n);
+          } else if (armedRef.current && joined.current !== snap.n && !joining.current) {
+            joining.current = true;
+            void join(snap.n);
+          }
+        } else if (snap.phase === "running") {
+          setPhase("running");
+          setInRound(snap.you?.status === "open");
+          if (snap.you?.status === "open") {
+            stakeRef.current = snap.you.amount;
+            roundRef.current = String(snap.n);
+          }
+        } else if (snap.phase === "locked") {
+          setPhase("betting");
+        } else if (seenBust.current !== snap.n) {
+          seenBust.current = snap.n;
+          const at = Number(snap.outcome?.crashAt ?? 1);
+          setCrashAt(at);
+          setPhase("crashed");
+          const stake = stakeRef.current;
+          const mine = snap.you;
+          if (stake > 0 && mine && mine.status !== "cashed") {
+            reportRound({
+              win: false,
+              label: `Crash ${formatMultiplier(at)}`,
+              stake,
+              payout: 0,
+              multiplier: 0,
+              view: { kind: "crash", crashAt: at },
+            });
+            playSfx("boom");
+          }
+          stakeRef.current = 0;
+          roundRef.current = null;
+          setInRound(false);
         }
-        stakeRef.current = 0;
-        roundRef.current = null;
-        setInRound(false);
+      } catch {
+        // next poll retries
+      } finally {
+        if (!stop) timer = window.setTimeout(pull, 400);
       }
-      raf = requestAnimationFrame(loop);
     };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [gameId, growth, reportRound]);
+    void pull();
+    let raf = 0;
+    const frame = () => {
+      const { startsAt, offset, phase: livePhase } = clock.current;
+      if (livePhase === "running" && startsAt) {
+        setDisplay(crashMultiplierAt(Date.now() + offset - startsAt, growth));
+        setPhase("running");
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => {
+      stop = true;
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+    };
+  }, [applyBalances, gameId, growth, reportRound]);
 
   async function cash() {
-    if (!roundRef.current || phaseRef.current !== "running") return;
-    const id = roundRef.current;
+    if (phaseRef.current !== "running" || !inRound) return;
     const stake = stakeRef.current;
     roundRef.current = null;
+    setInRound(false);
     try {
-      const res = await cashOutCrash({ data: { roundId: id } });
+      const res = await cashLive({ data: { gameId } });
       applyBalances(res.balances);
       stakeRef.current = 0;
-      setInRound(false);
       if (res.crashed) {
         playSfx("boom");
-        if (stake > 0) toast.error(`Crashed at ${formatMultiplier(res.crashAt)}`);
+        if (stake > 0) toast.error("Crashed before cash out");
       } else {
         setPhase("cashed");
         setDisplay(res.multiplier);
@@ -133,7 +188,7 @@ function CrashTable({ gameId }: { gameId: string }) {
             stake,
             payout: res.payout,
             multiplier: res.multiplier,
-            view: { kind: "crash", cashAt: res.multiplier, crashAt: res.crashAt },
+            view: { kind: "crash", cashAt: res.multiplier },
           });
           toast.success(`Cashed out at ${formatMultiplier(res.multiplier)}`);
         }
@@ -160,11 +215,14 @@ function CrashTable({ gameId }: { gameId: string }) {
         </>
       }
       play={
-        orbit ? (
-          <OrbitBoard display={display} phase={phase === "betting" ? "idle" : phase} crashAt={crashAt} history={history} />
-        ) : (
-          <CrashBoard display={display} phase={phase === "betting" ? "idle" : phase} crashAt={crashAt} history={history} />
-        )
+        <div className="flex w-full flex-col items-center gap-3">
+          {orbit ? (
+            <OrbitBoard display={display} phase={phase === "betting" ? "idle" : phase} crashAt={crashAt} history={history} />
+          ) : (
+            <CrashBoard display={display} phase={phase === "betting" ? "idle" : phase} crashAt={crashAt} history={history} />
+          )}
+          <LiveTape bets={tape} hash={hash} />
+        </div>
       }
     />
   );

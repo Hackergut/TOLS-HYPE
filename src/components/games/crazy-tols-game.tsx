@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useWallet } from "@/lib/wallet-context";
-import { playCrazyLive } from "@/lib/casino-api";
+import { liveTable, placeLiveBet } from "@/lib/live-room";
+import { LiveTape } from "@/components/games/live-tape";
 import { PlayGate } from "@/components/games/play-gate";
 import { GameShell, LimeBet } from "@/components/games/game-shell";
 import { useGameTable } from "@/components/games/game-table";
 import { FieldLabel, StakeField } from "@/components/games/stake-field";
-import { formatMoney, formatMultiplier } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { playSfx } from "@/lib/game-sound";
-import { liveCrazyRound } from "@/lib/live-table";
 import { cn } from "cn";
 import {
   CRAZY_BET_SPOTS,
@@ -24,7 +24,14 @@ export function CrazyTolsGame({ gameId }: { gameId: string }) {
   );
 }
 
-type ServerCrazy = NonNullable<Awaited<ReturnType<typeof playCrazyLive>>["result"]>;
+type Shown = {
+  wheelIndex: number;
+  segmentLabel: string;
+  win: boolean;
+  multiplier: number;
+  topSlot: { segment: string; multiplier: number } | null;
+  bonus: Record<string, unknown> | null;
+};
 
 function CrazyTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
@@ -34,70 +41,98 @@ function CrazyTable({ gameId }: { gameId: string }) {
   const [armed, setArmed] = useState(true);
   const [left, setLeft] = useState(8);
   const [spin, setSpin] = useState(0);
-  const [result, setResult] = useState<ServerCrazy | null>(null);
+  const [result, setResult] = useState<Shown | null>(null);
   const [phase, setPhase] = useState<"betting" | "spin" | "result">("betting");
+  const [tape, setTape] = useState<{ name: string; amount: number; currency: string; pick: string; status: string; cashMult: number | null; payout: number | null; mine: boolean }[]>([]);
+  const [hash, setHash] = useState("");
   const spotRef = useRef(spot);
   const amountRef = useRef(amount);
   const armedRef = useRef(armed);
   const currencyRef = useRef(currency);
   const joined = useRef(-1);
   const joining = useRef(false);
+  const reported = useRef(-1);
   spotRef.current = spot;
   amountRef.current = amount;
   armedRef.current = armed;
   currencyRef.current = currency;
 
   useEffect(() => {
-    let raf = 0;
-    const loop = () => {
-      const live = liveCrazyRound(Date.now(), spotRef.current);
-      setLeft(Math.max(0, Math.ceil(live.left / 1000)));
-      setPhase(live.phase);
-      const seg = 360 / CRAZY_WHEEL.length;
-      if (live.phase === "spin" || live.phase === "result") {
-        setSpin(360 * 5 + (360 - live.result.wheelIndex * seg));
-        setResult(live.result);
-      } else {
-        setSpin(0);
-        setResult(null);
-      }
-      if (live.phase !== "betting" && armedRef.current && joined.current !== live.slot && !joining.current) {
-        joining.current = true;
-        const stake = amountRef.current;
-        const chosen = spotRef.current;
-        void playCrazyLive({
-          data: { gameId, currency: currencyRef.current, amount: stake, spot: chosen, slot: live.slot },
-        })
-          .then((res) => {
-            joined.current = live.slot;
-            applyBalances(res.balances);
-            if (stake > 0) {
-              reportRound({
-                win: res.payout > 0,
-                label: res.result.segmentLabel,
-                stake,
-                payout: res.payout,
-                multiplier: res.multiplier,
-                view: { kind: "crazy", segment: res.result.segmentLabel },
-              });
-              if (res.payout > 0) {
-                playSfx("win");
-                toast.success(`Won ${formatMoney(res.payout, currencyRef.current)} · ${formatMultiplier(res.multiplier)}`);
-              }
-            }
-          })
-          .catch((err) => {
-            joined.current = live.slot;
-            if (stake > 0) toast.error(err instanceof Error ? err.message : "Bet missed the wheel");
-          })
-          .finally(() => {
-            joining.current = false;
+    let stop = false;
+    let timer = 0;
+    const pull = async () => {
+      try {
+        const snap = await liveTable({ data: { gameId } });
+        if (stop) return;
+        setLeft(Math.max(0, Math.ceil(snap.left / 1000)));
+        setTape(snap.bets);
+        setHash(snap.hash);
+        const seg = 360 / CRAZY_WHEEL.length;
+        const outcome = snap.outcome;
+        if ((snap.phase === "running" || snap.phase === "result") && outcome) {
+          const wheelIndex = Number(outcome.wheelIndex);
+          setPhase(snap.phase === "running" ? "spin" : "result");
+          setSpin(360 * 5 + (360 - wheelIndex * seg));
+          const paid = snap.phase === "result" && (snap.you?.payout ?? 0) > 0;
+          setResult({
+            wheelIndex,
+            segmentLabel: String(outcome.segmentLabel ?? ""),
+            win: paid,
+            multiplier: paid && snap.you?.amount ? (snap.you.payout ?? 0) / snap.you.amount : 0,
+            topSlot: (outcome.topSlot as Shown["topSlot"]) ?? null,
+            bonus: (outcome.bonus as Shown["bonus"]) ?? null,
           });
+          if (snap.phase === "result" && snap.you && reported.current !== snap.n) {
+            reported.current = snap.n;
+            const payout = snap.you.payout ?? 0;
+            reportRound({
+              win: payout > 0,
+              label: String(outcome.segmentLabel ?? "Crazy"),
+              stake: snap.you.amount,
+              payout,
+              multiplier: snap.you.amount > 0 ? payout / snap.you.amount : 0,
+              view: { kind: "crazy", segment: String(outcome.segmentLabel ?? "") },
+            });
+            if (payout > 0) {
+              playSfx("win");
+              toast.success(`Won ${formatMoney(payout, currencyRef.current)}`);
+            }
+          }
+        } else {
+          setPhase("betting");
+          setSpin(0);
+          setResult(null);
+          if (armedRef.current && amountRef.current > 0 && !snap.you && joined.current !== snap.n && !joining.current) {
+            joining.current = true;
+            const stake = amountRef.current;
+            const chosen = spotRef.current;
+            void placeLiveBet({
+              data: { gameId, currency: currencyRef.current, amount: stake, pick: chosen },
+            })
+              .then((res) => {
+                joined.current = snap.n;
+                applyBalances(res.balances);
+              })
+              .catch((err) => {
+                joined.current = snap.n;
+                toast.error(err instanceof Error ? err.message : "Bet missed the wheel");
+              })
+              .finally(() => {
+                joining.current = false;
+              });
+          }
+        }
+      } catch {
+        // next poll retries
+      } finally {
+        if (!stop) timer = window.setTimeout(pull, 400);
       }
-      raf = requestAnimationFrame(loop);
     };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    void pull();
+    return () => {
+      stop = true;
+      window.clearTimeout(timer);
+    };
   }, [applyBalances, gameId, reportRound]);
 
   return (
@@ -140,18 +175,19 @@ function CrazyTable({ gameId }: { gameId: string }) {
           <TopSlot result={result} phase={phase} />
           <WheelView spin={spin} phase={phase} result={result} />
           {result?.bonus ? <BonusPanel bonus={result.bonus} label={result.segmentLabel} /> : null}
-          {result && !result.bonus && (
+          {result && !result.bonus && phase === "result" && (
             <p className={cn("font-heading text-lg font-bold", result.win ? "text-lime" : "text-muted-foreground")}>
-              {result.win ? `WIN ${result.multiplier}×` : `LANDED ${result.segmentLabel}`}
+              {result.win ? `WIN ${result.multiplier.toFixed(2)}×` : `LANDED ${result.segmentLabel}`}
             </p>
           )}
+          <LiveTape bets={tape} hash={hash} />
         </div>
       }
     />
   );
 }
 
-function TopSlot({ result, phase }: { result: ServerCrazy | null; phase: string }) {
+function TopSlot({ result, phase }: { result: Shown | null; phase: string }) {
   return (
     <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-1.5">
       <span className="font-sub text-[0.6rem] tracking-[0.12em] text-muted-foreground uppercase">Top Slot</span>
@@ -168,7 +204,7 @@ function TopSlot({ result, phase }: { result: ServerCrazy | null; phase: string 
       );
 }
 
-function WheelView({ spin, phase, result }: { spin: number; phase: string; result: ServerCrazy | null }) {
+function WheelView({ spin, phase, result }: { spin: number; phase: string; result: Shown | null }) {
   const wheel = CRAZY_WHEEL;
   const segAngle = 360 / wheel.length;
   const R_OUT = 140;

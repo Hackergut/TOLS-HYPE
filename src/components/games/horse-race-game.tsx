@@ -7,14 +7,12 @@ import { useGameTable } from "@/components/games/game-table";
 import HorseIcon from "@/games/horse-race/game/HorseIcon";
 import Track from "@/games/horse-race/game/Track";
 import { HORSES, makeRunners, type Runner } from "@/games/horse-race/game/types";
-import { playHorse } from "@/lib/casino-api";
+import { liveTable, placeLiveBet } from "@/lib/live-room";
+import { LiveTape } from "@/components/games/live-tape";
 import { formatMoney } from "@/lib/format";
 import { useWallet } from "@/lib/wallet-context";
 
 type Phase = "betting" | "locking" | "countdown" | "racing" | "result";
-
-const BET_MS = 12_000;
-const COUNT_MS = 900;
 
 type Script = {
   winnerId: number;
@@ -48,6 +46,8 @@ function HorseTable({ gameId }: { gameId: string }) {
   const [armed, setArmed] = useState(true);
   const [runners, setRunners] = useState<Runner[]>(() => makeRunners());
   const [banner, setBanner] = useState("Live · gates open");
+  const [tape, setTape] = useState<{ name: string; amount: number; currency: string; pick: string; status: string; cashMult: number | null; payout: number | null; mine: boolean }[]>([]);
+  const [hash, setHash] = useState("");
   const runnersRef = useRef<Runner[]>(runners);
   const scriptRef = useRef<Script | null>(null);
   const fxRef = useRef({ shake: 0 });
@@ -57,6 +57,9 @@ function HorseTable({ gameId }: { gameId: string }) {
   const armedRef = useRef(armed);
   const currencyRef = useRef(currency);
   const reported = useRef(false);
+  const raced = useRef(-1);
+  const joined = useRef(-1);
+  const joining = useRef(false);
 
   phaseRef.current = phase;
   amountRef.current = amount;
@@ -65,34 +68,103 @@ function HorseTable({ gameId }: { gameId: string }) {
   currencyRef.current = currency;
 
   useEffect(() => {
-    if (phase !== "betting") return;
-    const t0 = Date.now();
-    setLeft(12);
-    const tick = window.setInterval(() => {
-      setLeft(Math.max(0, Math.ceil((BET_MS - (Date.now() - t0)) / 1000)));
-    }, 200);
-    const go = window.setTimeout(() => {
-      void lock();
-    }, BET_MS);
-    return () => {
-      window.clearInterval(tick);
-      window.clearTimeout(go);
+    let stop = false;
+    let timer = 0;
+    const pull = async () => {
+      try {
+        const snap = await liveTable({ data: { gameId } });
+        if (stop) return;
+        setLeft(Math.max(0, Math.ceil((snap.phase === "locked" ? snap.startsAt - snap.serverNow : snap.left) / 1000)));
+        setTape(snap.bets);
+        setHash(snap.hash);
+        if (snap.phase === "betting") {
+          if (phaseRef.current !== "betting") {
+            runnersRef.current = makeRunners();
+            setRunners(runnersRef.current);
+            setBanner("Live · gates open");
+            setPhase("betting");
+            reported.current = false;
+          }
+          if (armedRef.current && amountRef.current > 0 && !snap.you && joined.current !== snap.n && !joining.current) {
+            joining.current = true;
+            void placeLiveBet({
+              data: {
+                gameId,
+                currency: currencyRef.current,
+                amount: amountRef.current,
+                pick: String(selectedRef.current),
+              },
+            })
+              .then((res) => {
+                joined.current = snap.n;
+                applyBalances(res.balances);
+              })
+              .catch((err) => {
+                joined.current = snap.n;
+                toast.error(err instanceof Error ? err.message : "Bet missed the gate");
+              })
+              .finally(() => {
+                joining.current = false;
+              });
+          }
+        } else if (snap.phase === "locked") {
+          setPhase("countdown");
+          setCount(Math.max(1, Math.ceil((snap.startsAt - snap.serverNow) / 1000)));
+          setBanner("Live · locking the gate");
+        } else if (snap.phase === "running" && snap.outcome && raced.current !== snap.n) {
+          raced.current = snap.n;
+          const outcome = snap.outcome;
+          scriptRef.current = {
+            winnerId: Number(outcome.winnerId),
+            order: outcome.order as number[],
+            margins: outcome.margins as number[],
+            photoFinish: Boolean(outcome.photoFinish),
+            horseId: Number(snap.you?.pick ?? selectedRef.current),
+            odds: 0,
+            payout: 0,
+            multiplier: 0,
+            stake: snap.you?.amount ?? 0,
+          };
+          reported.current = false;
+          setPhase("racing");
+          setBanner("Live · they're off");
+        } else if (snap.phase === "result" && !reported.current) {
+          const script = scriptRef.current;
+          const payout = snap.you?.payout ?? 0;
+          const stake = snap.you?.amount ?? script?.stake ?? 0;
+          const winnerId = Number(snap.outcome?.winnerId ?? script?.winnerId ?? 0);
+          reported.current = true;
+          const horse = HORSES[winnerId];
+          setBanner(
+            payout > 0
+              ? `Paid ${formatMoney(payout, currencyRef.current)} ${currencyRef.current}`
+              : `${horse?.name ?? "Winner"}`,
+          );
+          if (stake > 0) {
+            reportRound({
+              win: payout > 0,
+              label: `${horse?.name ?? "Race"} · ${payout > 0 ? "win" : "miss"}`,
+              stake,
+              payout,
+              multiplier: stake > 0 ? payout / stake : 0,
+              fair: snap.seed ? { serverHash: snap.hash, clientSeed: snap.seed, nonce: snap.n } : undefined,
+            });
+            if (payout > 0) toast.success(`Won ${formatMoney(payout, currencyRef.current)} ${currencyRef.current}`);
+          }
+          setPhase("result");
+        }
+      } catch {
+        // next poll retries
+      } finally {
+        if (!stop) timer = window.setTimeout(pull, 400);
+      }
     };
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase !== "countdown") return;
-    let n = 3;
-    setCount(3);
-    const id = window.setInterval(() => {
-      n -= 1;
-      if (n <= 0) {
-        window.clearInterval(id);
-        setPhase("racing");
-      } else setCount(n);
-    }, COUNT_MS);
-    return () => window.clearInterval(id);
-  }, [phase]);
+    void pull();
+    return () => {
+      stop = true;
+      window.clearTimeout(timer);
+    };
+  }, [applyBalances, gameId, reportRound]);
 
   useEffect(() => {
     if (phase !== "racing") return;
@@ -139,7 +211,7 @@ function HorseTable({ gameId }: { gameId: string }) {
         }
       }
       if (places > 0 && timer === undefined) {
-        timer = window.setTimeout(() => finish(), 1100);
+        timer = window.setTimeout(() => undefined, 1100);
       }
       raf = requestAnimationFrame(step);
     };
@@ -149,76 +221,6 @@ function HorseTable({ gameId }: { gameId: string }) {
       if (timer) window.clearTimeout(timer);
     };
   }, [phase]);
-
-  async function lock() {
-    if (phaseRef.current !== "betting") return;
-    setPhase("locking");
-    setBanner("Live · locking the gate");
-    const stake = armedRef.current ? amountRef.current : 0;
-    const horseId = selectedRef.current;
-    try {
-      const res = await playHorse({
-        data: { gameId, currency: currencyRef.current, amount: stake, horseId },
-      });
-      applyBalances(res.balances);
-      scriptRef.current = {
-        winnerId: res.winnerId,
-        order: res.order,
-        margins: res.margins,
-        photoFinish: res.photoFinish,
-        horseId,
-        odds: res.odds,
-        payout: res.payout,
-        multiplier: res.multiplier,
-        stake,
-        fair: res.fair,
-      };
-      reported.current = false;
-      setPhase("countdown");
-      setBanner("Live · they're off");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Bet failed");
-      setArmed(false);
-      setPhase("betting");
-      setBanner("Live · gates open");
-    }
-  }
-
-  function finish() {
-    const script = scriptRef.current;
-    if (!script || reported.current) {
-      setPhase("result");
-      return;
-    }
-    reported.current = true;
-    const horse = HORSES[script.winnerId];
-    const win = script.stake > 0 && script.payout > 0;
-    setBanner(
-      win
-        ? `Paid ${formatMoney(script.payout, currencyRef.current)} ${currencyRef.current}`
-        : `${horse?.name ?? "Winner"} · ${script.odds.toFixed(2)}×`,
-    );
-    if (script.stake > 0) {
-      reportRound({
-        win,
-        label: `${horse?.name ?? "Race"} · ${win ? "win" : "miss"}`,
-        stake: script.stake,
-        payout: script.payout,
-        multiplier: script.multiplier,
-        fair: script.fair,
-      });
-      if (win) toast.success(`Won ${formatMoney(script.payout, currencyRef.current)} ${currencyRef.current}`);
-    }
-    setPhase("result");
-    window.setTimeout(() => {
-      if (phaseRef.current === "result") {
-        runnersRef.current = makeRunners();
-        setRunners(runnersRef.current);
-        setBanner("Live · gates open");
-        setPhase("betting");
-      }
-    }, 4000);
-  }
 
   const locked = phase !== "betting";
   const pick = HORSES[selected];
@@ -285,6 +287,7 @@ function HorseTable({ gameId }: { gameId: string }) {
               onPhotoFinish={() => undefined}
             />
           </div>
+          <LiveTape bets={tape} hash={hash} />
         </div>
       }
     />
