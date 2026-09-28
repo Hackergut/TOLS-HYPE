@@ -2,8 +2,30 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
 
-/** Official 1200×400 pack as image. Titles live in HTML, not baked into the JPEG. */
+/** Official art first. Those two already carry the lockup, so the HTML title stays off. */
 const HERO_SLIDES = [
+  {
+    id: "brand",
+    image: "/brand/hero/banner-chips.jpg",
+    kicker: "TOLS",
+    title: "TOLS",
+    subtitle: "Chips, cards, originals.",
+    cta: "PLAY",
+    alt: "TOLS banner — cyan chips, paint and the T lockup",
+    art: false,
+    to: "/casino" as const,
+  },
+  {
+    id: "horse-race",
+    image: "/brand/hero/banner-derby.jpg",
+    kicker: "HORSE RACE",
+    title: "HORSE RACE",
+    subtitle: "Six runners. Pick one.",
+    cta: "RACE",
+    alt: "TOLS Horse Race banner — jockeys in purple and magenta",
+    art: false,
+    to: "/games/$id" as const,
+  },
   {
     id: "obsidian-blackjack",
     image: "https://i.imgur.com/3WS292W.jpeg",
@@ -12,6 +34,8 @@ const HERO_SLIDES = [
     subtitle: "Crash · Dice · Roulette · Blackjack",
     cta: "PLAY",
     alt: "TOLS official welcome banner",
+    art: false,
+    to: "/games/$id" as const,
   },
   {
     id: "neon-crash",
@@ -21,6 +45,8 @@ const HERO_SLIDES = [
     subtitle: "Ride the curve. Cash out before it snaps.",
     cta: "RIDE",
     alt: "TOLS official banner — T mark and paint",
+    art: false,
+    to: "/games/$id" as const,
   },
   {
     id: "signal-dice",
@@ -30,6 +56,8 @@ const HERO_SLIDES = [
     subtitle: "Roll under or over. Instant.",
     cta: "BET",
     alt: "TOLS official banner — coins and cards",
+    art: false,
+    to: "/games/$id" as const,
   },
   {
     id: "obsidian-blackjack-2",
@@ -39,6 +67,8 @@ const HERO_SLIDES = [
     subtitle: "Dealer stands on 17. Blackjack pays 3:2.",
     cta: "DEAL",
     alt: "TOLS official banner — cards and chips",
+    art: false,
+    to: "/games/$id" as const,
   },
   {
     id: "crazy-tols",
@@ -48,6 +78,8 @@ const HERO_SLIDES = [
     subtitle: "Money wheel · 4 bonus rounds",
     cta: "SPIN",
     alt: "TOLS official banner — hands passing chips",
+    art: false,
+    to: "/games/$id" as const,
   },
   {
     id: "pool-rush",
@@ -57,6 +89,8 @@ const HERO_SLIDES = [
     subtitle: "Break the rack for multipliers.",
     cta: "BREAK",
     alt: "TOLS official banner — trophy podium",
+    art: false,
+    to: "/games/$id" as const,
   },
   {
     id: "midnight-roulette",
@@ -66,6 +100,8 @@ const HERO_SLIDES = [
     subtitle: "European single zero · 97.3% RTP",
     cta: "PLAY",
     alt: "TOLS official banner — aces",
+    art: false,
+    to: "/games/$id" as const,
   },
 ] as const;
 
@@ -100,16 +136,8 @@ export function Hero() {
         18+ play-money tables.
       </h1>
       <div className="relative aspect-[2.15/1] w-full sm:aspect-[3/1] sm:min-h-44 md:min-h-56">
-        {HERO_SLIDES.map((s, idx) => (
-          <Link
-            key={`${s.image}-${idx}`}
-            to="/games/$id"
-            params={{ id: s.id }}
-            tabIndex={idx === i ? 0 : -1}
-            className="absolute inset-0 block transition-opacity duration-500"
-            style={{ opacity: idx === i ? 1 : 0, pointerEvents: idx === i ? "auto" : "none" }}
-            aria-hidden={idx !== i}
-          >
+        {HERO_SLIDES.map((s, idx) => {
+          const frame = (
             <img
               src={s.image}
               alt={idx === i ? s.alt : ""}
@@ -120,10 +148,39 @@ export function Hero() {
               loading={idx === i ? "eager" : "lazy"}
               className="absolute inset-0 size-full object-cover object-center"
             />
-          </Link>
-        ))}
-        <div className="pointer-events-none absolute inset-0 z-10 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4 md:p-6">
+          );
+          const cls = "absolute inset-0 block transition-opacity duration-500";
+          const style = { opacity: idx === i ? 1 : 0, pointerEvents: idx === i ? "auto" : "none" } as const;
+          return s.to === "/casino" ? (
+            <Link
+              key={`${s.image}-${idx}`}
+              to="/casino"
+              tabIndex={idx === i ? 0 : -1}
+              className={cls}
+              style={style}
+              aria-hidden={idx !== i}
+            >
+              {frame}
+            </Link>
+          ) : (
+            <Link
+              key={`${s.image}-${idx}`}
+              to="/games/$id"
+              params={{ id: s.id }}
+              tabIndex={idx === i ? 0 : -1}
+              className={cls}
+              style={style}
+              aria-hidden={idx !== i}
+            >
+              {frame}
+            </Link>
+          );
+        })}
+        {!current.art ? (
+          <div className="pointer-events-none absolute inset-0 z-10 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
+        ) : null}
+        {!current.art ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4 md:p-6">
           <p className="text-[0.6rem] font-semibold tracking-[0.16em] text-lime uppercase md:text-xs">
             {current.kicker}
           </p>
@@ -135,6 +192,7 @@ export function Hero() {
             {current.cta}
           </span>
         </div>
+        ) : null}
         <button
           type="button"
           className="absolute right-11 bottom-2 z-30 grid size-7 place-items-center rounded-full bg-black/50 text-white sm:top-1/2 sm:right-auto sm:bottom-auto sm:left-2 sm:size-9 sm:-translate-y-1/2 md:left-3 md:size-10"

@@ -10,7 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { RoundClone } from "@/components/games/round-clone";
-import { shareBetToChat, shareText, shortHash, type BetRound } from "@/lib/bet-history";
+import { shareText, shortHash, type BetRound } from "@/lib/bet-history";
+import { postChat } from "@/lib/chat-api";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { useRightDock } from "@/components/layout/right-dock";
 import { cn } from "cn";
@@ -56,10 +57,16 @@ function RoundDialog({ round, onClose }: { round: BetRound | null; onClose: () =
   }
 
   function share() {
-    if (!round) return;
-    shareBetToChat(user?.displayName ?? "you", round);
-    dock?.toggle("chat");
-    toast.success("Shared in chat");
+    if (!round || !user) {
+      toast.error("Sign in to share a win");
+      return;
+    }
+    void postChat({ data: { room: "en", text: shareText(round), round: { ...round } } })
+      .then(() => {
+        dock?.toggle("chat");
+        toast.success("Shared in chat");
+      })
+      .catch((err) => toast.error(err instanceof Error ? err.message : "Share blocked"));
   }
 
   return (

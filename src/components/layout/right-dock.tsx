@@ -20,16 +20,15 @@ import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { CURRENCIES, PROMOS } from "@/lib/games-catalog";
 import { formatMoney } from "@/lib/format";
 import { useWallet } from "@/lib/wallet-context";
-import { shortHash, subscribeChatShare, type BetRound } from "@/lib/bet-history";
+import { shareText, shortHash, useBetHistory, type BetRound } from "@/lib/bet-history";
+import { chatProfile, chatRain, chatTip, listChat, postChat } from "@/lib/chat-api";
+import { screenChat } from "@/lib/chat-guard";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
 import { RoundClone } from "@/components/games/round-clone";
 
@@ -118,7 +117,10 @@ type ChatMsg = {
   vip: string;
   round?: BetRound;
   tip?: { to: string; amount: string; asset: string };
+  rain?: { names: string[]; share: string; asset: string };
 };
+
+type Card = { name: string; vip: string; wagered: number; bets: number; found: boolean };
 
 const ROOMS = [
   { id: "en", label: "English", flag: "🇬🇧" },
@@ -139,55 +141,152 @@ const VIP_COLOR: Record<string, string> = {
 
 const QUICK_EMOJI = ["😂", "🔥", "💎", "🏇", "💥", "🟢", "👑", "🍀"];
 
-const SEED: ChatMsg[] = [
-  { id: 1, user: "nova", text: "500× on dice", vip: "Gold" },
-  { id: 2, user: "hex", text: "Mines 24 cleared", vip: "Silver" },
-  { id: 3, user: "lido", text: "Who is running the weekly race?", vip: "Platinum" },
-  { id: 4, user: "kite", text: "Horse race just paid the long one", vip: "Jade" },
-  {
-    id: 5,
-    user: "ash",
-    text: "",
-    vip: "Silver",
-    tip: { to: "nova", amount: "10.00", asset: "USDC" },
-  },
-  { id: 6, user: "yard", text: "gl", vip: "Gold" },
-];
+function mapMsg(m: {
+  id: number;
+  user: string;
+  vip: string;
+  kind: string;
+  text: string;
+  payload: Record<string, unknown>;
+}): ChatMsg {
+  const p = m.payload ?? {};
+  return {
+    id: m.id,
+    user: m.user,
+    vip: m.vip,
+    text: m.text,
+    round: m.kind === "win" && p.round && typeof p.round === "object" ? (p.round as BetRound) : undefined,
+    tip: m.kind === "tip" ? { to: String(p.to ?? ""), amount: String(p.amount ?? ""), asset: String(p.asset ?? "") } : undefined,
+    rain:
+      m.kind === "rain"
+        ? {
+            names: Array.isArray(p.names) ? p.names.map(String) : [],
+            share: String(p.share ?? ""),
+            asset: String(p.asset ?? ""),
+          }
+        : undefined,
+  };
+}
 
 function ChatPanel({ onClose }: { onClose: () => void }) {
   const { user } = useCurrentUserState();
-  const [msgs, setMsgs] = useState(SEED);
+  const { currency, applyBalances } = useWallet();
+  const history = useBetHistory();
+  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
+  const [online, setOnline] = useState(0);
   const [text, setText] = useState("");
   const [room, setRoom] = useState<(typeof ROOMS)[number]["id"]>("en");
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [card, setCard] = useState<Card | null>(null);
+  const [tipAmount, setTipAmount] = useState("1");
+  const [rainAmount, setRainAmount] = useState("2");
+  const [mode, setMode] = useState<"chat" | "tip" | "rain">("chat");
+  const [notice, setNotice] = useState("");
   const viewer = useRoundViewerOptional();
   const scroller = useRef<HTMLDivElement>(null);
+  const ownTimes = useRef<number[]>([]);
+  const lastOwn = useRef("");
   const current = ROOMS.find((r) => r.id === room) ?? ROOMS[0];
 
+  async function refresh(next = room) {
+    const res = await listChat({ data: { room: next } });
+    setMsgs(res.messages.map(mapMsg));
+    setOnline(res.online);
+  }
+
   useEffect(() => {
-    return subscribeChatShare((msg) => {
-      setMsgs((m) => [
-        ...m,
-        { id: Date.now(), user: msg.user, text: msg.text, vip: "Gold", round: msg.round },
-      ]);
-    });
-  }, []);
+    let stop = false;
+    void refresh(room).catch(() => undefined);
+    const t = window.setInterval(() => {
+      if (!stop) void refresh(room).catch(() => undefined);
+    }, 3000);
+    return () => {
+      stop = true;
+      window.clearInterval(t);
+    };
+  }, [room]);
 
   useEffect(() => {
     const el = scroller.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [msgs]);
 
-  function send(e: FormEvent) {
+  async function openCard(name: string) {
+    setCard({ name, vip: "Member", wagered: 0, bets: 0, found: false });
+    setMode("tip");
+    try {
+      const res = await chatProfile({ data: { name } });
+      setCard({ name: res.name, vip: res.vip, wagered: res.wagered, bets: res.bets, found: res.found });
+    } catch {
+      setNotice("Profile unavailable");
+    }
+  }
+
+  async function send(e: FormEvent) {
     e.preventDefault();
-    const next = text.trim();
-    if (!next || !user) return;
-    setMsgs((m) => [
-      ...m,
-      { id: Date.now(), user: user.displayName ?? "you", text: next, vip: "Member" },
-    ]);
-    setText("");
-    setEmojiOpen(false);
+    if (!user) return;
+    const verdict = screenChat(text, { now: Date.now(), ownTimes: ownTimes.current, lastOwn: lastOwn.current });
+    if (!verdict.ok) {
+      setNotice(verdict.reason);
+      return;
+    }
+    try {
+      await postChat({ data: { room, text: verdict.text } });
+      ownTimes.current = [...ownTimes.current, Date.now()].slice(-8);
+      lastOwn.current = verdict.text;
+      setText("");
+      setNotice("");
+      setEmojiOpen(false);
+      await refresh();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Message blocked");
+    }
+  }
+
+  async function shareLast() {
+    if (!user) return;
+    const win = [...history].reverse().find((r) => r.win);
+    if (!win) {
+      setNotice("No win to share yet");
+      return;
+    }
+    try {
+      await postChat({ data: { room, text: shareText(win), round: { ...win } } });
+      setNotice("");
+      await refresh();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Share blocked");
+    }
+  }
+
+  async function sendTip(e: FormEvent) {
+    e.preventDefault();
+    if (!user || !card) return;
+    const amount = Number(tipAmount);
+    try {
+      const res = await chatTip({ data: { to: card.name, amount, currency, room } });
+      applyBalances(res.balances);
+      setNotice("");
+      setMode("chat");
+      await refresh();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Tip failed");
+    }
+  }
+
+  async function sendRain(e: FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    const amount = Number(rainAmount);
+    try {
+      const res = await chatRain({ data: { amount, currency, room } });
+      applyBalances(res.balances);
+      setNotice("");
+      setMode("chat");
+      await refresh();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Rain failed");
+    }
   }
 
   return (
@@ -219,28 +318,40 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
 
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <ul className="grid gap-1.5">
+          {msgs.length === 0 ? (
+            <li className="py-6 text-center text-xs text-white/40">No messages yet. Sign in and say something.</li>
+          ) : null}
           {msgs.map((m) => (
             <li key={m.id}>
               {m.tip ? (
                 <div className="rounded-lg bg-white/[0.04] px-2.5 py-2 ring-1 ring-white/10">
                   <p className="flex flex-wrap items-center gap-1 text-xs">
                     <VipMark name={m.vip} />
-                    <span className="font-semibold text-white">{m.user}</span>
+                    <NameButton name={m.user} onOpen={openCard} />
                     <span className="text-lime">tipped</span>
-                    <span className="font-semibold text-white">{m.tip.to}</span>
+                    <NameButton name={m.tip.to} onOpen={openCard} />
                   </p>
                   <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-black/40 px-2 py-1 text-xs font-semibold tabular-nums text-white">
-                    <span className="grid size-4 place-items-center rounded-full bg-[#2775ca] text-[8px] font-bold">$</span>
                     ${m.tip.amount}
                     <span className="text-[10px] text-white/50">{m.tip.asset}</span>
+                  </p>
+                </div>
+              ) : m.rain ? (
+                <div className="rounded-lg bg-white/[0.04] px-2.5 py-2 ring-1 ring-white/10">
+                  <p className="text-xs">
+                    <VipMark name={m.vip} />
+                    <NameButton name={m.user} onOpen={openCard} />
+                    <span className="text-lime"> rained </span>
+                    <span className="text-white/80">{m.rain.names.join(", ")}</span>
+                  </p>
+                  <p className="mt-1 text-xs font-semibold tabular-nums text-white">
+                    ${m.rain.share} {m.rain.asset} each
                   </p>
                 </div>
               ) : (
                 <p className="text-[13px] leading-5">
                   <VipMark name={m.vip} />
-                  <button type="button" className="font-semibold text-white hover:underline">
-                    {m.user}
-                  </button>
+                  <NameButton name={m.user} onOpen={openCard} />
                   <span className="text-white/35">: </span>
                   <span className="text-white/85">{renderChatText(m.text)}</span>
                 </p>
@@ -264,6 +375,57 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <footer className="shrink-0 border-t border-white/10 px-3 pt-2 pb-3">
+        {card && mode === "tip" ? (
+          <form onSubmit={sendTip} className="mb-2 rounded-lg bg-white/[0.04] p-2 ring-1 ring-white/10">
+            <p className="text-xs font-semibold text-white">{card.name}</p>
+            <p className="text-[11px] text-white/50">
+              {card.found ? `${card.vip} · ${card.bets} bets · wagered ${formatMoney(card.wagered, "USDT")}` : "Not a registered player"}
+            </p>
+            <div className="mt-2 flex gap-1">
+              <Input
+                value={tipAmount}
+                onChange={(e) => setTipAmount(e.target.value)}
+                inputMode="decimal"
+                className="h-8 border-white/10 bg-black/30"
+                aria-label="Tip amount"
+              />
+              <Button type="submit" size="sm" disabled={!card.found} className="bg-lime text-black">
+                Tip {currency}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setMode("chat")}>
+                Close
+              </Button>
+            </div>
+          </form>
+        ) : null}
+        {mode === "rain" ? (
+          <form onSubmit={sendRain} className="mb-2 rounded-lg bg-white/[0.04] p-2 ring-1 ring-white/10">
+            <p className="text-[11px] text-white/60">Split across players who spoke in this room in the last 30 minutes. Minimum 1.00, once a minute.</p>
+            <div className="mt-2 flex gap-1">
+              <Input
+                value={rainAmount}
+                onChange={(e) => setRainAmount(e.target.value)}
+                inputMode="decimal"
+                className="h-8 border-white/10 bg-black/30"
+                aria-label="Rain amount"
+              />
+              <Button type="submit" size="sm" className="bg-lime text-black">
+                Rain {currency}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setMode("chat")}>
+                Close
+              </Button>
+            </div>
+          </form>
+        ) : null}
+        <div className="mb-2 flex gap-1">
+          <button type="button" className="rounded-md bg-white/5 px-2 py-1 text-[11px] text-white/70" onClick={() => setMode("rain")}>
+            Rain
+          </button>
+          <button type="button" className="rounded-md bg-white/5 px-2 py-1 text-[11px] text-white/70" onClick={shareLast}>
+            Share win
+          </button>
+        </div>
         <form onSubmit={send} className="relative">
           {emojiOpen ? (
             <div className="absolute right-0 bottom-12 z-10 grid grid-cols-4 gap-1 rounded-lg bg-[#1c1f27] p-2 ring-1 ring-white/10">
@@ -287,6 +449,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
             onChange={(e) => setText(e.target.value)}
             placeholder={user ? "Your message" : "Sign in to chat"}
             disabled={!user}
+            maxLength={180}
             className="h-10 rounded-lg border-white/10 bg-black/30 pr-20"
           />
           <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
@@ -308,18 +471,27 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </form>
+        {notice ? <p className="mt-1 text-[11px] text-rose-300">{notice}</p> : null}
         <div className="mt-2 flex items-center justify-between text-[11px] text-white/45">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-lime" />
-            {180 + msgs.length} online
+            {online} in room
           </span>
           <Link to="/terms" className="inline-flex items-center gap-1 hover:text-white">
             <RiQuestionLine className="size-3.5" />
-            Chat rules
+            Slow mode 3s · no links · no spam
           </Link>
         </div>
       </footer>
     </div>
+  );
+}
+
+function NameButton({ name, onOpen }: { name: string; onOpen: (name: string) => void }) {
+  return (
+    <button type="button" className="font-semibold text-white hover:underline" onClick={() => onOpen(name)}>
+      {name}
+    </button>
   );
 }
 
