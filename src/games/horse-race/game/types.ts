@@ -23,6 +23,8 @@ export interface Horse {
   volatility: number;
   pop: number; // popularity weight for bots
   palette: HorsePalette;
+  /** Jockey silk shown when picking this runner. */
+  silkSrc: string;
   /** Vector renderer palette (reference design). Derived from `palette` at load. */
   art?: HorseArt;
 }
@@ -89,6 +91,7 @@ export const HORSES: Horse[] = [
       cap: "#e63946",
       cloth: "#ffffff",
     },
+    silkSrc: "/games/silks/crimson.png",
   },
   {
     id: 1,
@@ -108,6 +111,7 @@ export const HORSES: Horse[] = [
       cap: "#1e3f9c",
       cloth: "#ffd23f",
     },
+    silkSrc: "/games/silks/azure.png",
   },
   {
     id: 2,
@@ -127,6 +131,7 @@ export const HORSES: Horse[] = [
       cap: "#00ffbd",
       cloth: "#0d0d10",
     },
+    silkSrc: "/games/silks/ghost.png",
   },
   {
     id: 3,
@@ -146,6 +151,7 @@ export const HORSES: Horse[] = [
       cap: "#ffb703",
       cloth: "#904bf9",
     },
+    silkSrc: "/games/silks/solar.png",
   },
   {
     id: 4,
@@ -165,6 +171,7 @@ export const HORSES: Horse[] = [
       cap: "#ffffff",
       cloth: "#00ffbd",
     },
+    silkSrc: "/games/silks/phantom.png",
   },
   {
     id: 5,
@@ -184,6 +191,7 @@ export const HORSES: Horse[] = [
       cap: "#0d0d10",
       cloth: "#e63946",
     },
+    silkSrc: "/games/silks/silver.png",
   },
 ];
 

@@ -4,19 +4,12 @@ import { Hero } from "@/components/home/hero";
 import { LogoLoop } from "@/components/home/logo-loop";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { LobbySection } from "@/components/games/lobby-section";
-import { ProviderShelf } from "@/components/games/provider-shelf";
 import { ProviderStrip } from "@/components/games/provider-strip";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import { groupByProvider } from "@/lib/providers";
 import {
   lobbyPool,
-  sectionCrash,
-  sectionLiveShow,
-  sectionMostPlayed,
-  sectionNew,
-  sectionOriginals,
-  sectionSlots,
-  sectionTableGames,
+  sectionByCategory,
 } from "@/lib/lobby-sections";
 import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
@@ -50,16 +43,12 @@ function Home() {
   const navigate = useNavigate();
   const { games: studio, ready, flexrix } = useRemoteCatalog();
   const pool = useMemo(() => lobbyPool(studio), [studio]);
-  const live = useMemo(() => sectionLiveShow(pool), [pool]);
-  const originals = useMemo(() => sectionOriginals(pool), [pool]);
-  const mostPlayed = useMemo(() => sectionMostPlayed(pool, 18), [pool]);
-  const news = useMemo(() => sectionNew(pool, 18), [pool]);
-  const tables = useMemo(() => sectionTableGames(pool), [pool]);
-  const slots = useMemo(() => sectionSlots(pool), [pool]);
-  const crash = useMemo(() => sectionCrash(pool), [pool]);
+  const originals = useMemo(() => sectionByCategory(pool, "originals"), [pool]);
+  const slots = useMemo(() => sectionByCategory(pool, "slots"), [pool]);
+  const crash = useMemo(() => sectionByCategory(pool, "crash"), [pool]);
+  const tables = useMemo(() => sectionByCategory(pool, "table"), [pool]);
+  const live = useMemo(() => sectionByCategory(pool, "live"), [pool]);
   const providers = useMemo(() => groupByProvider(studio), [studio]);
-  const premium = providers.filter((p) => p.premium).slice(0, 8);
-  const rest = providers.filter((p) => !p.premium).slice(0, 10);
   const loading = !ready && studio.length === 0;
   const hubDown = Boolean(flexrix.error) && studio.length === 0;
 
@@ -82,12 +71,11 @@ function Home() {
       <LogoLoop />
       <PromoBanner />
 
-      <LobbySection title="Live Show" cat="live" games={live} loading={loading} limit={12} />
-      <LobbySection title="Originals" cat="originals" games={originals} limit={14} />
-      <LobbySection title="Slots" cat="slots" games={slots} loading={loading} limit={14} />
-      <LobbySection title="Crash" cat="crash" games={crash} limit={12} />
-      <LobbySection title="Most Played" games={mostPlayed} loading={loading} limit={14} />
-      <LobbySection title="New" games={news} loading={loading} limit={14} />
+      <LobbySection title="Originals" cat="originals" games={originals} limit={24} />
+      <LobbySection title="Crash" cat="crash" games={crash} limit={24} />
+      <LobbySection title="Slots" cat="slots" games={slots} loading={loading} limit={24} />
+      <LobbySection title="Table Games" cat="table" games={tables} limit={24} />
+      <LobbySection title="Live Show" cat="live" games={live} loading={loading} limit={24} />
 
       <section aria-label="Providers" className="flex flex-col gap-2.5">
         <div className="flex items-end gap-3">
@@ -107,15 +95,7 @@ function Home() {
             }}
           />
         )}
-        {premium.map((group) => (
-          <ProviderShelf key={`p-${group.slug}`} group={group} limit={12} />
-        ))}
-        {rest.map((group) => (
-          <ProviderShelf key={`r-${group.slug}`} group={group} limit={8} />
-        ))}
       </section>
-
-      <LobbySection title="Table Games" cat="table" games={tables} loading={loading} limit={12} />
     </main>
   );
 }

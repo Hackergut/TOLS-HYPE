@@ -44,11 +44,8 @@ export function ProviderShelf({ group, limit = 12 }: { group: ProviderGroup; lim
           <RiArrowRightLine className="size-3.5" />
         </Link>
       </div>
-      <div className="tols-shelf-scroll no-scrollbar">
-        <div
-          className="tols-shelf-grid"
-          style={{ ["--shelf-count" as string]: String(Math.max(1, Math.ceil(games.length / 2))) }}
-        >
+      <div className="tols-shelf-scroll">
+        <div className="tols-shelf-grid">
           {games.map((game, i) => (
             <GameCard key={game.id} game={game} priority={i < 4} />
           ))}

@@ -2,11 +2,10 @@ import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { GameGrid } from "@/components/games/game-grid";
-import { ProviderShelf } from "@/components/games/provider-shelf";
 import { ProviderStrip } from "@/components/games/provider-strip";
 import { TolsBreadcrumb } from "@/components/layout/tols-breadcrumb";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
-import { CATEGORIES, GAMES, gamesByCategory, type CatalogGame, type GameCategory } from "@/lib/games-catalog";
+import { CATEGORIES, GAMES, type CatalogGame, type GameCategory } from "@/lib/games-catalog";
 import { groupByProvider } from "@/lib/providers";
 import { useRemoteCatalog } from "@/hooks/use-remote-catalog";
 
@@ -25,14 +24,9 @@ export const Route = createFileRoute("/_shell/casino")({
   }),
 });
 
-function merge(cat: GameCategory | "all", remote: CatalogGame[]): CatalogGame[] {
-  const local = cat === "all" ? GAMES : gamesByCategory(cat);
-  const studio =
-    cat === "all"
-      ? remote
-      : cat === "originals"
-        ? []
-        : remote.filter((g) => (cat === "live" ? g.live : g.category === cat));
+function ofCategory(cat: GameCategory, remote: CatalogGame[]): CatalogGame[] {
+  const local = GAMES.filter((g) => g.category === cat);
+  const studio = remote.filter((g) => g.category === cat);
   const seen = new Set(local.map((g) => g.id));
   return [...local, ...studio.filter((g) => !seen.has(g.id))];
 }
@@ -43,18 +37,25 @@ function CasinoPage() {
   const navigate = Route.useNavigate();
   const { games: remote, ready } = useRemoteCatalog();
   const providers = useMemo(() => groupByProvider(remote), [remote]);
-  const featured = useMemo(() => providers.filter((p) => p.premium).slice(0, 8), [providers]);
   const selected = providers.find((p) => p.slug === providerParam) ?? null;
   const setProvider = (slug: string | null) =>
     navigate({ search: (prev) => ({ ...prev, provider: slug ?? undefined }) });
   const gridGames = useMemo(() => {
-    const merged = merge(cat, remote);
+    const merged = cat === "all" ? [...GAMES, ...remote.filter((g) => !GAMES.some((local) => local.id === g.id))] : ofCategory(cat, remote);
     if (!selected) return merged;
     const ids = new Set(selected.games.map((g) => g.id));
     return merged.filter((g) => ids.has(g.id));
   }, [cat, remote, selected]);
+  const sections = useMemo(
+    () =>
+      CATEGORIES.filter((c) => c.id !== "all").map((c) => ({
+        ...c,
+        id: c.id as GameCategory,
+        games: ofCategory(c.id as GameCategory, remote),
+      })),
+    [remote],
+  );
   const showShelves = cat === "all" && !selected;
-  const originals = useMemo(() => GAMES.filter((g) => g.original), []);
   const loading = !ready && remote.length === 0;
 
   return (
@@ -83,38 +84,16 @@ function CasinoPage() {
       </div>
       <ProviderStrip providers={providers} selected={selected?.slug ?? null} onSelect={setProvider} />
       {showShelves ? (
-        <>
-          <section>
-            <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
-              TOLS Originals
-            </BluescreenTitle>
-            <GameGrid games={originals} />
-          </section>
-          {featured.length > 0 ? (
-            <section className="flex flex-col gap-8">
-              <BluescreenTitle as="h2" className="text-lg font-bold md:text-xl">
-                Premium studios
+        sections.map((section) =>
+          section.games.length === 0 ? null : (
+            <section key={section.id}>
+              <BluescreenTitle as="h2" className="mb-4 text-lg font-bold md:text-xl">
+                {section.label}
               </BluescreenTitle>
-              {featured.map((group) => (
-                <ProviderShelf key={`feat-${group.slug}`} group={group} limit={14} />
-              ))}
+              <GameGrid games={section.games} />
             </section>
-          ) : null}
-          {loading ? (
-            <GameGrid games={[]} loading />
-          ) : (
-            <section className="flex flex-col gap-8">
-              <BluescreenTitle as="h2" className="text-lg font-bold md:text-xl">
-                All providers
-              </BluescreenTitle>
-              {providers
-                .filter((g) => !featured.some((f) => f.slug === g.slug))
-                .map((group) => (
-                  <ProviderShelf key={group.slug} group={group} limit={10} />
-                ))}
-            </section>
-          )}
-        </>
+          ),
+        )
       ) : (
         <GameGrid games={gridGames} loading={loading && gridGames.length === 0} />
       )}

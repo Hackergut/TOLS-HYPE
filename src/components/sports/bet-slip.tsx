@@ -171,7 +171,7 @@ export function BetSlip({
           </dd>
         </div>
       </dl>
-      <Button className="mt-3 h-11 w-full" disabled={!picks.length || busy || amount <= 0} onClick={onPlace}>
+      <Button className="mt-3 h-11 w-full" disabled={!picks.length || busy || amount < 0} onClick={onPlace}>
         {busy
           ? "Placing…"
           : mode2 === "system"

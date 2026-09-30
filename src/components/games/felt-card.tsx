@@ -1,5 +1,6 @@
 import { TolsT } from "@/components/brand/tols-mark";
 import type { PlayingCard } from "@/lib/rng";
+import { cn } from "cn";
 
 const HILO_FACES = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
@@ -10,6 +11,7 @@ export function FeltCard({
   size = "md",
   stripe,
   brand,
+  fluid,
 }: {
   rank?: string | number;
   suit?: string;
@@ -17,10 +19,13 @@ export function FeltCard({
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   stripe?: boolean;
   brand?: boolean;
+  /** Fill the parent box. Text scales with the card. */
+  fluid?: boolean;
 }) {
-  const dim =
-    size === "xl"
-      ? "h-[250px] w-[167px]"
+  const dim = fluid
+    ? "h-full w-full"
+    : size === "xl"
+      ? "h-full w-full"
       : size === "lg"
         ? "h-44 w-32 md:h-52 md:w-36"
         : size === "sm"
@@ -31,24 +36,36 @@ export function FeltCard({
   if (hidden) {
     return (
       <div
-        className={`relative flex ${dim} items-center justify-center overflow-hidden rounded-md border border-white bg-[linear-gradient(124deg,#904BF9_50%,#680cec_50%)] shadow-[0_2px_3px_rgb(0_0_0/0.25)]`}
+        className={cn(
+          "relative flex items-center justify-center overflow-hidden rounded-md border border-white bg-[linear-gradient(124deg,#14f1d9_50%,#0e8f86_50%)] shadow-[0_2px_3px_rgb(0_0_0/0.25)]",
+          dim,
+        )}
       >
-        <TolsT className={size === "xs" ? "size-5 text-white" : "size-12 text-white"} />
+        <TolsT className={size === "xs" ? "size-5 text-black" : "size-[28%] text-black"} />
       </div>
     );
   }
   const face = typeof rank === "number" ? (HILO_FACES[rank - 1] ?? String(rank)) : rank;
   const red = suit === "♥" || suit === "♦";
   const ink = brand ? (red ? "text-purple" : "text-zinc-900") : red ? "text-destructive" : "text-zinc-900";
-  const faceSize = size === "xl" ? "text-[86px] leading-none" : size === "xs" ? "text-sm" : "text-2xl";
+  const faceSize =
+    fluid || size === "xl"
+      ? "text-[clamp(1.35rem,42cqw,5.375rem)] leading-none"
+      : size === "xs"
+        ? "text-sm"
+        : "text-2xl";
+  const suitSize = fluid || size === "xl" ? "text-[clamp(0.85rem,22cqw,2.25rem)]" : size === "xs" ? "text-xs" : "text-lg";
   return (
     <div
-      className={`relative flex ${dim} flex-col items-center justify-center gap-3 overflow-hidden rounded-md bg-white shadow-[0_2px_3px_rgb(0_0_0/0.25)] ${
-        size === "xs" ? "p-1" : "p-2.5"
-      } ${ink}`}
+      className={cn(
+        "relative flex flex-col items-center justify-center gap-[8%] overflow-hidden rounded-md bg-white shadow-[0_2px_3px_rgb(0_0_0/0.25)] @container",
+        size === "xs" ? "p-1" : "p-[6%]",
+        dim,
+        ink,
+      )}
     >
-      <p className={`font-heading font-bold tabular-nums ${faceSize}`}>{face}</p>
-      <p className={size === "xl" ? "text-4xl" : size === "xs" ? "text-xs" : "text-lg"}>{suit}</p>
+      <p className={cn("font-heading font-bold tabular-nums", faceSize)}>{face}</p>
+      <p className={suitSize}>{suit}</p>
       {stripe ? <span className="absolute inset-x-0 bottom-0 h-1 bg-lime" /> : null}
     </div>
   );

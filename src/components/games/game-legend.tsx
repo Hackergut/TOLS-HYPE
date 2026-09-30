@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { RiArrowDownSLine } from "@remixicon/react";
+import { RiArrowDownSLine, RiListCheck2 } from "@remixicon/react";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -33,10 +33,12 @@ export function GameLegend({ game }: { game: CatalogGame }) {
   const [sort, setSort] = useState<"luckiest" | "highest">("luckiest");
   const [windowId, setWindowId] = useState<(typeof WINDOWS)[number]["id"]>("24h");
   const [wins, setWins] = useState<GameWinRow[]>([]);
+  const [limit, setLimit] = useState(10);
+  const [limitOpen, setLimitOpen] = useState(false);
 
   useEffect(() => {
     let live = true;
-    void listGameWins({ data: { gameId: game.id, window: windowId, sort } })
+    void listGameWins({ data: { gameId: game.id, window: windowId, sort, limit: limit as 10 | 50 | 100 } })
       .then((rows) => {
         if (live) setWins(rows);
       })
@@ -46,7 +48,7 @@ export function GameLegend({ game }: { game: CatalogGame }) {
     return () => {
       live = false;
     };
-  }, [game.id, windowId, sort]);
+  }, [game.id, windowId, sort, limit]);
 
   const tags = game.original
     ? ["TOLS Games", "TOLS Originals"]
@@ -105,6 +107,34 @@ export function GameLegend({ game }: { game: CatalogGame }) {
                   </option>
                 ))}
               </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label={`Rows: ${limit}`}
+                  onClick={() => setLimitOpen((v) => !v)}
+                  className="flex h-8 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-muted"
+                >
+                  <RiListCheck2 className="size-4" />
+                  <span className="tabular-nums">{limit}</span>
+                </button>
+                {limitOpen ? (
+                  <div className="absolute top-9 right-0 z-20 grid min-w-16 overflow-hidden rounded-md border border-border bg-card shadow-md">
+                    {[10, 50, 100].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => {
+                          setLimit(n);
+                          setLimitOpen(false);
+                        }}
+                        className={cn("px-3 py-1.5 text-left text-xs tabular-nums hover:bg-muted", n === limit && "text-lime")}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="mt-3 overflow-hidden rounded-xl">
@@ -124,7 +154,7 @@ export function GameLegend({ game }: { game: CatalogGame }) {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    wins.map((w) => (
+                    wins.slice(0, limit).map((w) => (
                       <TableRow key={w.id}>
                         <TableCell className="font-medium">{w.user}</TableCell>
                         <TableCell className="text-right tabular-nums text-lime">

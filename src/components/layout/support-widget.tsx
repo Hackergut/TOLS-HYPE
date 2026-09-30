@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiChat3Fill, RiCloseLine, RiHome5Line, RiQuestionLine, RiSearchLine, RiSendPlaneFill } from "@remixicon/react";
 import { TolsWordmark } from "@/components/brand/tols-mark";
 import { TolsChatIcon } from "@/components/brand/tols-chat-icon";
 import { useRightDock } from "@/components/layout/right-dock";
+import { supportInbox, supportSend, type SupportMessage } from "@/lib/governance/support";
 import { cn } from "cn";
 
 const FAQS = [
@@ -17,6 +18,8 @@ const FAQS = [
 
 type Tab = "home" | "messages" | "help";
 
+type DeskStatus = "ai" | "live" | "closed";
+
 export function SupportWidget() {
   const { tab: dockTab, mobileOpen } = useRightDock();
   const chatOpen = dockTab === "chat";
@@ -24,16 +27,50 @@ export function SupportWidget() {
   const [tab, setTab] = useState<Tab>("home");
   const [q, setQ] = useState("");
   const [draft, setDraft] = useState("");
-  const [notes, setNotes] = useState<string[]>([]);
   const [article, setArticle] = useState<(typeof FAQS)[number] | null>(null);
+  const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [status, setStatus] = useState<DeskStatus>("ai");
+  const [agentName, setAgentName] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const busyRef = useRef(false);
 
   useEffect(() => {
     function openFromNav() {
       setOpen(true);
+      setTab("messages");
     }
     window.addEventListener("tols-support-open", openFromNav);
     return () => window.removeEventListener("tols-support-open", openFromNav);
   }, []);
+
+  useEffect(() => {
+    if (!open || tab !== "messages") return;
+    let stop = false;
+    async function pull() {
+      try {
+        const view = await supportInbox({ data: {} });
+        if (stop || busyRef.current) return;
+        setMessages(view.messages);
+        setStatus(view.status);
+        setAgentName(view.agentName);
+      } catch {
+        /* keep the thread on screen if a poll fails */
+      }
+    }
+    void pull();
+    const id = window.setInterval(() => void pull(), 5000);
+    return () => {
+      stop = true;
+      window.clearInterval(id);
+    };
+  }, [open, tab]);
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, busy]);
 
   const hits = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -41,11 +78,26 @@ export function SupportWidget() {
     return FAQS.filter((f) => f.q.toLowerCase().includes(n) || f.a.toLowerCase().includes(n));
   }, [q]);
 
-  function send() {
-    const t = draft.trim();
-    if (!t) return;
-    setNotes((prev) => [...prev, t]);
+  async function send(handoff = false) {
+    const t = handoff ? draft.trim() || "I need a live agent." : draft.trim();
+    if (!t || busy) return;
+    setBusy(true);
+    busyRef.current = true;
+    setError(null);
     setDraft("");
+    try {
+      const view = await supportSend({ data: { text: t, handoff } });
+      setMessages(view.messages);
+      setStatus(view.status);
+      setAgentName(view.agentName);
+      if (!view.ok && view.error) setError(view.error);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't send");
+      setDraft(t);
+    } finally {
+      setBusy(false);
+      busyRef.current = false;
+    }
   }
 
   return (
@@ -127,30 +179,67 @@ export function SupportWidget() {
 
             {tab === "messages" ? (
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#16171b]">
-                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
-                  <p className="rounded-xl bg-white/5 px-3 py-2 text-sm text-white/70">
-                    TOLS Support — we reply around the clock. Include your account email.
+                <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
+                  <p className="text-[0.68rem] font-semibold tracking-wide text-white/70 uppercase">
+                    {status === "live" ? agentName || "Live agent" : status === "closed" ? "Closed" : "TOLS AI"}
                   </p>
-                  {notes.map((n, i) => (
-                    <p key={i} className="ml-8 rounded-xl bg-[#904bf9]/25 px-3 py-2 text-sm text-white">
-                      {n}
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[0.6rem] font-semibold",
+                      status === "live" ? "bg-lime/15 text-lime" : "bg-white/8 text-white/45",
+                    )}
+                  >
+                    {status === "live" ? "Governance desk" : status === "closed" ? "Closed" : "AI"}
+                  </span>
+                </div>
+                <div ref={scroller} className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+                  {messages.length === 0 ? (
+                    <p className="rounded-xl bg-white/5 px-3 py-2 text-sm text-white/70">
+                      Ask about deposits, fairness, or limits. If a person has to act, this chat calls a live agent on the governance desk.
+                    </p>
+                  ) : null}
+                  {messages.map((m) => (
+                    <p
+                      key={m.id}
+                      className={cn(
+                        "rounded-xl px-3 py-2 text-sm",
+                        m.role === "user" && "ml-8 bg-[#904bf9]/25 text-white",
+                        m.role === "assistant" && "mr-6 bg-white/5 text-white/80",
+                        m.role === "agent" && "mr-4 border border-lime/30 bg-lime/10 text-white",
+                        m.role === "system" && "text-center text-[0.7rem] text-white/45",
+                      )}
+                    >
+                      {m.role === "agent" ? <span className="mb-0.5 block text-[0.62rem] font-semibold text-lime">Live agent</span> : null}
+                      {m.body}
                     </p>
                   ))}
+                  {busy ? <p className="text-[0.7rem] text-white/40">Replying…</p> : null}
+                  {error ? <p className="text-[0.7rem] text-rose-300">{error}</p> : null}
                 </div>
+                {status !== "live" ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void send(true)}
+                    className="mx-2 mb-1 rounded-lg border border-white/10 px-2 py-1.5 text-[0.68rem] font-semibold text-white/70 hover:bg-white/5 disabled:opacity-50"
+                  >
+                    Talk to a live agent
+                  </button>
+                ) : null}
                 <form
                   className="flex gap-2 border-t border-white/10 p-2"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    send();
+                    void send(false);
                   }}
                 >
                   <input
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    placeholder="Write a message…"
+                    placeholder={status === "live" ? "Message the agent…" : "Write a message…"}
                     className="h-10 min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0f1116] px-3 text-sm text-white outline-none"
                   />
-                  <button type="submit" aria-label="Send" className="grid size-10 place-items-center rounded-xl bg-lime text-black">
+                  <button type="submit" aria-label="Send" disabled={busy} className="grid size-10 place-items-center rounded-xl bg-lime text-black disabled:opacity-50">
                     <RiSendPlaneFill className="size-4" />
                   </button>
                 </form>

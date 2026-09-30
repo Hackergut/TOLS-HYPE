@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AdvancedSettings } from "@/components/games/advanced-settings";
+import { LiveRaceStats } from "@/components/promos/live-race-stats";
 import { SpeedPills } from "@/components/games/speed-pills";
 import { getGame } from "@/lib/games-catalog";
 import { isFavorite, loadAnimOn, loadSoundOn, saveAnimOn, saveSoundOn, toggleFavorite } from "@/lib/game-prefs";
@@ -122,10 +123,6 @@ export function useGameTableOptional() {
   return useContext(Ctx);
 }
 
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
-}
-
 export function GameToolbar() {
   const table = useGameTableOptional();
   const gameId = table?.gameId ?? "";
@@ -153,7 +150,7 @@ export function GameToolbar() {
     toast.message(next ? "Sound on" : "Sound off");
   }
 
-  const a = table?.analysis;
+  const [stats, setStats] = useState(false);
 
   return (
     <div className="flex items-center gap-1">
@@ -217,62 +214,19 @@ export function GameToolbar() {
       >
         {fav ? <RiStarFill className="size-4" /> : <RiStarLine className="size-4" />}
       </button>
-      <Popover>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Statistics"
-          >
-            <RiBarChartBoxLine className="size-4" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-72 gap-3 p-3">
-          <div className="flex items-center justify-between">
-            <p className="font-heading text-sm font-semibold">Round analysis</p>
-            {a && a.plays > 0 ? (
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase",
-                  a.heat === "hot" && "bg-lime/15 text-lime",
-                  a.heat === "cold" && "bg-destructive/15 text-destructive",
-                  a.heat === "even" && "bg-muted text-muted-foreground",
-                )}
-              >
-                {a.heat}
-              </span>
-            ) : null}
-          </div>
-          {!a || a.plays === 0 ? (
-            <p className="text-sm text-muted-foreground">Place a bet to start the sample.</p>
-          ) : (
-            <>
-              <div className="flex gap-0.5">
-                {a.recent.slice(0, 20).reverse().map((r, i) => (
-                  <span
-                    key={`${r.at}-${i}`}
-                    title={r.label}
-                    className={cn("h-4 flex-1 rounded-sm", r.win ? "bg-lime" : "bg-muted-foreground/30")}
-                  />
-                ))}
-              </div>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                <Stat k="Rounds" v={String(a.plays)} />
-                <Stat k="Wins" v={`${a.wins} / ${a.losses}L`} />
-                <Stat k="Win rate" v={`${a.winRate}%`} />
-                <Stat k="Last 10" v={`${a.last10Rate}%`} />
-                <Stat k="Streak" v={a.streakKind === "-" ? "—" : `${a.streakKind}${a.streak}`} />
-                <Stat k="Best run" v={`${a.bestWinStreak}W`} />
-                <Stat k="Wagered" v={fmt(a.volume)} />
-                <Stat k="Returned" v={fmt(a.returned)} />
-                <Stat k="Net" v={`${a.net >= 0 ? "+" : ""}${fmt(a.net)}`} accent={a.net >= 0} />
-                <Stat k="Best ×" v={a.bestMult ? `${a.bestMult.toFixed(2)}×` : "—"} />
-              </dl>
-              <p className="truncate text-xs text-muted-foreground">Last · {a.lastLabel}</p>
-            </>
-          )}
-        </PopoverContent>
-      </Popover>
+      <button
+        type="button"
+        className={cn(
+          "grid size-8 place-items-center rounded-md hover:bg-muted",
+          stats ? "bg-lime text-black" : "text-muted-foreground hover:text-foreground",
+        )}
+        aria-label="Statistics"
+        aria-pressed={stats}
+        onClick={() => setStats((v) => !v)}
+      >
+        <RiBarChartBoxLine className="size-4" />
+      </button>
+      <LiveRaceStats open={stats} onClose={() => setStats(false)} />
       <SpeedPills />
       <button
         type="button"
@@ -283,15 +237,6 @@ export function GameToolbar() {
       >
         {sound ? <RiVolumeUpLine className="size-4" /> : <RiVolumeMuteLine className="size-4" />}
       </button>
-    </div>
-  );
-}
-
-function Stat({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
-  return (
-    <div className="flex justify-between gap-2">
-      <dt className="text-muted-foreground">{k}</dt>
-      <dd className={cn("tabular-nums", accent && "text-lime")}>{v}</dd>
     </div>
   );
 }

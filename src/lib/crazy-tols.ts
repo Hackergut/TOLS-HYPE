@@ -37,12 +37,12 @@ export const CRAZY_BET_SPOTS: { id: CrazyBetSpot; label: string; blurb: string }
 ];
 
 const SEG_COLOR: Record<CrazySegmentType, string> = {
-  "1": "#1d63ff",
-  "2": "#e8b84a",
-  "5": "#1a8f2c",
-  "10": "#7c3aec",
-  coinflip: "#d4a017",
-  cashhunt: "#0aa3c2",
+  "1": "#904bf9",
+  "2": "#00ffbd",
+  "5": "#ea2fd4",
+  "10": "#ff8904",
+  coinflip: "#f4efe4",
+  cashhunt: "#34edcd",
   pachinko: "#ff5b79",
   crazy: "#e11d48",
 };
@@ -95,7 +95,7 @@ const TOP_SLOT_RANGES: Record<CrazySegmentType, number[]> = {
 const COIN_FLIP_MULTS = [2, 2, 2, 3, 3, 3, 4, 4, 5, 7, 10, 15, 20, 50];
 
 /** Pachinko wall — 18 slots, DOUBLE at both ends (re-drop doubles the wall). */
-const PACHINKO_SLOTS = [0, 75, 50, 25, 20, 15, 10, 10, 10, 10, 5, 5, 5, 2, 2, 2, 25, 0];
+export const PACHINKO_SLOTS = [0, 75, 50, 25, 20, 15, 10, 10, 10, 10, 5, 5, 5, 2, 2, 2, 25, 0];
 
 /** Cash Hunt wall: [value, cells] — 108 cells, avg profit 19.78x. */
 const CASH_HUNT_SPEC: [number, number][] = [

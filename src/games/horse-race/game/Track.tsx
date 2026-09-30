@@ -67,8 +67,14 @@ export default function Track(props: TrackProps) {
     let lastTs = 0;
     let t = 0;
     let photoDone = false;
+    let varUntil = 0;
+    let varWinner = -1;
     let lastBurst = 0;
-    let flashUntil = 0;
+    let finishCut = 0;
+    let viewX = 0;
+    let viewW = 1;
+    const plate = document.createElement("canvas");
+    const plateCtx = plate.getContext("2d", { alpha: false });
 
     const spawn = (p: Partial<Particle>) => {
       const q = pool[cursor];
@@ -115,10 +121,14 @@ export default function Track(props: TrackProps) {
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      W = Math.max(320, Math.floor(rect.width));
-      H = Math.max(200, Math.floor(rect.height));
-      const area = W * H;
-      dpr = Math.min(window.devicePixelRatio || 1, area > 700000 ? 1.35 : 2);
+      if (rect.width < 2 || rect.height < 2) return;
+      const nextW = Math.floor(rect.width);
+      const nextH = Math.floor(rect.height);
+      const nextDpr = Math.min(window.devicePixelRatio || 1, nextW * nextH > 700000 ? 1.35 : 2);
+      if (nextW === W && nextH === H && nextDpr === dpr && canvas.width > 0) return;
+      W = nextW;
+      H = nextH;
+      dpr = nextDpr;
       canvas.width = Math.floor(W * dpr);
       canvas.height = Math.floor(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -133,7 +143,7 @@ export default function Track(props: TrackProps) {
 
     // ---- geometry helper ----
     const geo = () => {
-      const standsH = Math.max(26, Math.min(40, H * 0.13));
+      const standsH = Math.max(52, Math.min(68, H * 0.2));
       const railB = 8;
       const trackTop = standsH + 6;
       const trackBottom = H - railB;
@@ -144,10 +154,18 @@ export default function Track(props: TrackProps) {
       return { standsH, trackTop, trackBottom, lanes, laneH, startX, finishX, trackW: finishX - startX };
     };
 
+    let dead = false;
     const frame = (ts: number) => {
-      const dtms = Math.min(48, ts - lastTs || 16);
+      if (dead) return;
+      try {
+      const dtms = Math.min(48, Math.max(8, ts - lastTs || 16));
       lastTs = ts;
       const st = R.current;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (W < 2 || H < 2) {
+        requestAnimationFrame(frame);
+        return;
+      }
       const live = (st.running || st.parade) && !st.paused;
       if (live) t += dtms;
       const tsec = t / 1000;
@@ -197,7 +215,9 @@ export default function Track(props: TrackProps) {
 
       ctx.save();
       const sh = st.fx.shake;
-      if (sh > 0.001) ctx.translate((Math.random() - 0.5) * 15 * sh, (Math.random() - 0.5) * 15 * sh);
+      if (sh > 0.001 && Number.isFinite(sh)) {
+        ctx.translate((Math.random() - 0.5) * 8 * sh, (Math.random() - 0.5) * 6 * sh);
+      }
       st.fx.shake *= 0.9;
 
       // ---------- stands + crowd ----------
@@ -213,18 +233,6 @@ export default function Track(props: TrackProps) {
       // stand rail
       ctx.fillStyle = "rgba(148,163,184,0.25)";
       ctx.fillRect(0, g.standsH - 1, W, 1.5);
-      // big screen
-      const bw = Math.min(120, W * 0.2);
-      ctx.fillStyle = "rgba(2,6,23,0.85)";
-      ctx.fillRect(W / 2 - bw / 2, 3, bw, 14);
-      ctx.strokeStyle = "rgba(0,255,189,0.55)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(W / 2 - bw / 2, 3, bw, 14);
-      ctx.fillStyle = "#00ffbd";
-      ctx.font = "bold 9px ui-monospace, monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(st.running ? "◉ LIVE RACE" : st.parade ? "NEXT RACE" : "BETTING OPEN", W / 2, 10.5);
 
       // ---------- track surface ----------
       const trackGrad = ctx.createLinearGradient(0, g.trackTop, 0, g.trackBottom);
@@ -300,7 +308,6 @@ export default function Track(props: TrackProps) {
           }
         }
       }
-      // finish post + flag
       ctx.fillStyle = "#e2e8f0";
       ctx.fillRect(g.finishX + cs * 2 - 1, g.trackTop - 12, 2, 12);
       ctx.fillStyle = "#facc15";
@@ -410,8 +417,7 @@ export default function Track(props: TrackProps) {
       };
       drawParticles(0);
 
-      // ---------- horses (reference vector renderer) ----------
-      // Local bbox ≈ 96 × 70 units → fit inside the lane height.
+      // ---------- horses (animated gallop, one coat colour each) ----------
       const scale = Math.max(0.42, Math.min(1.15, (g.laneH * 0.88) / 70));
       for (let k = 0; k < order.length; k++) {
         const { i } = order[k];
@@ -420,12 +426,10 @@ export default function Track(props: TrackProps) {
         const x = g.startX + r.x * g.trackW;
         const isRun = st.running && !st.paused && !r.finished;
         const isLead = order[0].i === i && st.running;
-        // gallop phase: faster runners cycle faster; idle horses trot slowly at the gate
-        const rate = isRun ? 1.15 + r.horse.volatility * 0.55 : 0.42;
+        const rate = isRun ? 0.36 * Math.max(0.72, Math.min(1.2, r.momentum || 1)) : 0.14;
         const phase = st.paused ? 0.12 : (tsec * rate + i * 0.19) % 1;
         const spd = isRun ? Math.min(1, 0.55 + r.horse.volatility * 0.5 + Math.abs(r.momentum) * 6) : 0.17;
 
-        // contact shadow
         ctx.save();
         ctx.globalAlpha = 0.38;
         ctx.fillStyle = "#04120b";
@@ -434,7 +438,6 @@ export default function Track(props: TrackProps) {
         ctx.fill();
         ctx.restore();
 
-        // leader lime glow
         if (isLead && r.x > 0.02) {
           ctx.save();
           const gl = ctx.createRadialGradient(x, laneY - 34 * scale, 4, x, laneY - 34 * scale, 60 * scale);
@@ -445,12 +448,13 @@ export default function Track(props: TrackProps) {
           ctx.restore();
         }
 
+        const zoom = isLead && st.running ? Math.min(1, Math.max(0, (r.x - 0.7) / 0.3)) : 0;
+        if (zoom > 0.08) continue;
         ctx.save();
         ctx.translate(x, laneY - 34 * scale);
-        drawHorse(ctx, { horse: artOf(r.horse), phase, speed: spd, scale, number: i + 1 });
+        drawHorse(ctx, { horse: artOf(r.horse), phase, speed: spd, scale, number: i + 1, zoom: 0 });
         ctx.restore();
 
-        // "YOU" marker
         if (st.yourHorseId === i && (st.running || st.parade)) {
           const bob = Math.round(Math.sin(tsec * 6) * 2);
           const my = Math.round(laneY - 26 * scale + bob);
@@ -470,60 +474,163 @@ export default function Track(props: TrackProps) {
         }
       }
 
+      const leadId = order[0]?.i;
+      if (leadId !== undefined && st.running) {
+        const r = rs[leadId]!;
+        const zoom = Math.min(1, Math.max(0, (r.x - 0.7) / 0.3));
+        if (zoom > 0.08) {
+          const laneY = g.trackTop + leadId * g.laneH + g.laneH * 0.9;
+          const x = g.startX + r.x * g.trackW;
+          const rate = 0.36 * Math.max(0.72, Math.min(1.2, r.momentum || 1));
+          const phase = (tsec * rate + leadId * 0.19) % 1;
+          ctx.save();
+          ctx.translate(x, laneY - 34 * scale);
+          drawHorse(ctx, {
+            horse: artOf(r.horse),
+            phase,
+            speed: 1,
+            scale,
+            number: leadId + 1,
+            zoom,
+          });
+          ctx.restore();
+        }
+      }
+
       // ---------- particles pass 2 (confetti / sparks) ----------
       drawParticles(1);
       drawParticles(2);
 
       // ---------- photo finish ----------
       if (st.running && !photoDone) {
-        const leader = rs[order[0].i];
-        if (leader && leader.x > 0.985) {
+        const leader = order[0] ? rs[order[0].i] : undefined;
+        if (leader && leader.x > 0.97) {
           photoDone = true;
-          flashUntil = ts + 420;
+          varUntil = ts + 1800;
+          varWinner = order[0]!.i;
           st.onPhotoFinish();
         }
       }
-      if (ts < flashUntil) {
-        const a = 0.35 * (1 - (flashUntil - ts) / 420);
-        ctx.fillStyle = `rgba(255,255,255,${a})`;
-        ctx.fillRect(0, 0, W, H);
-      }
-      if (!st.running) photoDone = false;
-
-      // ---------- standings board ----------
-      if (st.running || st.parade) {
-        const bw2 = Math.min(126, W * 0.34);
-        const bh = Math.min(g.lanes * 12 + 18, 92);
-        const bx = W - bw2 - 8;
-        const by = g.trackTop + 8;
-        ctx.fillStyle = "rgba(2,6,23,0.72)";
-        ctx.beginPath();
-        ctx.roundRect(bx, by, bw2, bh, 6);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(148,163,184,0.2)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.font = "bold 7px ui-monospace, monospace";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "rgba(148,163,184,0.8)";
-        ctx.fillText("ORDER", bx + 7, by + 8);
-        for (let k = 0; k < Math.min(g.lanes, 6); k++) {
-          const { i } = order[k];
-          const r = rs[i];
-          const yy = by + 19 + k * 12;
-          const medal = k === 0 ? "🥇" : k === 1 ? "🥈" : k === 2 ? "🥉" : `${k + 1}.`;
-          ctx.fillStyle = r.horse.color;
-          ctx.beginPath();
-          ctx.arc(bx + 22, yy, 3, 0, 6.283);
-          ctx.fill();
-          ctx.fillStyle = st.yourHorseId === i ? "#00ffbd" : "rgba(226,232,240,0.85)";
-          ctx.font = "bold 8px ui-sans-serif, system-ui, sans-serif";
-          ctx.fillText(`${medal} ${r.horse.name.slice(0, 10)}`, bx + 28, yy);
-        }
+      if (!st.running) {
+        photoDone = false;
+        varUntil = 0;
+        varWinner = -1;
       }
 
       ctx.restore();
+
+      let lead = 0;
+      for (const r of st.runners) {
+        const x = Number.isFinite(r.x) ? r.x : 0;
+        if (x > lead) lead = x;
+      }
+      const wantCut = 0;
+      finishCut += (wantCut - finishCut) * (1 - Math.exp(-dtms / 260));
+      if (!Number.isFinite(finishCut)) finishCut = 0;
+      finishCut = Math.min(1, Math.max(0, finishCut));
+      const strip = Math.max(72, g.trackW * (0.34 - finishCut * 0.16));
+      const tightX = Math.min(Math.max(0, W - strip), Math.max(0, g.finishX - strip * 0.78));
+      const tightY = g.trackTop;
+      const tightH = Math.max(40, g.trackBottom - g.trackTop);
+      viewX = tightX * finishCut;
+      viewW = Math.max(1, W + (strip - W) * finishCut);
+      const viewY = tightY * finishCut;
+      const viewH = Math.max(1, H + (tightH - H) * finishCut);
+      if (finishCut > 0.02 && plateCtx && W > 2 && H > 2) {
+        if (plate.width !== canvas.width || plate.height !== canvas.height) {
+          plate.width = canvas.width;
+          plate.height = canvas.height;
+        }
+        plateCtx.setTransform(1, 0, 0, 1, 0, 0);
+        plateCtx.drawImage(canvas, 0, 0);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#121017";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(
+          plate,
+          viewX * dpr,
+          viewY * dpr,
+          viewW * dpr,
+          viewH * dpr,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      ctx.fillStyle = "#16171b";
+      ctx.fillRect(0, 0, W, g.standsH);
+      const rsHud = st.runners;
+      const nHud = Math.max(1, rsHud.length);
+      const slot = W / nHud;
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      for (let i = 0; i < nHud; i++) {
+        const r = rsHud[i]!;
+        const x = i * slot + 8;
+        ctx.fillStyle = r.horse.color;
+        ctx.beginPath();
+        ctx.arc(x + 5, 14, 4.5, 0, 6.283);
+        ctx.fill();
+        ctx.fillStyle = st.yourHorseId === i ? "#00ffbd" : "#e2e8f0";
+        ctx.font = "600 11px ui-sans-serif, system-ui, sans-serif";
+        ctx.fillText(r.horse.name.split(" ")[0]!.slice(0, 9), x + 14, 14);
+      }
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#00ffbd";
+      ctx.font = "bold 10px ui-monospace, monospace";
+      ctx.fillText(st.running ? "◉ LIVE RACE" : st.parade ? "NEXT RACE" : "BETTING OPEN", W / 2, g.standsH - 14);
+      ctx.fillStyle = "rgba(148,163,184,0.35)";
+      ctx.fillRect(0, g.standsH - 1, W, 1.5);
+
+      if (ts < varUntil && varWinner >= 0) {
+        const horse = rs[varWinner];
+        if (horse) {
+          const left = varUntil - ts;
+          const age = 1800 - left;
+          const lineX = ((g.finishX - viewX) / viewW) * W;
+          const y0 = finishCut > 0.45 ? g.standsH + 4 : g.trackTop;
+          const y1 = finishCut > 0.45 ? H - 8 : g.trackBottom;
+          const band = Math.max(18, (y1 - y0) * 0.22);
+          const scan = (age % 320) / 320;
+          const sy = y0 + scan * Math.max(0, y1 - y0 - band);
+          ctx.save();
+          ctx.globalAlpha = Math.min(1, age / 90) * (left < 260 ? left / 260 : 1);
+          const flash = ctx.createLinearGradient(0, sy, 0, sy + band);
+          flash.addColorStop(0, "rgba(0,255,189,0)");
+          flash.addColorStop(0.5, "rgba(255,255,255,0.9)");
+          flash.addColorStop(1, "rgba(0,255,189,0)");
+          ctx.fillStyle = flash;
+          ctx.fillRect(lineX - 4, sy, 12, band);
+          const cardW = Math.min(168, W * 0.46);
+          const cardH = 52;
+          let cx = lineX - cardW - 10;
+          if (cx < 8) cx = Math.min(W - cardW - 8, lineX + 18);
+          const cy = g.trackTop + 8;
+          ctx.fillStyle = "rgba(8,8,12,0.9)";
+          ctx.beginPath();
+          ctx.roundRect(cx, cy, cardW, cardH, 8);
+          ctx.fill();
+          ctx.strokeStyle = horse.horse.color;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = "#00ffbd";
+          ctx.font = "700 9px ui-monospace, monospace";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "middle";
+          ctx.fillText("VAR  ·  PHOTO", cx + 8, cy + 14);
+          ctx.fillStyle = horse.horse.color;
+          ctx.beginPath();
+          ctx.arc(cx + 14, cy + 35, 5, 0, 6.283);
+          ctx.fill();
+          ctx.fillStyle = "#fff";
+          ctx.font = "700 13px ui-sans-serif, system-ui, sans-serif";
+          ctx.fillText(horse.horse.name.slice(0, 14), cx + 26, cy + 35);
+          ctx.restore();
+        }
+      }
 
       // ---------- pause veil ----------
       if (st.paused && st.running) {
@@ -540,10 +647,16 @@ export default function Track(props: TrackProps) {
       }
 
       requestAnimationFrame(frame);
+      } catch {
+        requestAnimationFrame(frame);
+      }
     };
 
     requestAnimationFrame(frame);
-    return () => ro.disconnect();
+    return () => {
+      dead = true;
+      ro.disconnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

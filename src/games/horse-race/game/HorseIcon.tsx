@@ -45,7 +45,7 @@ export default function HorseIcon({
       ctx.translate(w * 0.5, h * 0.56);
       drawHorse(ctx, {
         horse: art,
-        phase: (t * (running ? 1.4 : 0.42)) % 1,
+        phase: (t * (running ? 0.34 : 0.12)) % 1,
         speed: running ? 0.85 : 0.17,
         scale,
         number: number ?? horse.id + 1,

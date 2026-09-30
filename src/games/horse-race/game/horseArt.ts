@@ -31,9 +31,96 @@ export interface DrawHorseOpts {
   speed: number;  // 0..1 → lean, bob, streaks
   scale: number;
   number: number;
+  /** 0..1 finish push-in. Uses the slow-motion zoom clip. */
+  zoom?: number;
 }
 
 const TAU = Math.PI * 2;
+
+const RUNNER = new Image();
+RUNNER.src = "/games/runner.png";
+
+function loadSeq(dir: string, n: number) {
+  return Array.from({ length: n }, (_, i) => {
+    const img = new Image();
+    img.src = `/games/stables/${dir}/${String(i).padStart(2, "0")}.png`;
+    return img;
+  });
+}
+
+/** Side-on teal gallop — the race cycle. */
+const RUN = loadSeq("run", 80);
+/** Purple 3/4 gallop — second camera, used on half the field. */
+const THREE = loadSeq("threeq", 16);
+/** Slow-motion push-in. Indexed by finish zoom, not looped. */
+const PUSH = loadSeq("push", 16);
+
+function ready(img: HTMLImageElement | null | undefined): img is HTMLImageElement {
+  return !!img && img.complete && img.naturalWidth > 0;
+}
+
+function frameAt(list: HTMLImageElement[], phase: number): HTMLImageElement | null {
+  if (list.length === 0) return null;
+  const idx = Math.floor((((phase % 1) + 1) % 1) * list.length) % list.length;
+  if (ready(list[idx])) return list[idx];
+  for (let d = 1; d < list.length; d++) {
+    const img = list[(idx + d) % list.length];
+    if (ready(img)) return img;
+  }
+  return null;
+}
+
+function clipAt(list: HTMLImageElement[], t: number): HTMLImageElement | null {
+  if (list.length === 0) return null;
+  const u = Math.min(0.999, Math.max(0, t));
+  const idx = Math.min(list.length - 1, Math.floor(u * list.length));
+  if (ready(list[idx])) return list[idx];
+  for (let d = 1; d < list.length; d++) {
+    const a = list[Math.max(0, idx - d)];
+    if (ready(a)) return a;
+    const b = list[Math.min(list.length - 1, idx + d)];
+    if (ready(b)) return b;
+  }
+  return null;
+}
+
+function drawRunnerSprite(ctx: CanvasRenderingContext2D, number: number, phase: number, zoom = 0): boolean {
+  const slot = ((number - 1) % 6 + 6) % 6;
+  const side = slot < 3;
+  let frame: HTMLImageElement | null = null;
+  let mode: "run" | "angle" | "push" = side ? "run" : "angle";
+  if (zoom > 0.42) {
+    frame = clipAt(PUSH, (zoom - 0.42) / 0.58);
+    mode = "push";
+  }
+  if (!frame && zoom > 0.08) {
+    frame = frameAt(THREE, phase);
+    mode = "angle";
+  }
+  if (!frame) {
+    frame = frameAt(side ? RUN : THREE, phase + slot * 0.13) ?? frameAt(RUN, phase);
+    mode = side ? "run" : "angle";
+  }
+  if (!frame && RUNNER.complete && RUNNER.naturalWidth > 0) {
+    frame = RUNNER;
+    mode = "run";
+  }
+  if (!frame) return false;
+  const h = mode === "push" ? 128 : mode === "angle" ? 96 : 84;
+  const w = h * (frame.naturalWidth / frame.naturalHeight);
+  ctx.drawImage(frame, -w * 0.46, -h * 0.82, w, h);
+  if (mode === "push") return true;
+  ctx.fillStyle = "#00ffbd";
+  ctx.beginPath();
+  ctx.roundRect(-10, -6, 18, 12, 2);
+  ctx.fill();
+  ctx.fillStyle = "#04120b";
+  ctx.font = "700 9px ui-sans-serif, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(number), -1, 0);
+  return true;
+}
 
 /* ---------------------------------------------------------- colours */
 
@@ -205,10 +292,15 @@ function drawJockey(ctx: CanvasRenderingContext2D, h: HorseArt, phase: number, s
 /* ------------------------------------------------------------- main */
 
 export function drawHorse(ctx: CanvasRenderingContext2D, o: DrawHorseOpts) {
-  const { horse: h, phase, speed, scale, number } = o;
+  const { horse: h, phase, speed, scale, number, zoom = 0 } = o;
 
   ctx.save();
   ctx.scale(scale, scale);
+
+  if (drawRunnerSprite(ctx, number, phase, zoom)) {
+    ctx.restore();
+    return;
+  }
 
   const pitch = Math.sin(phase * TAU) * 0.055 + speed * 0.03;
   const bob = Math.sin(phase * TAU * 2) * 1.6 * speed;

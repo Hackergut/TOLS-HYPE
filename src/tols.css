@@ -1029,7 +1029,8 @@
   }
 }
 
-/* Lobby: one page grid. Shelves are a two-row CSS grid that fills the row. */
+/* Lobby sections. One auto-fill grid for shelves and the casino mosaic:
+   columns come from the box width, so the sidebar does not squeeze a 6-col row. */
 .tols-lobby {
   display: grid;
   align-content: start;
@@ -1039,9 +1040,6 @@
   .tols-lobby {
     gap: 1rem;
   }
-  .tols-shelf {
-    contain-intrinsic-size: auto 28rem;
-  }
 }
 .tols-shelf {
   display: grid;
@@ -1049,57 +1047,31 @@
   align-content: start;
   min-width: 0;
   content-visibility: auto;
-  contain-intrinsic-size: auto 13.5rem;
+  contain-intrinsic-size: auto 52rem;
 }
 .tols-shelf-scroll {
-  container-type: inline-size;
-  overflow-x: auto;
-  overflow-y: hidden;
-  min-width: 0;
-  scroll-snap-type: x mandatory;
-}
-.tols-shelf-grid {
-  --shelf-gap: 0.45rem;
-  --shelf-cols: 2.55;
-  --shelf-count: 6;
-  --tile: calc((100cqi - (var(--shelf-cols) - 1) * var(--shelf-gap)) / var(--shelf-cols));
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: auto;
-  grid-auto-columns: var(--tile);
-  gap: var(--shelf-gap);
-  width: max-content;
-}
-.tols-shelf-grid > * {
-  scroll-snap-align: start;
   min-width: 0;
 }
-@container (min-width: 36rem) {
-  .tols-shelf-grid {
-    --shelf-cols: 4;
-    --shelf-gap: 0.5rem;
-    grid-auto-flow: row;
-    grid-template-rows: repeat(2, minmax(0, auto));
-    grid-template-columns: repeat(var(--shelf-count), var(--tile));
-    grid-auto-columns: auto;
-  }
-}
-@container (min-width: 52rem) {
-  .tols-shelf-grid {
-    --shelf-cols: 6;
-    --shelf-gap: 0.625rem;
-  }
-}
-@container (min-width: 68rem) {
-  .tols-shelf-grid {
-    --shelf-cols: 7;
-  }
-}
+.tols-shelf-grid,
 .tols-mosaic {
+  --card-min: 9.25rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.25rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--card-min)), 1fr));
   gap: 0.5rem;
   align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+.tols-shelf-grid > *,
+.tols-mosaic > * {
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .tols-shelf-grid,
+  .tols-mosaic {
+    --card-min: 10rem;
+    gap: 0.625rem;
+  }
 }
 .tols-promo {
   display: grid;

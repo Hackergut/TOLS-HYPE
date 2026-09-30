@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlayGate } from "@/components/games/play-gate";
 import { GameShell } from "@/components/games/game-shell";
+import { LiveBetDesk, type DeskBet } from "@/components/games/live-bet-desk";
 import { useGameTable } from "@/components/games/game-table";
-import { FieldLabel, StakeField } from "@/components/games/stake-field";
 import { playPool } from "@/lib/casino-api";
 import { formatMoney } from "@/lib/format";
-import { CURRENCY_META } from "@/lib/games-catalog";
-import { loadAnimOn, loadHotkeysOn, loadInstantOn } from "@/lib/game-prefs";
+import { loadHotkeysOn } from "@/lib/game-prefs";
 import { playSfx } from "@/lib/game-sound";
 import { poolFrameMs } from "@/lib/game-speed";
 import {
@@ -23,7 +20,6 @@ import {
   cueBall,
   rackBalls,
   simulateBreak,
-  toSvg,
   type PoolDiff,
   type PoolFrame,
 } from "@/lib/pool-physics";
@@ -31,6 +27,12 @@ import { TOLS_HEX } from "@/lib/palette";
 import { useWallet } from "@/lib/wallet-context";
 
 const DIFFS: PoolDiff[] = ["beginner", "intermediate", "expert", "pro"];
+const DIFF_LABEL: Record<PoolDiff, string> = {
+  beginner: "Beginner",
+  intermediate: "Mid",
+  expert: "Expert",
+  pro: "Pro",
+};
 
 const BALL_FILL: Record<number, string> = {
   0: "#f4f1ea",
@@ -60,31 +62,63 @@ export function PoolGame({ gameId }: { gameId: string }) {
 }
 
 function PoolTable({ gameId }: { gameId: string }) {
-  const { currency, applyBalances } = useWallet();
+  const { currency, balances, applyBalances } = useWallet();
   const { reportRound } = useGameTable();
-  const meta = CURRENCY_META[currency];
   const [amount, setAmount] = useState(0);
   const [diff, setDiff] = useState<PoolDiff>("expert");
-  const [tab, setTab] = useState("manual");
+  const [mode, setMode] = useState<"manual" | "auto">("manual");
   const [power, setPower] = useState(0.82);
   const [aim, setAim] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [openBets, setOpenBets] = useState(true);
+  const [bets, setBets] = useState<DeskBet[]>([]);
+  const [profit, setProfit] = useState(0);
   const [last, setLast] = useState<{ balls: number; multiplier: number; scratch: boolean } | null>(null);
   const [frame, setFrame] = useState<PoolFrame>(() => restFrame());
-  const [striking, setStriking] = useState(0);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const raf = useRef(0);
+  const playing = useRef(false);
   const autoRef = useRef(false);
   const stopAuto = useRef(false);
-  autoRef.current = tab === "auto";
+  const aimRef = useRef(aim);
+  const powerRef = useRef(power);
+  const frameRef = useRef(frame);
+  autoRef.current = mode === "auto";
+  aimRef.current = aim;
+  powerRef.current = power;
+  frameRef.current = frame;
 
-  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ro = new ResizeObserver(() => {
+      if (playing.current) return;
+      paintPool(canvas, frameRef.current, {
+        aim: aimRef.current,
+        power: powerRef.current,
+        showAim: !busy,
+        stick: "ball",
+      });
+    });
+    ro.observe(canvas);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf.current);
+    };
+  }, [busy]);
 
   const cue = useMemo(() => {
     const c = frame[0];
-    if (!c || c.p) return toSvg(PLAY_W * 0.25, PLAY_H / 2);
-    return toSvg(c.x, c.y);
+    if (!c || c.p) return { x: RAIL + PLAY_W * 0.25, y: RAIL + PLAY_H / 2 };
+    return { x: c.x + RAIL, y: c.y + RAIL };
   }, [frame]);
+
+  useEffect(() => {
+    if (playing.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    paintPool(canvas, frame, { aim, power, showAim: !busy, stick: "ball" });
+  }, [aim, busy, frame, power]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -97,10 +131,11 @@ function PoolTable({ gameId }: { gameId: string }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busy, power, aim, diff, amount]);
+  }, [busy, power, aim, diff, amount, mode]);
 
-  function aimFromEvent(e: PointerEvent<SVGSVGElement>) {
-    const el = svgRef.current;
+  function aimFromEvent(e: PointerEvent<HTMLCanvasElement>) {
+    if (busy) return;
+    const el = canvasRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     const x = ((e.clientX - r.left) / r.width) * TABLE_W;
@@ -110,26 +145,58 @@ function PoolTable({ gameId }: { gameId: string }) {
 
   function playFrames(frames: PoolFrame[]): Promise<void> {
     cancelAnimationFrame(raf.current);
+    const canvas = canvasRef.current;
     const msPer = poolFrameMs();
-    if (!loadAnimOn() || loadInstantOn() || msPer <= 0 || frames.length < 2) {
-      setFrame(frames[frames.length - 1] ?? restFrame());
-      setStriking(0);
+    const lastFrame = frames[frames.length - 1] ?? restFrame();
+    const address = frames[0] ?? restFrame();
+    if (!canvas || msPer <= 0 || frames.length < 2) {
+      playing.current = false;
+      setFrame(lastFrame);
       return Promise.resolve();
     }
+    playing.current = true;
+    playSfx("hit");
+    const ball = address[0];
+    const anchor = ball ? { x: ball.x + RAIL, y: ball.y + RAIL } : { x: RAIL + PLAY_W * 0.25, y: RAIL + PLAY_H / 2 };
+    const aim = aimRef.current;
+    const pulled = BALL_R + 16 + powerRef.current * 62;
+    const contact = BALL_R + 1.5;
+    const strikeMs = 140;
     return new Promise((resolve) => {
-      let i = 0;
       const t0 = performance.now();
       const tick = (now: number) => {
-        i = Math.min(frames.length - 1, Math.floor((now - t0) / msPer));
-        setFrame(frames[i]!);
+        const elapsed = now - t0;
+        if (elapsed < strikeMs) {
+          const t = elapsed / strikeMs;
+          const gap = pulled + (contact - pulled) * t;
+          paintPool(canvas, address, {
+            aim,
+            power: powerRef.current,
+            showAim: false,
+            stick: { ...anchor, aim, gap, alpha: 1 },
+          });
+          raf.current = requestAnimationFrame(tick);
+          return;
+        }
+        const i = Math.min(frames.length - 1, Math.floor((elapsed - strikeMs) / msPer));
+        const away = elapsed - strikeMs;
+        const stick =
+          away < 280
+            ? { ...anchor, aim, gap: contact + away * 0.55, alpha: 1 - away / 280 }
+            : null;
+        paintPool(canvas, frames[i]!, {
+          aim,
+          power: powerRef.current,
+          showAim: false,
+          stick,
+        });
         if (i < frames.length - 1) raf.current = requestAnimationFrame(tick);
         else {
-          setStriking(0);
+          playing.current = false;
+          setFrame(lastFrame);
           resolve();
         }
       };
-      setStriking(1);
-      playSfx("hit");
       raf.current = requestAnimationFrame(tick);
     });
   }
@@ -137,6 +204,7 @@ function PoolTable({ gameId }: { gameId: string }) {
   async function breakShot() {
     setBusy(true);
     setLast(null);
+    setProfit(0);
     try {
       const res = await playPool({
         data: { gameId, currency, amount, difficulty: diff, power, aim },
@@ -152,6 +220,22 @@ function PoolTable({ gameId }: { gameId: string }) {
       if (res.balls > 0) playSfx("pocket");
       else playSfx("lose");
       setLast({ balls: res.balls, multiplier: res.multiplier, scratch: res.scratch });
+      setProfit(Math.max(0, res.payout - amount));
+      window.setTimeout(() => {
+        if (!playing.current) setFrame(restFrame());
+      }, 900);
+      setBets((prev) =>
+        [
+          {
+            name: "You",
+            pick: diff,
+            amount,
+            status: res.multiplier > 0 ? "won" : "lost",
+            mine: true,
+          },
+          ...prev,
+        ].slice(0, 24),
+      );
       reportRound({
         win: res.multiplier > 0,
         label: res.scratch ? "Scratch" : `${res.balls} balls · ${res.multiplier}×`,
@@ -174,62 +258,63 @@ function PoolTable({ gameId }: { gameId: string }) {
       if (autoRef.current && !stopAuto.current) {
         window.setTimeout(() => {
           if (autoRef.current && !stopAuto.current) void breakShot();
-        }, 500);
+        }, 420);
       }
     }
   }
 
-  const rad = (aim * Math.PI) / 180;
-  const pull = 70 + power * 50;
-  const cueX2 = cue.x - Math.cos(rad) * (pull + striking * 8);
-  const cueY2 = cue.y - Math.sin(rad) * (pull + striking * 8);
-  const ghostX = cue.x + Math.cos(rad) * 90;
-  const ghostY = cue.y + Math.sin(rad) * 90;
+  function onBreak() {
+    if (mode === "auto" && busy) {
+      stopAuto.current = true;
+      return;
+    }
+    stopAuto.current = false;
+    void breakShot();
+  }
 
   return (
     <GameShell
       controls={
-        <>
-          <FieldLabel label="Break">
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
-              {DIFFS.map((d) => (
-                <Button
-                  key={d}
-                  type="button"
-                  size="sm"
-                  variant={diff === d ? "default" : "ghost"}
-                  className="h-8 capitalize"
-                  onClick={() => setDiff(d)}
-                >
-                  {d.slice(0, 3)}
-                </Button>
-              ))}
-            </div>
-          </FieldLabel>
-          <Tabs value={tab} onValueChange={setTab} className="gap-0">
-            <TabsList className="h-10 w-full rounded-lg bg-muted">
-              <TabsTrigger value="manual" className="flex-1">Manual</TabsTrigger>
-              <TabsTrigger value="auto" className="flex-1">Auto</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <button
-            type="button"
-            disabled={busy && tab !== "auto"}
-            onClick={() => {
-              if (tab === "auto" && busy) {
-                stopAuto.current = true;
-                return;
-              }
-              stopAuto.current = false;
-              void breakShot();
-            }}
-            className="h-12 w-full rounded-lg bg-lime text-base font-bold text-black hover:bg-lime/90 disabled:opacity-50"
-          >
-            {tab === "auto" && busy ? "Stop" : "Break"}
-          </button>
-          <StakeField amount={amount} setAmount={setAmount} disabled={busy} />
-          <p className="text-[0.65rem] text-muted-foreground">Space to break · 96% RTP</p>
-        </>
+        <LiveBetDesk
+          mode={mode}
+          setMode={(next) => {
+            setMode(next);
+            if (next !== "auto") stopAuto.current = true;
+          }}
+          amount={amount}
+          setAmount={setAmount}
+          busy={mode === "manual" && busy}
+          inputsLocked={busy}
+          currency={currency}
+          balance={balances[currency]}
+          profit={profit}
+          closed={false}
+          onAdd={onBreak}
+          buttonLabel={mode === "auto" && busy ? "Stop" : "Break"}
+          bets={bets}
+          openBets={openBets}
+          setOpenBets={setOpenBets}
+          formatPick={(bet) => DIFF_LABEL[bet.pick as PoolDiff] ?? bet.pick}
+        >
+          <div className="grid grid-cols-2 gap-1.5">
+            {DIFFS.map((d) => (
+              <button
+                key={d}
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setDiff(d);
+                  playSfx("click");
+                }}
+                className={`h-9 rounded-md text-xs font-medium ${
+                  diff === d ? "bg-[#343843] text-white" : "bg-[#202329] text-[#bec6d1]"
+                } disabled:opacity-60`}
+              >
+                {DIFF_LABEL[d]}
+              </button>
+            ))}
+          </div>
+        </LiveBetDesk>
       }
       play={
         <div className="flex flex-col gap-3">
@@ -248,197 +333,35 @@ function PoolTable({ gameId }: { gameId: string }) {
             ))}
           </div>
           <div className="flex items-stretch gap-3">
-          <svg
-            ref={svgRef}
-            viewBox={`0 0 ${TABLE_W} ${TABLE_H}`}
-            className="min-w-0 flex-1 cursor-crosshair touch-none rounded-xl"
-            onPointerDown={aimFromEvent}
-            onPointerMove={(e) => {
-              if (e.buttons) aimFromEvent(e);
-            }}
-          >
-            <defs>
-              <linearGradient id="pool-felt" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5a1cb8" />
-                <stop offset="50%" stopColor={TOLS_HEX.purple} />
-                <stop offset="100%" stopColor="#4a1288" />
-              </linearGradient>
-            </defs>
-            <rect width={TABLE_W} height={TABLE_H} rx="28" fill="#141416" />
-            <rect x="8" y="8" width={TABLE_W - 16} height={TABLE_H - 16} rx="22" fill="#1c1c20" />
-            <rect x={RAIL} y={RAIL} width={PLAY_W} height={PLAY_H} fill="url(#pool-felt)" />
-            <rect
-              x={RAIL}
-              y={RAIL}
-              width={PLAY_W}
-              height={PLAY_H}
-              fill="none"
-              stroke={TOLS_HEX.lime}
-              strokeWidth="3"
+            <canvas
+              ref={canvasRef}
+              className="aspect-[11/6] min-w-0 flex-1 cursor-crosshair touch-none rounded-xl"
+              onPointerDown={aimFromEvent}
+              onPointerMove={(e) => {
+                if (e.buttons) aimFromEvent(e);
+              }}
             />
-            <line
-              x1={RAIL + PLAY_W * 0.25}
-              y1={RAIL + 10}
-              x2={RAIL + PLAY_W * 0.25}
-              y2={RAIL + PLAY_H - 10}
-              stroke={TOLS_HEX.lime}
-              strokeOpacity="0.55"
-              strokeWidth="1.2"
-            />
-            <line
-              x1={RAIL + 12}
-              y1={RAIL + PLAY_H / 2}
-              x2={RAIL + PLAY_W * 0.25}
-              y2={RAIL + PLAY_H / 2}
-              stroke={TOLS_HEX.lime}
-              strokeOpacity="0.45"
-              strokeWidth="1.2"
-            />
-            <circle
-              cx={RAIL + PLAY_W * 0.25}
-              cy={RAIL + PLAY_H / 2}
-              r="28"
-              fill="none"
-              stroke={TOLS_HEX.lime}
-              strokeOpacity="0.55"
-              strokeWidth="1.3"
-            />
-            <line
-              x1={RAIL + PLAY_W * 0.25}
-              y1={RAIL + PLAY_H / 2}
-              x2={RAIL + PLAY_W * 0.75}
-              y2={RAIL + PLAY_H / 2}
-              stroke={TOLS_HEX.lime}
-              strokeOpacity="0.28"
-              strokeDasharray="3 6"
-              strokeWidth="1.1"
-            />
-            {[0.25, 0.5, 0.75].map((t) => (
-              <g key={`d-${t}`}>
-                <rect
-                  x={RAIL + PLAY_W * t - 3.5}
-                  y={14}
-                  width="7"
-                  height="7"
-                  rx="0.5"
-                  fill={TOLS_HEX.lime}
-                  transform={`rotate(45 ${RAIL + PLAY_W * t} 17.5)`}
+            <label className="flex w-8 shrink-0 flex-col items-center gap-1 self-stretch py-1">
+              <span className="relative w-3 flex-1 overflow-hidden rounded-full bg-[#2d2d2d]">
+                <span
+                  className="absolute inset-x-0 bottom-0 rounded-full bg-lime"
+                  style={{ height: `${Math.round(power * 100)}%` }}
                 />
-                <rect
-                  x={RAIL + PLAY_W * t - 3.5}
-                  y={TABLE_H - 21}
-                  width="7"
-                  height="7"
-                  rx="0.5"
-                  fill={TOLS_HEX.lime}
-                  transform={`rotate(45 ${RAIL + PLAY_W * t} ${TABLE_H - 17.5})`}
+                <input
+                  type="range"
+                  min={0.15}
+                  max={1}
+                  step={0.01}
+                  value={power}
+                  onChange={(e) => setPower(Number(e.target.value))}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  style={{ writingMode: "vertical-lr", direction: "rtl" }}
+                  aria-label="Power"
+                  disabled={busy}
                 />
-              </g>
-            ))}
-            {[0.25, 0.5, 0.75].map((t) => (
-              <g key={`s-${t}`}>
-                <rect
-                  x={14}
-                  y={RAIL + PLAY_H * t - 3.5}
-                  width="7"
-                  height="7"
-                  fill={TOLS_HEX.lime}
-                  transform={`rotate(45 17.5 ${RAIL + PLAY_H * t})`}
-                />
-                <rect
-                  x={TABLE_W - 21}
-                  y={RAIL + PLAY_H * t - 3.5}
-                  width="7"
-                  height="7"
-                  fill={TOLS_HEX.lime}
-                  transform={`rotate(45 ${TABLE_W - 17.5} ${RAIL + PLAY_H * t})`}
-                />
-              </g>
-            ))}
-            {[
-              [RAIL, RAIL],
-              [RAIL + PLAY_W, RAIL],
-              [RAIL, RAIL + PLAY_H],
-              [RAIL + PLAY_W, RAIL + PLAY_H],
-              [RAIL + PLAY_W / 2, RAIL],
-              [RAIL + PLAY_W / 2, RAIL + PLAY_H],
-            ].map(([x, y], i) => (
-              <circle key={i} cx={x} cy={y} r={i < 4 ? 16 : 14} fill={TOLS_HEX.black} stroke={TOLS_HEX.lime} strokeWidth="1.6" />
-            ))}
-            {/* Aim + cue */}
-            {!frame[0]?.p ? (
-              <>
-                {!busy && !striking ? (
-                  <line
-                    x1={cue.x}
-                    y1={cue.y}
-                    x2={ghostX}
-                    y2={ghostY}
-                    stroke={TOLS_HEX.lime}
-                    strokeDasharray="4 5"
-                    strokeWidth="1.2"
-                    opacity="0.55"
-                  />
-                ) : null}
-                <line
-                  x1={cue.x}
-                  y1={cue.y}
-                  x2={cueX2}
-                  y2={cueY2}
-                  stroke="#c4a574"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                />
-                <circle cx={cueX2} cy={cueY2} r="3" fill="#111" />
-              </>
-            ) : null}
-            {frame.map((b, i) => {
-              if (b.p) return null;
-              const p = toSvg(b.x, b.y);
-              const id = i === 0 ? 0 : rackIds()[i - 1]!;
-              const stripe = id >= 9;
-              return (
-                <g key={i}>
-                  <circle cx={p.x} cy={p.y} r={BALL_R} fill={BALL_FILL[id]} stroke="#111" strokeWidth="0.7" />
-                  {stripe ? (
-                    <rect x={p.x - BALL_R + 1} y={p.y - 3} width={BALL_R * 2 - 2} height="6" fill="#fff" opacity="0.9" />
-                  ) : null}
-                  {id > 0 ? (
-                    <text
-                      x={p.x}
-                      y={p.y + 3.2}
-                      textAnchor="middle"
-                      fontSize="8"
-                      fontWeight="700"
-                      fill={id === 8 ? "#fff" : "#111"}
-                    >
-                      {id}
-                    </text>
-                  ) : null}
-                </g>
-              );
-            })}
-          </svg>
-          <label className="flex w-8 shrink-0 flex-col items-center gap-1 self-stretch py-1">
-            <span className="relative flex-1 w-3 overflow-hidden rounded-full bg-[#2d2d2d]">
-              <span
-                className="absolute inset-x-0 bottom-0 rounded-full bg-lime"
-                style={{ height: `${Math.round(power * 100)}%` }}
-              />
-              <input
-                type="range"
-                min={0.15}
-                max={1}
-                step={0.01}
-                value={power}
-                onChange={(e) => setPower(Number(e.target.value))}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                style={{ writingMode: "vertical-lr", direction: "rtl" }}
-                aria-label="Power"
-              />
-            </span>
-            <span className="text-[0.6rem] font-bold tracking-wider text-lime">PWR</span>
-          </label>
+              </span>
+              <span className="text-[0.6rem] font-bold tracking-wider text-lime">PWR</span>
+            </label>
           </div>
           {last ? (
             <p className="text-center text-sm tabular-nums">
@@ -447,7 +370,9 @@ function PoolTable({ gameId }: { gameId: string }) {
               {last.multiplier > 0 ? ` · ${formatMoney(amount * last.multiplier, currency)}` : null}
             </p>
           ) : (
-            <p className="text-center text-xs text-muted-foreground">Drag to aim the kitchen break · triangle at the foot spot</p>
+            <p className="text-center text-xs text-muted-foreground">
+              Drag to aim · Space to break · 96% RTP
+            </p>
           )}
         </div>
       }
@@ -463,4 +388,179 @@ function restFrame(): PoolFrame {
   const cue = cueBall();
   const rack = rackBalls();
   return [{ x: cue.x, y: cue.y, p: false }, ...rack.map((b) => ({ x: b.x, y: b.y, p: false }))];
+}
+
+function paintPool(
+  canvas: HTMLCanvasElement,
+  frame: PoolFrame,
+  opts: { aim: number; power: number; showAim: boolean; stick: Stick | "ball" | null },
+) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const cssW = canvas.clientWidth || TABLE_W;
+  const cssH = canvas.clientHeight || cssW * (TABLE_H / TABLE_W);
+  const pxW = Math.max(1, Math.floor(cssW * dpr));
+  const pxH = Math.max(1, Math.floor(cssH * dpr));
+  if (canvas.width !== pxW || canvas.height !== pxH) {
+    canvas.width = pxW;
+    canvas.height = pxH;
+  }
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.setTransform(pxW / TABLE_W, 0, 0, pxH / TABLE_H, 0, 0);
+  ctx.clearRect(0, 0, TABLE_W, TABLE_H);
+  ctx.fillStyle = "#141416";
+  roundRect(ctx, 0, 0, TABLE_W, TABLE_H, 28);
+  ctx.fill();
+  ctx.fillStyle = "#1c1c20";
+  roundRect(ctx, 8, 8, TABLE_W - 16, TABLE_H - 16, 22);
+  ctx.fill();
+  const felt = ctx.createLinearGradient(0, RAIL, 0, RAIL + PLAY_H);
+  felt.addColorStop(0, "#5a1cb8");
+  felt.addColorStop(0.5, TOLS_HEX.purple);
+  felt.addColorStop(1, "#4a1288");
+  ctx.fillStyle = felt;
+  ctx.fillRect(RAIL, RAIL, PLAY_W, PLAY_H);
+  ctx.strokeStyle = TOLS_HEX.lime;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(RAIL, RAIL, PLAY_W, PLAY_H);
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(RAIL + PLAY_W * 0.25, RAIL + 10);
+  ctx.lineTo(RAIL + PLAY_W * 0.25, RAIL + PLAY_H - 10);
+  ctx.moveTo(RAIL + 12, RAIL + PLAY_H / 2);
+  ctx.lineTo(RAIL + PLAY_W * 0.25, RAIL + PLAY_H / 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(RAIL + PLAY_W * 0.25, RAIL + PLAY_H / 2, 28, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 0.28;
+  ctx.setLineDash([3, 6]);
+  ctx.beginPath();
+  ctx.moveTo(RAIL + PLAY_W * 0.25, RAIL + PLAY_H / 2);
+  ctx.lineTo(RAIL + PLAY_W * 0.75, RAIL + PLAY_H / 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = TOLS_HEX.lime;
+  for (const t of [0.25, 0.5, 0.75]) {
+    diamond(ctx, RAIL + PLAY_W * t, 17.5);
+    diamond(ctx, RAIL + PLAY_W * t, TABLE_H - 17.5);
+    diamond(ctx, 17.5, RAIL + PLAY_H * t);
+    diamond(ctx, TABLE_W - 17.5, RAIL + PLAY_H * t);
+  }
+  const pockets: [number, number, number][] = [
+    [RAIL, RAIL, 16],
+    [RAIL + PLAY_W, RAIL, 16],
+    [RAIL, RAIL + PLAY_H, 16],
+    [RAIL + PLAY_W, RAIL + PLAY_H, 16],
+    [RAIL + PLAY_W / 2, RAIL, 14],
+    [RAIL + PLAY_W / 2, RAIL + PLAY_H, 14],
+  ];
+  for (const [x, y, r] of pockets) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = TOLS_HEX.black;
+    ctx.fill();
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = TOLS_HEX.lime;
+    ctx.stroke();
+  }
+
+  const cue = frame[0];
+  const stick =
+    opts.stick === "ball"
+      ? cue && !cue.p
+        ? {
+            x: cue.x + RAIL,
+            y: cue.y + RAIL,
+            aim: opts.aim,
+            gap: BALL_R + 14 + opts.power * 58,
+            alpha: 1,
+          }
+        : null
+      : opts.stick;
+  if (opts.showAim && cue && !cue.p) {
+    const rad = (opts.aim * Math.PI) / 180;
+    ctx.globalAlpha = 0.55;
+    ctx.setLineDash([4, 5]);
+    ctx.strokeStyle = TOLS_HEX.lime;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cue.x + RAIL, cue.y + RAIL);
+    ctx.lineTo(cue.x + RAIL + Math.cos(rad) * 110, cue.y + RAIL + Math.sin(rad) * 110);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  if (stick && stick.alpha > 0.02) drawStick(ctx, stick);
+
+  const ids = rackIds();
+  frame.forEach((b, i) => {
+    if (b.p) return;
+    const id = i === 0 ? 0 : ids[i - 1] ?? 1;
+    const x = b.x + RAIL;
+    const y = b.y + RAIL;
+    ctx.beginPath();
+    ctx.arc(x, y, BALL_R, 0, Math.PI * 2);
+    ctx.fillStyle = BALL_FILL[id] ?? "#fff";
+    ctx.fill();
+    ctx.lineWidth = 0.7;
+    ctx.strokeStyle = "#111";
+    ctx.stroke();
+    if (id >= 9) {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillRect(x - BALL_R + 1, y - 3, BALL_R * 2 - 2, 6);
+    }
+    if (id > 0) {
+      ctx.fillStyle = id === 8 ? "#fff" : "#111";
+      ctx.font = "700 8px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(id), x, y + 0.5);
+    }
+  });
+}
+
+type Stick = { x: number; y: number; aim: number; gap: number; alpha: number };
+
+function drawStick(ctx: CanvasRenderingContext2D, stick: Stick) {
+  const rad = (stick.aim * Math.PI) / 180;
+  const tipX = stick.x - Math.cos(rad) * stick.gap;
+  const tipY = stick.y - Math.sin(rad) * stick.gap;
+  const len = 156;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, stick.alpha));
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#c4a574";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(tipX - Math.cos(rad) * len, tipY - Math.sin(rad) * len);
+  ctx.stroke();
+  ctx.strokeStyle = "#f4f1ea";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(tipX - Math.cos(rad) * 12, tipY - Math.sin(rad) * 12);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function diamond(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.PI / 4);
+  ctx.fillRect(-3.5, -3.5, 7, 7);
+  ctx.restore();
 }

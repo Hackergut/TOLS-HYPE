@@ -587,6 +587,11 @@ export async function applyGovCommand(type: string, payload: Record<string, unkn
     return { applied: true, action: "feature_flag", key };
   }
 
+  if (type === "governance.support_reply" || type === "governance.support_close") {
+    const { applySupportInbound } = await import("./support");
+    return applySupportInbound(type, payload);
+  }
+
   return { accepted: true, type };
 }
 

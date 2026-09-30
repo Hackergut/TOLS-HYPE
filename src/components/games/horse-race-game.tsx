@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { GameShell, LimeBet } from "@/components/games/game-shell";
+import { GameShell } from "@/components/games/game-shell";
 import { PlayGate } from "@/components/games/play-gate";
-import { StakeField } from "@/components/games/stake-field";
+import { LiveBetDesk } from "@/components/games/live-bet-desk";
 import { useGameTable } from "@/components/games/game-table";
-import HorseIcon from "@/games/horse-race/game/HorseIcon";
 import Track from "@/games/horse-race/game/Track";
 import { HORSES, makeRunners, type Runner } from "@/games/horse-race/game/types";
 import { liveTable, placeLiveBet } from "@/lib/live-room";
 import { LiveTape } from "@/components/games/live-tape";
 import { formatMoney } from "@/lib/format";
+import { playSfx, setRacePace, startRaceBed, stopRaceBed, unlockGameAudio } from "@/lib/game-sound";
 import { useWallet } from "@/lib/wallet-context";
 
 type Phase = "betting" | "locking" | "countdown" | "racing" | "result";
@@ -36,14 +36,17 @@ export function HorseRaceGame({ gameId }: { gameId: string }) {
 }
 
 function HorseTable({ gameId }: { gameId: string }) {
-  const { currency, applyBalances } = useWallet();
+  const { currency, balances, applyBalances } = useWallet();
   const { reportRound } = useGameTable();
   const [phase, setPhase] = useState<Phase>("betting");
   const [left, setLeft] = useState(12);
   const [count, setCount] = useState(3);
   const [amount, setAmount] = useState(0);
+  const [mode, setMode] = useState<"manual" | "auto">("manual");
+  const [autoOn, setAutoOn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [openBets, setOpenBets] = useState(true);
   const [selected, setSelected] = useState(0);
-  const [armed, setArmed] = useState(true);
   const [runners, setRunners] = useState<Runner[]>(() => makeRunners());
   const [banner, setBanner] = useState("Live · gates open");
   const [tape, setTape] = useState<{ name: string; amount: number; currency: string; pick: string; status: string; cashMult: number | null; payout: number | null; mine: boolean }[]>([]);
@@ -54,17 +57,20 @@ function HorseTable({ gameId }: { gameId: string }) {
   const phaseRef = useRef<Phase>("betting");
   const amountRef = useRef(amount);
   const selectedRef = useRef(selected);
-  const armedRef = useRef(armed);
+  const modeRef = useRef(mode);
+  const autoOnRef = useRef(false);
   const currencyRef = useRef(currency);
   const reported = useRef(false);
   const raced = useRef(-1);
   const joined = useRef(-1);
   const joining = useRef(false);
+  const heardTick = useRef(-1);
 
   phaseRef.current = phase;
   amountRef.current = amount;
   selectedRef.current = selected;
-  armedRef.current = armed;
+  modeRef.current = mode;
+  autoOnRef.current = autoOn;
   currencyRef.current = currency;
 
   useEffect(() => {
@@ -85,7 +91,7 @@ function HorseTable({ gameId }: { gameId: string }) {
             setPhase("betting");
             reported.current = false;
           }
-          if (armedRef.current && amountRef.current > 0 && !snap.you && joined.current !== snap.n && !joining.current) {
+          if (autoOnRef.current && amountRef.current >= 0 && !snap.you && joined.current !== snap.n && !joining.current) {
             joining.current = true;
             void placeLiveBet({
               data: {
@@ -98,6 +104,7 @@ function HorseTable({ gameId }: { gameId: string }) {
               .then((res) => {
                 joined.current = snap.n;
                 applyBalances(res.balances);
+                playSfx("pocket");
               })
               .catch((err) => {
                 joined.current = snap.n;
@@ -149,7 +156,15 @@ function HorseTable({ gameId }: { gameId: string }) {
               multiplier: stake > 0 ? payout / stake : 0,
               fair: snap.seed ? { serverHash: snap.hash, clientSeed: snap.seed, nonce: snap.n } : undefined,
             });
-            if (payout > 0) toast.success(`Won ${formatMoney(payout, currencyRef.current)} ${currencyRef.current}`);
+            stopRaceBed();
+            if (payout > 0) {
+              playSfx(payout >= stake * 6 ? "win" : "cash");
+              toast.success(`Won ${formatMoney(payout, currencyRef.current)} ${currencyRef.current}`);
+            } else {
+              playSfx("lose");
+            }
+          } else {
+            stopRaceBed();
           }
           setPhase("result");
         }
@@ -167,6 +182,23 @@ function HorseTable({ gameId }: { gameId: string }) {
   }, [applyBalances, gameId, reportRound]);
 
   useEffect(() => {
+    if (phase !== "countdown") {
+      heardTick.current = -1;
+      return;
+    }
+    if (heardTick.current === count) return;
+    heardTick.current = count;
+    playSfx("tick");
+  }, [phase, count]);
+
+  useEffect(() => {
+    if (phase !== "racing") return;
+    playSfx("gate");
+    startRaceBed();
+    return () => stopRaceBed();
+  }, [phase]);
+
+  useEffect(() => {
     if (phase !== "racing") return;
     const script = scriptRef.current;
     const rs = makeRunners();
@@ -181,23 +213,29 @@ function HorseTable({ gameId }: { gameId: string }) {
     let raf = 0;
     let places = 0;
     let timer: number | undefined;
-    const t0 = performance.now();
+    let clock = 0;
+    let timeScale = 1;
+    let prev = performance.now();
     const step = (ts: number) => {
-      const elapsed = (ts - t0) / 1000;
+      const dt = Math.min(0.05, (ts - prev) / 1000);
+      prev = ts;
+      let lead = 0;
+      for (const r of rs) lead = Math.max(lead, r.x);
+      const wantSlow = lead > 0.9 ? 0.1 : lead > 0.72 ? Math.max(0.16, 1 - ((lead - 0.72) / 0.18) * 0.84) : 1;
+      timeScale += (wantSlow - timeScale) * (1 - Math.exp(-dt * 2.4));
+      setRacePace(timeScale);
+      clock += dt * timeScale;
       const crossed: { i: number; at: number }[] = [];
       for (let i = 0; i < rs.length; i++) {
         const r = rs[i]!;
         if (r.finished) continue;
         const at = finishAt[i] ?? BASE;
-        const base = elapsed / at;
-        const damp = Math.max(0, 1 - Math.pow(base, 2.6));
-        const wob =
-          Math.sin(elapsed * (2.1 + i * 0.47) + i * 2.3) * 0.055 +
-          Math.sin(elapsed * (0.9 + i * 0.21) + i) * 0.035;
-        const gate = base < 0.06 ? base / 0.06 : 1;
-        r.momentum = wob * damp;
-        r.x = Math.max(0, Math.min(1, (base + r.momentum) * gate));
-        if (base >= 1) {
+        const target = Math.min(1, Math.max(0, clock / at));
+        const follow = 1 - Math.exp(-dt * (lead > 0.72 ? 3.4 : 8));
+        const next = r.x + (target - r.x) * follow;
+        r.x = Number.isFinite(next) ? Math.max(0, Math.min(1, next)) : target;
+        r.momentum = timeScale;
+        if (target >= 1 && r.x > 0.992) {
           r.x = 1;
           crossed.push({ i, at });
         }
@@ -224,47 +262,80 @@ function HorseTable({ gameId }: { gameId: string }) {
 
   const locked = phase !== "betting";
   const pick = HORSES[selected];
+  const profit = amount * Math.max(0, (pick?.odds ?? 1) - 1);
+
+  async function addBet() {
+    if (locked || amount < 0 || busy) return;
+    setBusy(true);
+    try {
+      const res = await placeLiveBet({
+        data: { gameId, currency, amount, pick: String(selected) },
+      });
+      joined.current = res.snap.n;
+      setTape(res.snap.bets);
+      applyBalances(res.balances);
+      playSfx("pocket");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Bet failed");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <GameShell
       controls={
-        <>
-          <StakeField amount={amount} setAmount={setAmount} disabled={locked} />
-          <div className="grid grid-cols-2 gap-2">
+        <LiveBetDesk
+          mode={mode}
+          setMode={(next) => {
+            setMode(next);
+            if (next !== "auto") setAutoOn(false);
+          }}
+          amount={amount}
+          setAmount={setAmount}
+          busy={busy}
+          currency={currency}
+          balance={balances[currency]}
+          profit={profit}
+          closed={locked}
+          onAdd={() => void addBet()}
+          autoRunning={autoOn}
+          onAutoToggle={() => setAutoOn((on) => !on)}
+          bets={tape}
+          openBets={openBets}
+          setOpenBets={setOpenBets}
+          formatPick={(bet) => HORSES[Number(bet.pick)]?.name ?? bet.pick}
+        >
+          <div className="grid grid-cols-3 gap-1.5">
             {HORSES.map((horse) => (
               <button
                 key={horse.id}
                 type="button"
                 disabled={locked}
-                onClick={() => setSelected(horse.id)}
-                className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-left ${
-                  selected === horse.id ? "border-lime bg-lime/10" : "border-[#2a2e38] bg-black/20"
+                onClick={() => {
+                  setSelected(horse.id);
+                  playSfx("click");
+                }}
+                className={`overflow-hidden rounded-md border text-left ${
+                  selected === horse.id ? "border-lime bg-lime/10" : "border-[#2a2e38] bg-black"
                 } disabled:opacity-60`}
               >
-                <HorseIcon horse={horse} size={36} running={phase === "racing" && selected === horse.id} />
-                <span className="min-w-0">
-                  <span className="block truncate text-xs font-semibold text-white">{horse.name}</span>
-                  <span className="text-[11px] tabular-nums text-lime">{horse.odds.toFixed(2)}×</span>
+                <img
+                  src={horse.silkSrc}
+                  alt=""
+                  className="h-16 w-full bg-black object-contain object-top"
+                />
+                <span className="block px-1.5 py-1">
+                  <span className="block truncate text-[10px] font-semibold text-white">{horse.name}</span>
+                  <span className="text-[11px] font-bold tabular-nums text-lime">{horse.odds.toFixed(2)}×</span>
                 </span>
               </button>
             ))}
           </div>
-          {phase === "betting" ? (
-            <LimeBet onClick={() => setArmed((v) => !v)}>
-              {armed ? `In · ${left}s` : `Sit out · ${left}s`}
-            </LimeBet>
-          ) : (
-            <LimeBet disabled>
-              {phase === "racing" ? "Live" : phase === "result" ? "Paying" : "Locked"}
-            </LimeBet>
-          )}
-          <p className="text-[11px] text-[#9ba5b4]">
-            Stake is taken when the gate locks. Win pays {pick ? pick.odds.toFixed(2) : "—"}× back to the wallet.
-          </p>
-        </>
+        </LiveBetDesk>
       }
       play={
-        <div className="flex w-full flex-col gap-3">
+        <div className="flex w-full flex-col gap-3" onPointerDown={unlockGameAudio}>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-lime" />
@@ -283,8 +354,8 @@ function HorseTable({ gameId }: { gameId: string }) {
               fx={fxRef.current}
               burstToken={phase === "result" ? 1 : 0}
               burstColors={["#00ffbd", "#904bf9", "#ffffff"]}
-              yourHorseId={armed ? selected : null}
-              onPhotoFinish={() => undefined}
+              yourHorseId={selected}
+              onPhotoFinish={() => playSfx("photo")}
             />
           </div>
           <LiveTape bets={tape} hash={hash} />

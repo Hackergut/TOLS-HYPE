@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authClient, authEnabled } from "./client";
+import { authClient } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
 export type AppUser = {
@@ -23,12 +23,24 @@ export const DEV_USER: AppUser = {
   isDevFallback: true,
 };
 
+/** Fixed seat for the Grok sandbox preview only. Not used on the deployed site. */
+export const PREVIEW_PLAYER: AppUser = {
+  id: "preview-player",
+  displayName: "Grok",
+  primaryEmail: "preview@tols.local",
+  profileImageUrl: null,
+  isDevFallback: false,
+};
+
 export function isRealPlayer(user: AppUser | null | undefined): boolean {
   return Boolean(user && !user.isDevFallback);
 }
 
-function inGrokSandbox(): boolean {
-  return typeof window !== "undefined" && window.location.hostname.endsWith(".grok-sandbox.com");
+function inPreviewDev(): boolean {
+  if (!import.meta.env.DEV || typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  if (host === "tols.fun" || host === "www.tols.fun" || host.endsWith(".vercel.app")) return false;
+  return true;
 }
 
 /** `useCurrentUserState()` result: the user plus the session-loading flag. */
@@ -64,10 +76,8 @@ function useNativeSession(): CurrentUserState {
 /**
  * Current user + loading state.
  *
- * Real identity is `/api/auth/me` (`tols_session` from Google/Telegram) and,
- * when `VITE_AUTH_ENABLED` is not `"false"`, Better Auth email session.
- * Production guests are signed **out** (Login + Sign up). The shared DEV_USER
- * is only for the Grok sandbox preview.
+ * Real identity is `/api/auth/me` and the Better Auth session.
+ * Production guests stay signed out. This dev preview uses the fixed Grok seat.
  */
 export function useCurrentUserState(): CurrentUserState {
   const native = useNativeSession();
@@ -86,7 +96,9 @@ export function useCurrentUserState(): CurrentUserState {
       isPending: false,
     };
   }
-  if (!authEnabled && inGrokSandbox()) return { user: DEV_USER, isPending: false };
+  // This dev server only. The deployed bundle has import.meta.env.DEV false,
+  // so tols.fun still asks for Login / Sign up.
+  if (inPreviewDev()) return { user: PREVIEW_PLAYER, isPending: false };
   return { user: null, isPending: native.isPending || isPending };
 }
 

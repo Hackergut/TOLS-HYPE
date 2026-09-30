@@ -39,6 +39,7 @@ export type GameKind =
   | "tower"
   | "crazy"
   | "horse"
+  | "slide"
   | "iframe";
 
 export type CatalogGame = {
@@ -210,6 +211,21 @@ export const ORIGINALS: CatalogGame[] = [
     edge: 0.01,
     rtp: 99,
     blurb: "Set a target. If the number lands at or above, you hit.",
+    cover: "/brand/games/limbo.jpg?v=4",
+    cta: "Bet",
+  },
+  {
+    id: "neon-slide",
+    title: "Slide",
+    provider: "TOLS Originals",
+    category: "crash",
+    kind: "slide",
+    original: true,
+    isNew: true,
+    players: 860,
+    edge: 0.01,
+    rtp: 99,
+    blurb: "Set a target. The marker slides. Hit it and the bet pays.",
     cover: "/brand/games/limbo.jpg?v=4",
     cta: "Bet",
   },

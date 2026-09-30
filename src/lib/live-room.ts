@@ -12,6 +12,7 @@ import { crazyRound, type CrazyBetSpot } from "@/lib/crazy-tols";
 import { oddsFor, orderFromFloats } from "@/games/horse-race/game/rtp";
 import { credit, debit, ensureWallets, snapshotBalances } from "@/lib/wallet.server";
 import { pushSettledBet } from "@/lib/governance/bridge";
+import { guardStake } from "@/lib/governance/stake-guard";
 
 const currencySchema = z.enum(CURRENCIES);
 
@@ -71,7 +72,7 @@ export type LiveSnap = {
   history: { n: number; label: string }[];
 };
 
-type Kind = "crash" | "crazy" | "horse";
+type Kind = "crash" | "crazy" | "horse" | "slide";
 
 type RoundRow = {
   game_id: string;
@@ -98,7 +99,7 @@ function settledOf(v: unknown) {
 function kindOf(gameId: string): Kind {
   const game = getGame(gameId);
   if (!game) throw new Error("Unknown game");
-  if (game.kind === "crash" || game.kind === "crazy" || game.kind === "horse") return game.kind;
+  if (game.kind === "crash" || game.kind === "crazy" || game.kind === "horse" || game.kind === "slide") return game.kind;
   throw new Error("Not a live table");
 }
 
@@ -122,6 +123,12 @@ function buildOutcome(gameId: string, kind: Kind, seed: string) {
     const crashAt = crashPointFromFloat(floats[0] ?? 0.5, edge);
     const flight = Math.min(Math.max(crashElapsedFor(crashAt, growth), 400), 90_000);
     return { floats, crashAt, growth, edge, flight };
+  }
+  if (kind === "slide") {
+    const game = getGame(gameId);
+    const edge = game?.edge ?? 0.01;
+    const crashAt = crashPointFromFloat(floats[0] ?? 0.5, edge);
+    return { floats, crashAt, edge };
   }
   if (kind === "crazy") {
     const drawn = crazyRound(floats, "1");
@@ -152,6 +159,12 @@ function windows(kind: Kind, opens: number, outcome: { flight?: number }) {
     const reveal = starts + (outcome.flight ?? 3_000);
     return { locks, starts, reveal, ends: reveal + 2_800 };
   }
+  if (kind === "slide") {
+    const locks = opens + 6_000;
+    const starts = locks + 200;
+    const reveal = starts + 2_400;
+    return { locks, starts, reveal, ends: reveal + 2_200 };
+  }
   if (kind === "crazy") {
     const locks = opens + 8_000;
     const starts = locks;
@@ -172,7 +185,7 @@ function phaseAt(row: RoundRow, now: number): LivePhase {
 }
 
 function publicOutcome(kind: Kind, phase: LivePhase, outcome: LiveOutcome): LiveOutcome | null {
-  if (kind === "crash") {
+  if (kind === "crash" || kind === "slide") {
     if (phase !== "result") return null;
     return { crashAt: outcome.crashAt };
   }
@@ -196,7 +209,7 @@ function publicOutcome(kind: Kind, phase: LivePhase, outcome: LiveOutcome): Live
 }
 
 function historyLabel(kind: Kind, outcome: Record<string, unknown>) {
-  if (kind === "crash") return `${Number(outcome.crashAt).toFixed(2)}×`;
+  if (kind === "crash" || kind === "slide") return `${Number(outcome.crashAt).toFixed(2)}×`;
   if (kind === "crazy") return String(outcome.segmentLabel ?? "spin");
   return `#${Number(outcome.winnerId) + 1}`;
 }
@@ -269,6 +282,13 @@ async function settle(row: RoundRow, kind: Kind) {
         multiplier = drawn.multiplier;
         payout = amount * multiplier;
       }
+    } else if (kind === "slide") {
+      const target = Number(bet.pick);
+      const point = Number(outcome.crashAt);
+      if (target >= 1.01 && point >= target) {
+        multiplier = target;
+        payout = amount * target;
+      }
     } else if (kind === "horse") {
       const horseId = Number(bet.pick);
       if (horseId === Number(outcome.winnerId)) {
@@ -278,7 +298,8 @@ async function settle(row: RoundRow, kind: Kind) {
     }
     const status = payout > 0 ? "won" : "lost";
     const marked = await sql<{ ok: number }>`
-      update live_bets set status = ${status}, payout = ${payout}
+      update live_bets set status = ${status}, payout = ${payout},
+        cash_mult = case when ${kind === "slide" && multiplier > 0} then ${multiplier} else cash_mult end
       where id = ${bet.id} and status = 'open'
       returning 1 as ok
     `;
@@ -340,9 +361,9 @@ async function snapshot(gameId: string, userId: string, now = Date.now()): Promi
   }>`
     select user_id, user_name, currency, amount::text, pick, status, cash_mult::text, payout::text
     from live_bets
-    where game_id = ${gameId} and n = ${row.n}
+    where game_id = ${gameId} and n = ${row.n} and status <> 'void'
     order by created_at asc
-    limit 24
+    limit 48
   `;
   const past = await sql<{ n: number; outcome: string }>`
     select n, outcome from live_rounds
@@ -402,7 +423,7 @@ export const placeLiveBet = createServerFn({ method: "POST" })
     z.object({
       gameId: z.string(),
       currency: currencySchema,
-      amount: z.number().positive(),
+      amount: z.number().min(0),
       pick: z.string().max(24).default(""),
     }),
   )
@@ -422,9 +443,16 @@ export const placeLiveBet = createServerFn({ method: "POST" })
       select id from live_bets
       where game_id = ${data.gameId} and n = ${row.n} and user_id = ${context.userId}
     `;
-    if (existing.length > 0) {
+    if (kind === "slide") {
+      const target = Number(data.pick);
+      if (!Number.isFinite(target) || target < 1.01 || target > 1_000_000) throw new Error("Set a target");
+      if (existing.length >= 8) throw new Error("Eight bets is the round limit");
+    } else if (kind === "crazy") {
+      if (existing.length >= 40) throw new Error("Chip limit reached");
+    } else if (existing.length > 0) {
       return { snap: await snapshot(data.gameId, context.userId, now), balances: await snapshotBalances(context.userId) };
     }
+    await guardStake(context.userId, data.currency, data.amount);
     await ensureWallets(context.userId);
     await debit(context.userId, data.currency, data.amount, "bet", game.id, game.title);
     const name = await displayName(context.userId);
@@ -447,6 +475,101 @@ export const placeLiveBet = createServerFn({ method: "POST" })
       await credit(context.userId, data.currency, data.amount, "refund", game.id, "live bet refund");
       throw err;
     }
+    return { snap: await snapshot(data.gameId, context.userId), balances: await snapshotBalances(context.userId) };
+  });
+
+const crazySpot = z.enum(["1", "2", "5", "10", "coinflip", "cashhunt", "pachinko", "crazy"]);
+
+/** Chip stack controls for Crazy Tols: undo the last chip, clear, double, or repeat the last round. */
+export const adjustCrazyBet = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ gameId: z.string(), action: z.enum(["undo", "clear", "double", "rebet"]) }))
+  .handler(async ({ context, data }) => {
+    const game = getGame(data.gameId);
+    if (!game || kindOf(data.gameId) !== "crazy") throw new Error("Not Crazy Tols");
+    const now = Date.now();
+    const row = await tick(data.gameId, now);
+    if (phaseAt(row, now) !== "betting") throw new Error("Round closed");
+    const sql = await getSql();
+    const open = await sql<{ id: string; amount: string; currency: string; pick: string }>`
+      select id, amount::text, currency, pick
+      from live_bets
+      where game_id = ${data.gameId} and n = ${row.n} and user_id = ${context.userId} and status = 'open'
+      order by created_at desc
+    `;
+
+    if (data.action === "undo") {
+      const last = open[0];
+      if (!last) throw new Error("No chip to undo");
+      const amount = asNumber(last.amount);
+      await sql`update live_bets set status = 'void' where id = ${last.id} and status = 'open'`;
+      await credit(context.userId, last.currency as Currency, amount, "refund", game.id, "crazy undo");
+    } else if (data.action === "clear") {
+      if (open.length === 0) throw new Error("No chips");
+      const currency = open[0]!.currency as Currency;
+      if (open.some((bet) => bet.currency !== currency)) throw new Error("One currency per round");
+      const total = open.reduce((sum, bet) => sum + asNumber(bet.amount), 0);
+      await sql`
+        update live_bets set status = 'void'
+        where game_id = ${data.gameId} and n = ${row.n} and user_id = ${context.userId} and status = 'open'
+      `;
+      await credit(context.userId, currency, total, "refund", game.id, "crazy clear");
+    } else if (data.action === "double") {
+      if (open.length === 0) throw new Error("No chips to double");
+      const currency = open[0]!.currency as Currency;
+      if (open.some((bet) => bet.currency !== currency)) throw new Error("One currency per round");
+      const extra = open.reduce((sum, bet) => sum + asNumber(bet.amount), 0);
+      await guardStake(context.userId, currency, extra);
+      await debit(context.userId, currency, extra, "bet", game.id, game.title);
+      try {
+        for (const bet of open) {
+          await sql`update live_bets set amount = amount * 2 where id = ${bet.id} and status = 'open'`;
+        }
+      } catch (err) {
+        await credit(context.userId, currency, extra, "refund", game.id, "crazy double refund");
+        throw err;
+      }
+    } else {
+      if (open.length > 0) throw new Error("Clear the felt before a rebet");
+      const prev = await sql<{ pick: string; amount: string; currency: string }>`
+        select pick, sum(amount)::text as amount, currency
+        from live_bets
+        where game_id = ${data.gameId} and n = ${row.n - 1} and user_id = ${context.userId}
+          and status in ('won', 'lost')
+        group by pick, currency
+      `;
+      const spots = prev.filter((bet) => crazySpot.safeParse(bet.pick).success && asNumber(bet.amount) > 0);
+      if (spots.length === 0) throw new Error("Nothing to rebet");
+      const currency = spots[0]!.currency as Currency;
+      if (spots.some((bet) => bet.currency !== currency)) throw new Error("One currency per round");
+      const total = spots.reduce((sum, bet) => sum + asNumber(bet.amount), 0);
+      await guardStake(context.userId, currency, total);
+      await ensureWallets(context.userId);
+      await debit(context.userId, currency, total, "bet", game.id, game.title);
+      const name = await displayName(context.userId);
+      try {
+        for (const bet of spots) {
+          await sql`
+            insert into live_bets (id, game_id, n, user_id, user_name, currency, amount, pick, status)
+            values (
+              ${newRoundId()},
+              ${data.gameId},
+              ${row.n},
+              ${context.userId},
+              ${name},
+              ${currency},
+              ${asNumber(bet.amount)},
+              ${bet.pick},
+              'open'
+            )
+          `;
+        }
+      } catch (err) {
+        await credit(context.userId, currency, total, "refund", game.id, "crazy rebet refund");
+        throw err;
+      }
+    }
+
     return { snap: await snapshot(data.gameId, context.userId), balances: await snapshotBalances(context.userId) };
   });
 

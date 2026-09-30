@@ -12,6 +12,7 @@ import { CrazyTolsGame } from "@/components/games/crazy-tols-game";
 import { PoolGame } from "@/components/games/pool-game";
 import { LimboGame } from "@/components/games/limbo-game";
 import { PlinkoGame } from "@/components/games/plinko-game";
+import { SlideGame } from "@/components/games/slide-game";
 import { TowerGame } from "@/components/games/tower-game";
 import { HorseRaceGame } from "@/components/games/horse-race-game";
 import { AggregatorFrame } from "@/components/games/aggregator-frame";
@@ -145,6 +146,8 @@ function GameSwitch({ kind, id }: { kind: string; id: string }) {
       return <CrazyTolsGame gameId={id} />;
     case "plinko":
       return <PlinkoGame gameId={id} />;
+    case "slide":
+      return <SlideGame gameId={id} />;
     case "tower":
       return <TowerGame gameId={id} />;
     case "horse":

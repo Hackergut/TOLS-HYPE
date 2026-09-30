@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { RiArrowRightLine, RiArrowRightSLine } from "@remixicon/react";
+import { RiArrowRightLine } from "@remixicon/react";
 import { GameCard, GameCardSkeleton } from "@/components/games/game-card";
 import { BluescreenTitle } from "@/components/brand/bluescreen-title";
 import { TolsT } from "@/components/brand/tols-mark";
@@ -19,36 +18,10 @@ export function LobbySection({
   loading?: boolean;
   limit?: number;
 }) {
-  const scroller = useRef<HTMLDivElement>(null);
-  const [canRight, setCanRight] = useState(false);
   const row = games.slice(0, limit);
   const search = cat && cat !== "all" ? { cat } : {};
 
-  const update = () => {
-    const el = scroller.current;
-    if (!el) return;
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
-  };
-
-  useEffect(() => {
-    update();
-    const el = scroller.current;
-    if (!el) return;
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [row.length, loading]);
-
   if (!loading && games.length === 0) return null;
-
-  const count = (loading && row.length === 0 ? 8 : row.length) + 1;
-  const shelfCount = Math.max(1, Math.ceil(count / 2));
-
-  const scrollNext = () => {
-    const el = scroller.current;
-    if (!el) return;
-    el.scrollBy({ left: el.clientWidth * 0.86, behavior: "smooth" });
-  };
 
   return (
     <section aria-label={title} className="tols-shelf">
@@ -66,15 +39,8 @@ export function LobbySection({
           <RiArrowRightLine className="size-3.5" />
         </Link>
       </div>
-      <div className="relative min-w-0">
-        <div
-          ref={scroller}
-          onScroll={update}
-          className="tols-shelf-scroll no-scrollbar"
-          role="region"
-          aria-label={`${title} grid`}
-        >
-          <div className="tols-shelf-grid" style={{ ["--shelf-count" as string]: String(shelfCount) }}>
+      <div className="tols-shelf-scroll">
+        <div className="tols-shelf-grid" role="region" aria-label={`${title} grid`}>
           {loading && row.length === 0
             ? Array.from({ length: 8 }, (_, i) => <GameCardSkeleton key={i} />)
             : row.map((game, i) => <GameCard key={game.id} game={game} priority={i < 6} />)}
@@ -93,19 +59,7 @@ export function LobbySection({
               </span>
             </span>
           </Link>
-          </div>
         </div>
-        <button
-          type="button"
-          aria-label={`Scroll ${title}`}
-          disabled={!canRight}
-          onClick={scrollNext}
-          className="absolute inset-y-0 right-0 z-2 hidden w-16 items-center justify-end bg-linear-to-l from-[#0d0d10] to-transparent pr-1 disabled:pointer-events-none disabled:opacity-0 md:flex"
-        >
-          <span className="grid size-[38px] place-items-center rounded-full border border-white/12 bg-[#16171b]/90 text-white">
-            <RiArrowRightSLine className="size-5" />
-          </span>
-        </button>
       </div>
     </section>
   );

@@ -52,11 +52,13 @@ export function limboFromFloat(u: number, max = 2 ** 24): number {
   return Math.max(1, Math.floor(raw * 100) / 100);
 }
 
-/** Number of right bounces → bucket index 0..rows. */
+/** Right-bounce path. Bucket index is how many times the chip went right. */
+export function plinkoPath(floats: number[], rows: number): number[] {
+  return Array.from({ length: rows }, (_, i) => ((floats[i] ?? 0) >= 0.5 ? 1 : 0));
+}
+
 export function plinkoBucket(floats: number[], rows: number): number {
-  let r = 0;
-  for (let i = 0; i < rows; i += 1) r += (floats[i] ?? Math.random()) >= 0.5 ? 1 : 0;
-  return r;
+  return plinkoPath(floats, rows).reduce((sum, step) => sum + step, 0);
 }
 
 const PLINKO: Record<"low" | "medium" | "high", Record<8 | 12 | 16, number[]>> = {
@@ -108,7 +110,7 @@ export function towerMultiplier(safeRows: number, cols = TOWER_COLS, bombs = 1):
   return Math.floor(m * 100) / 100;
 }
 
-/** Provably placed bombs. Classic is random; the other patterns are readable shapes. */
+/** Provably placed bombs. The shape is fixed, the rotation comes from the seed. */
 export function towerBombs(
   floats: number[],
   cols: number,
@@ -117,6 +119,7 @@ export function towerBombs(
   pattern: TowerPattern,
 ): number[][] {
   const grid: number[][] = [];
+  const shift = Math.floor((floats[0] ?? 0.5) * cols);
   for (let r = 0; r < rows; r += 1) {
     const picked: number[] = [];
     const take = (c: number) => {
@@ -124,22 +127,19 @@ export function towerBombs(
       if (!picked.includes(col) && picked.length < bombs) picked.push(col);
     };
     if (pattern === "snake") {
-      const start = Math.floor((floats[0] ?? 0.5) * cols);
-      for (let b = 0; b < bombs; b += 1) take(start + r + b);
+      for (let b = 0; b < bombs; b += 1) take(shift + r + b);
     } else if (pattern === "mirror") {
-      if (bombs === 1) take(r % 2 === 0 ? 0 : cols - 1);
-      else {
-        take(0);
-        take(cols - 1);
-        let k = 0;
-        while (picked.length < bombs && k < cols) {
-          take(Math.floor(cols / 2) + (k % 2 === 0 ? k / 2 : -Math.ceil(k / 2)));
-          k += 1;
-        }
+      const edge = r % 2 === 0 ? 0 : cols - 1;
+      take(shift + edge);
+      if (bombs > 1) take(shift + (cols - 1 - edge));
+      let k = 0;
+      while (picked.length < bombs && k < cols) {
+        take(shift + Math.floor(cols / 2) + (k % 2 === 0 ? k / 2 : -Math.ceil(k / 2)));
+        k += 1;
       }
     } else if (pattern === "edges") {
       const order = [0, cols - 1, 1, Math.max(0, cols - 2)];
-      for (let b = 0; b < bombs; b += 1) take(order[b % order.length]!);
+      for (let b = 0; b < bombs; b += 1) take(shift + order[b % order.length]!);
     } else {
       let fi = r;
       let guard = 0;

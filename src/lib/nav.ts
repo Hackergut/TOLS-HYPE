@@ -51,6 +51,7 @@ export const ORIGINAL_SECTIONS: OriginalNav[] = [
   { title: "Keno", id: "keno-40" },
   { title: "Hi-Lo", id: "hilo-ace" },
   { title: "Limbo", id: "pulse-limbo" },
+  { title: "Slide", id: "neon-slide" },
   { title: "Plinko", id: "grid-plinko" },
   { title: "Tower", id: "sky-tower" },
   { title: "Roulette", id: "midnight-roulette" },

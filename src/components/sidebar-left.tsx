@@ -141,7 +141,7 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
             onClick={() => setRail("casino")}
             className={
               rail === "casino"
-                ? "flex-1 rounded-l-md border border-[#7717ff] text-sm font-bold text-white [text-shadow:0_1px_0_#000]"
+                ? "flex-1 rounded-l-md border border-lime text-sm font-bold text-lime"
                 : "flex-1 rounded-l-md border border-[#343843] border-r-0 text-sm font-medium text-white/70"
             }
           >
@@ -152,7 +152,7 @@ export function SidebarLeft(props: ComponentProps<typeof Sidebar>) {
             onClick={() => setRail("sport")}
             className={
               rail === "sport"
-                ? "flex-1 rounded-r-md border border-[#7717ff] text-sm font-bold text-white [text-shadow:0_1px_0_#000]"
+                ? "flex-1 rounded-r-md border border-lime text-sm font-bold text-lime"
                 : "flex-1 rounded-r-md border border-[#343843] border-l-0 text-sm font-medium text-white/70"
             }
           >

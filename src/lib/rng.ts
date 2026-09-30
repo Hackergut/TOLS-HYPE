@@ -51,6 +51,9 @@ export function rouletteMultiplier(number: number, choice: string): number {
   if (choice === "dozen1") return number >= 1 && number <= 12 ? 3 : 0;
   if (choice === "dozen2") return number >= 13 && number <= 24 ? 3 : 0;
   if (choice === "dozen3") return number >= 25 && number <= 36 ? 3 : 0;
+  if (choice === "col1") return number > 0 && number % 3 === 1 ? 3 : 0;
+  if (choice === "col2") return number > 0 && number % 3 === 2 ? 3 : 0;
+  if (choice === "col3") return number > 0 && number % 3 === 0 ? 3 : 0;
   const n = Number(choice);
   if (Number.isInteger(n) && n >= 0 && n <= 36) return n === number ? 36 : 0;
   return 0;

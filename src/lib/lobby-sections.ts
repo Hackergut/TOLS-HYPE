@@ -19,6 +19,10 @@ export function lobbyPool(remote: CatalogGame[]): CatalogGame[] {
   return uniqueGames([...GAMES, ...remote]);
 }
 
+export function sectionByCategory(pool: CatalogGame[], category: CatalogGame["category"]): CatalogGame[] {
+  return pool.filter((g) => g.category === category);
+}
+
 export function sectionOriginals(pool: CatalogGame[]): CatalogGame[] {
   return pool.filter(isHouseOriginal);
 }

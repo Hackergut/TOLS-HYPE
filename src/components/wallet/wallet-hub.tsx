@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { RiCloseLine, RiLogoutBoxRLine } from "@remixicon/react";
 import { toast } from "sonner";
@@ -471,19 +471,79 @@ function VaultPane() {
 }
 
 export function WalletChip() {
-  const { currency, balances } = useWallet();
-  const [mode] = useValueMode();
-  const { openTab } = useWalletHub();
+  const { currency, setCurrency, balances } = useWallet();
+  const [mode, setMode] = useValueMode();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const fiat = mode === "usd";
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener("mousedown", close);
+    return () => window.removeEventListener("mousedown", close);
+  }, [open]);
+
   return (
-    <Button
-      variant="outline"
-      className="h-9 min-w-0 gap-1.5 rounded-lg px-2 md:h-10 md:px-3"
-      onClick={() => openTab("wallet")}
-    >
-      <CryptoMark currency={currency} className="size-5" />
-      <span className="max-w-24 truncate text-xs tabular-nums md:max-w-none md:text-sm">
-        {display(balances[currency], currency, mode)}
-      </span>
-    </Button>
+    <div ref={root} className="relative">
+      <Button
+        variant="outline"
+        className="h-9 min-w-0 gap-1.5 rounded-lg px-2 md:h-10 md:px-3"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <CryptoMark currency={currency} className="size-5" />
+        <span className="max-w-24 truncate text-xs tabular-nums md:max-w-none md:text-sm">
+          {display(balances[currency], currency, mode)}
+        </span>
+      </Button>
+      {open ? (
+        <div role="dialog" className="absolute top-[calc(100%+8px)] right-0 z-20 min-w-max">
+          <div className="w-[250px] overflow-hidden rounded-lg border border-[#444054] bg-[#262334] shadow-[0_0_30px_#000]">
+            <ul className="max-h-80 overflow-auto">
+              {CURRENCIES.map((c, i) => (
+                <li key={c} className={i < CURRENCIES.length - 1 ? "border-b border-[#444054]" : ""}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-3 py-3.5 text-sm font-semibold text-white"
+                    onClick={() => {
+                      setCurrency(c);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <CryptoMark currency={c} className="size-[18px]" />
+                      {c}
+                    </span>
+                    <span className="text-xs font-normal">{formatUsd(toUsd(balances[c], c))}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-between gap-2.5 rounded-b-lg border-t border-[#444054] bg-[#14121e] px-3 py-3">
+              <span className="text-sm font-semibold text-white">Display in Fiat</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={fiat}
+                aria-label="Display in Fiat"
+                onClick={() => setMode(fiat ? "crypto" : "usd")}
+                className={cn("relative h-[22px] w-10 shrink-0 rounded-full", fiat ? "bg-lime" : "bg-[#444054]")}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 size-[18px] rounded-full bg-white transition-transform",
+                    fiat ? "translate-x-[18px]" : "translate-x-0.5",
+                  )}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

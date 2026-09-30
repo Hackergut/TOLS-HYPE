@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   RiDiceLine,
-  RiTvLine,
   RiSearchLine,
   RiBasketballLine,
+  RiChat3Line,
   RiUser3Line,
 } from "@remixicon/react";
 import { GAMES } from "@/lib/games-catalog";
@@ -18,12 +18,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "cn";
+import { useRightDock } from "@/components/layout/right-dock";
 
 const tabs = [
   { id: "casino", label: "Casino", to: "/casino" as const, icon: RiDiceLine, match: ["/", "/casino", "/games"] },
-  { id: "live", label: "Live", to: "/live" as const, icon: RiTvLine, match: ["/live"] },
-  { id: "search", label: "Search", to: null, icon: RiSearchLine, match: [] },
   { id: "sports", label: "Sports", to: "/sports" as const, icon: RiBasketballLine, match: ["/sports"] },
+  { id: "search", label: "Search", to: null, icon: RiSearchLine, match: [] as string[] },
+  { id: "chat", label: "Chat", to: null, icon: RiChat3Line, match: [] as string[] },
   { id: "profile", label: "Profile", to: "/profile" as const, icon: RiUser3Line, match: ["/profile"] },
 ] as const;
 
@@ -32,6 +33,7 @@ export function MobileTabBar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [q, setQ] = useState("");
   const navigate = useNavigate();
+  const { toggle, mobileOpen } = useRightDock();
 
   const sportHits = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -69,6 +71,8 @@ export function MobileTabBar() {
             const Icon = tab.icon;
             const active = tab.match.some((p) => pathname === p || (p !== "/" && pathname.startsWith(p)));
             const isSearch = tab.id === "search";
+            const isChat = tab.id === "chat";
+            const on = isChat ? mobileOpen : active;
             return (
               <li key={tab.id} className="flex items-center justify-center">
                 {isSearch ? (
@@ -79,6 +83,19 @@ export function MobileTabBar() {
                     className="-mt-4 grid size-12 place-items-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-fab)]"
                   >
                     <Icon className="size-5" />
+                  </button>
+                ) : isChat ? (
+                  <button
+                    type="button"
+                    aria-label="Open chat"
+                    onClick={() => toggle("chat")}
+                    className={cn(
+                      "flex h-full w-full flex-col items-center justify-center gap-0.5 text-[0.65rem] font-medium",
+                      on ? "text-lime" : "text-muted-foreground",
+                    )}
+                  >
+                    <Icon className={cn("size-5", on && "text-lime")} />
+                    {tab.label}
                   </button>
                 ) : (
                   <Link

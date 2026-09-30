@@ -24,13 +24,13 @@ export type PoolBall = {
 export type PoolFrame = { x: number; y: number; p: boolean }[];
 
 const POCKET_CORNER = {
-  beginner: 26,
-  intermediate: 22,
-  expert: 19,
-  pro: 17,
+  beginner: 24,
+  intermediate: 23,
+  expert: 20,
+  pro: 18,
 } as const;
 const POCKET_SIDE = {
-  beginner: 21,
+  beginner: 18.5,
   intermediate: 18,
   expert: 16,
   pro: 14.5,
@@ -92,10 +92,12 @@ export function cueBall(aimY = 0): PoolBall {
 }
 
 function inPocket(b: PoolBall, diff: PoolDiff): boolean {
+  const mouth = b.id === 0 ? 0.64 : 1;
   for (const p of pockets(diff)) {
     const dx = b.x - p.x;
     const dy = b.y - p.y;
-    if (dx * dx + dy * dy < p.r * p.r) return true;
+    const r = p.r * mouth;
+    if (dx * dx + dy * dy < r * r) return true;
   }
   return false;
 }
@@ -117,7 +119,7 @@ function collide(a: PoolBall, b: PoolBall) {
   const dvy = a.vy - b.vy;
   const vn = dvx * nx + dvy * ny;
   if (vn <= 0) return;
-  const e = 0.96;
+  const e = 0.985;
   a.vx -= vn * nx * e;
   a.vy -= vn * ny * e;
   b.vx += vn * nx * e;
@@ -132,7 +134,7 @@ function cushions(b: PoolBall, diff: PoolDiff) {
     b.vy = 0;
     return;
   }
-  const e = 0.72;
+  const e = 0.78;
   if (b.x < BALL_R) {
     b.x = BALL_R;
     b.vx = Math.abs(b.vx) * e;
@@ -154,6 +156,8 @@ export type BreakInput = {
   aimDeg: number;
   floats: number[];
   difficulty: PoolDiff;
+  /** Client plays these back. The server only needs the pocket result. */
+  record?: boolean;
 };
 
 export type BreakResult = {
@@ -172,86 +176,64 @@ export function simulateBreak(input: BreakInput): BreakResult {
   const balls = [cue, ...rack];
 
   const aim = (input.aimDeg * Math.PI) / 180;
-  const speed = 720 + Math.max(0, Math.min(1, power)) * 1320;
+  const speed = 1100 + Math.max(0, Math.min(1, power)) * 1700;
   cue.vx = Math.cos(aim) * speed;
   cue.vy = Math.sin(aim) * speed;
 
   const dt = 1 / 120;
-  const mu = 130;
+  const mu = 78;
+  const record = input.record !== false;
   const frames: PoolFrame[] = [];
   let steps = 0;
-  const maxSteps = 120 * 7;
-  let cracked = false;
+  const maxSteps = 120 * 6;
+  const sub = 4;
+  const subDt = dt / sub;
 
   const snapshot = (): PoolFrame => balls.map((b) => ({ x: b.x, y: b.y, p: b.pocketed }));
-  frames.push(snapshot());
-
-  function crack(hit: PoolBall) {
-    cracked = true;
-    collide(cue, hit);
-    const kick = 90 + power * 160;
-    for (const b of balls) {
-      if (b.id === 0 || b.pocketed) continue;
-      const dx = b.x - hit.x;
-      const dy = b.y - hit.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      const spread = kick * (0.35 + (jitter[b.id] ?? 0.5) * 0.9) / Math.max(1, dist / BALL_D);
-      b.vx += (dx / dist) * spread + cue.vx * 0.22;
-      b.vy += (dy / dist) * spread + cue.vy * 0.22;
-    }
-    hit.vx += Math.cos(aim) * speed * 0.45;
-    hit.vy += Math.sin(aim) * speed * 0.45;
-    cue.vx *= 0.28;
-    cue.vy *= 0.28;
-  }
+  if (record) frames.push(snapshot());
 
   while (steps < maxSteps) {
     steps += 1;
     let moving = false;
-    for (const b of balls) {
-      if (b.pocketed) continue;
-      const sp = Math.hypot(b.vx, b.vy);
-      const capped = Math.min(sp, 1100);
-      if (capped > 1.2) {
-        moving = true;
-        const ns = Math.max(0, capped - mu * dt);
-        const scale = sp > 0 ? ns / sp : 0;
-        b.vx *= scale;
-        b.vy *= scale;
-      } else {
-        b.vx = 0;
-        b.vy = 0;
-      }
-      b.x += b.vx * dt;
-      b.y += b.vy * dt;
-      if (inPocket(b, difficulty)) {
-        b.pocketed = true;
-        b.vx = 0;
-        b.vy = 0;
-      } else {
-        cushions(b, difficulty);
-      }
-    }
-    if (!cracked) {
+    for (let s = 0; s < sub; s += 1) {
       for (const b of balls) {
-        if (b.id === 0 || b.pocketed) continue;
-        const d = Math.hypot(b.x - cue.x, b.y - cue.y);
-        if (d < BALL_D * 1.04) {
-          crack(b);
-          break;
+        if (b.pocketed) continue;
+        const sp = Math.hypot(b.vx, b.vy);
+        const capped = Math.min(sp, 1600);
+        if (capped > 2) {
+          moving = true;
+          const ns = Math.max(0, capped - mu * subDt);
+          const scale = sp > 0 ? ns / sp : 0;
+          b.vx *= scale;
+          b.vy *= scale;
+          b.x += b.vx * subDt;
+          b.y += b.vy * subDt;
+        } else {
+          b.vx = 0;
+          b.vy = 0;
+        }
+        if (inPocket(b, difficulty)) {
+          b.pocketed = true;
+          b.vx = 0;
+          b.vy = 0;
+        } else {
+          cushions(b, difficulty);
         }
       }
-    } else {
-      for (let i = 0; i < balls.length; i += 1) {
-        if (balls[i]!.pocketed) continue;
-        for (let j = i + 1; j < balls.length; j += 1) {
-          if (balls[j]!.pocketed) continue;
-          collide(balls[i]!, balls[j]!);
+      for (let pass = 0; pass < 2; pass += 1) {
+        for (let i = 0; i < balls.length; i += 1) {
+          const a = balls[i]!;
+          if (a.pocketed) continue;
+          for (let j = i + 1; j < balls.length; j += 1) {
+            const b = balls[j]!;
+            if (b.pocketed) continue;
+            collide(a, b);
+          }
         }
       }
     }
-    if (steps % 2 === 0) frames.push(snapshot());
-    if (!moving && steps > 30) break;
+    if (record && steps % 4 === 0) frames.push(snapshot());
+    if (!moving && steps > 24) break;
   }
 
   const scratch = Boolean(balls[0]?.pocketed);

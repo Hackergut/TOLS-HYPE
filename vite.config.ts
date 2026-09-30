@@ -152,6 +152,12 @@ export default defineConfig(({ command, isPreview }) => ({
     strictPort: true,
     // Arena live preview proxy host changes per sandbox — dev only, no effect on build.
     allowedHosts: true,
+    // The sandbox filesystem often drops native watch events.
+    watch: {
+      usePolling: true,
+      interval: 300,
+      ignored: ["**/.output/**", "**/.vercel/**", "**/public/games/**"],
+    },
   },
   preview: {
     host: "127.0.0.1",
@@ -160,8 +166,17 @@ export default defineConfig(({ command, isPreview }) => ({
   },
   resolve: { tsconfigPaths: true },
   ssr: {
+    target: "node",
     noExternal: ["tslib", "radix-ui", /^@radix-ui\//],
-    external: ["3dsvg", "three", "@react-three/fiber", "@react-three/drei"],
+    external: [
+      "3dsvg",
+      "three",
+      "@react-three/fiber",
+      "@react-three/drei",
+      "pg",
+      "pg-pool",
+      "@prisma/adapter-pg",
+    ],
   },
   optimizeDeps: {
     include: ["3dsvg", "three", "@react-three/fiber", "@react-three/drei"],

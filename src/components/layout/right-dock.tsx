@@ -9,13 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  RiArrowDownSLine,
-  RiCloseLine,
-  RiEmotionHappyLine,
-  RiQuestionLine,
-  RiSendPlane2Line,
-} from "@remixicon/react";
+import { RiArrowDownSLine, RiCloseLine, RiQuestionLine } from "@remixicon/react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -170,7 +164,7 @@ function mapMsg(m: {
 
 function ChatPanel({ onClose }: { onClose: () => void }) {
   const { user } = useCurrentUserState();
-  const { currency, applyBalances } = useWallet();
+  const { currency, applyBalances, wagered } = useWallet();
   const history = useBetHistory();
   const [msgs, setMsgs] = useState<ChatMsg[]>([]);
   const [online, setOnline] = useState(0);
@@ -225,6 +219,10 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
   async function send(e: FormEvent) {
     e.preventDefault();
     if (!user) return;
+    if (wagered < 1000) {
+      setNotice("Wager 1,000 XPs to unlock chat");
+      return;
+    }
     const verdict = screenChat(text, { now: Date.now(), ownTimes: ownTimes.current, lastOwn: lastOwn.current });
     if (!verdict.ok) {
       setNotice(verdict.reason);
@@ -374,7 +372,9 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         </ul>
       </div>
 
-      <footer className="shrink-0 border-t border-white/10 px-3 pt-2 pb-3">
+      <footer className="flex shrink-0 flex-col border-t border-[#444054] bg-[#14121e]">
+        <ChatUnlock wagered={wagered} />
+        <div className="flex flex-col gap-4 border-t border-[#444054] px-4 py-6">
         {card && mode === "tip" ? (
           <form onSubmit={sendTip} className="mb-2 rounded-lg bg-white/[0.04] p-2 ring-1 ring-white/10">
             <p className="text-xs font-semibold text-white">{card.name}</p>
@@ -428,7 +428,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         </div>
         <form onSubmit={send} className="relative">
           {emojiOpen ? (
-            <div className="absolute right-0 bottom-12 z-10 grid grid-cols-4 gap-1 rounded-lg bg-[#1c1f27] p-2 ring-1 ring-white/10">
+            <div className="absolute right-0 bottom-14 z-10 grid grid-cols-4 gap-1 rounded-lg bg-[#1c1f27] p-2 ring-1 ring-white/10">
               {QUICK_EMOJI.map((emo) => (
                 <button
                   key={emo}
@@ -444,31 +444,50 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           ) : null}
-          <Input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={user ? "Your message" : "Sign in to chat"}
-            disabled={!user}
-            maxLength={180}
-            className="h-10 rounded-lg border-white/10 bg-black/30 pr-20"
-          />
-          <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
-            <button
-              type="button"
-              aria-label="Emoji"
-              className="grid size-8 place-items-center text-white/60 hover:text-white"
-              onClick={() => setEmojiOpen((v) => !v)}
-            >
-              <RiEmotionHappyLine className="size-4" />
-            </button>
-            <button
-              type="submit"
-              aria-label="Send"
-              disabled={!user || !text.trim()}
-              className="grid size-8 place-items-center text-lime disabled:text-white/25"
-            >
-              <RiSendPlane2Line className="size-4" />
-            </button>
+          <div className={cn("flex items-center rounded-lg bg-[#202329] px-4", !user && "opacity-80")}>
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Say something"
+              disabled={!user || wagered < 1000}
+              maxLength={180}
+              aria-label="Your message"
+              className="h-[46px] min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#f7f7f8] outline-none placeholder:text-[#f7f7f8]/40 disabled:cursor-default"
+            />
+            <div className="ml-1 flex shrink-0 gap-1">
+              <button
+                type="button"
+                aria-label="Click to see emojis"
+                disabled={!user || wagered < 1000}
+                className="grid size-8 place-items-center rounded-full text-[#f7f7f8] disabled:pointer-events-none disabled:opacity-60"
+                onClick={() => setEmojiOpen((v) => !v)}
+              >
+                <svg viewBox="0 0 16 16" className="size-4" aria-hidden>
+                  <path
+                    fill="currentColor"
+                    d="M9.574 9.487a2.51 2.51 0 0 1-3.147 0 .667.667 0 1 0-.853 1.027 3.79 3.79 0 0 0 4.853 0 .667.667 0 1 0-.854-1.027M6 7.334a.667.667 0 1 0 0-1.333.667.667 0 0 0 0 1.333m4-1.333a.667.667 0 1 0 0 1.333.667.667 0 0 0 0-1.333M8 1.334a6.667 6.667 0 1 0 0 13.333A6.667 6.667 0 0 0 8 1.334m0 12A5.334 5.334 0 1 1 8 2.667a5.334 5.334 0 0 1 0 10.667"
+                  />
+                </svg>
+              </button>
+              <button
+                type="submit"
+                aria-label="Click to send"
+                disabled={!user || wagered < 1000 || !text.trim()}
+                className="grid size-8 place-items-center rounded-full text-[#f7f7f8] disabled:pointer-events-none disabled:opacity-60"
+              >
+                <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                    d="m5.323 19.878 14.429-6.699c.998-.463.998-1.897 0-2.36L5.323 4.122c-1.035-.48-2.13.538-1.743 1.621l2.233 6.254-2.233 6.261c-.387 1.082.708 2.1 1.743 1.62"
+                    clipRule="evenodd"
+                  />
+                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5.81 12H20.5" />
+                </svg>
+              </button>
+            </div>
           </div>
         </form>
         {notice ? <p className="mt-1 text-[11px] text-rose-300">{notice}</p> : null}
@@ -482,7 +501,30 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
             Slow mode 3s · no links · no spam
           </Link>
         </div>
+        </div>
       </footer>
+    </div>
+  );
+}
+
+function ChatUnlock({ wagered }: { wagered: number }) {
+  const xp = Math.max(0, Math.floor(wagered));
+  const goal = 1000;
+  const pct = Math.min(100, (xp / goal) * 100);
+  if (xp >= goal) return null;
+  return (
+    <div className="px-4 py-6 text-white">
+      <p className="flex items-center justify-between text-sm leading-none font-bold">
+        <span>Chat Unlock</span>
+        <span className="tabular-nums">{pct.toFixed(2)}%</span>
+      </p>
+      <div className="relative my-3 h-2 overflow-hidden rounded bg-[#444054]">
+        <span className="absolute inset-y-0 left-0 rounded bg-[#d7ff00] transition-[width] duration-150" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="flex items-center justify-between text-sm leading-none">
+        <span className="tabular-nums">{xp.toLocaleString("en-US")} XPs</span>
+        <span className="tabular-nums">{goal.toLocaleString("en-US")} XPs</span>
+      </p>
     </div>
   );
 }

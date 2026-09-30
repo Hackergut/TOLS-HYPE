@@ -186,15 +186,15 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
   },
   tower: {
     summary:
-      "Eight floors, three tiles, one death per floor. Each safe pick multiplies by 0.99 ÷ (2/3). Cash out any time — or hit death and the climb is 0×.",
+      "Nine floors. Easy is 4 tiles and 1 bomb, Master is 4 tiles and 3 bombs. A safe pick multiplies by 0.99 ÷ (safe tiles / tiles). Cash out after a safe floor, or hit a bomb and the climb is 0×.",
     what: "Tower is a TOLS Original of nerve, row by row. Same math family as Mines, stacked.",
     how: [
       "Start a climb.",
-      "Pick one of three tiles on the live floor.",
+      "Pick one tile on the live floor. Columns outside the floor are rejected.",
       "Safe continues. Death ends at 0×.",
       "Cash out after any safe floor.",
     ],
-    features: ["8 floors", "Cash out any time", "1% edge"],
+    features: ["Easy → Master", "Seed-shifted patterns", "1% edge"],
     payouts: [
       { label: "Each floor", value: "×1.48" },
       { label: "Death", value: "0×" },
@@ -386,5 +386,18 @@ export const GAME_LEGENDS: Record<GameKind, GameLegendCopy> = {
       "Pachinko — puck drop with DOUBLE re-drops",
       "Crazy Time — 64-stop bonus wheel with doubles",
     ],
+  },
+  slide: {
+    summary:
+      "Shared round. Set a target multiplier, add the bet, and the marker slides to one result for everyone. If it lands at or above your target, that bet pays the target.",
+    what: "Slide is a TOLS Original on one live table. Several targets can sit in the same round. The result is a crash-style point, hidden until the slide stops.",
+    how: [
+      "Set stake and a target from 1.01× up.",
+      "Add bet before the round locks. Add another target if you want.",
+      "The marker slides. At or above your target pays that multiplier.",
+    ],
+    features: ["One result for the whole table", "Several bets per round", "99% RTP"],
+    payouts: [{ label: "Target hit", value: "Target × stake" }, { label: "Under", value: "0×" }],
+    symbols: ["Marker — the live slide", "Target — the line you set"],
   },
 };

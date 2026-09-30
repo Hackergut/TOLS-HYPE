@@ -773,22 +773,14 @@ function BetPanel({
                   {picks[h.id]}👥
                 </span>
               )}
-              <div className="flex items-center gap-1.5">
-                <div
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[10px] font-black text-white shadow"
-                  style={{ background: `linear-gradient(140deg,${h.palette.coatLight},${h.palette.coatDark})`, boxShadow: `0 0 12px ${h.color}55` }}
-                >
-                  {h.id + 1}
-                </div>
-                <div className="min-w-0 flex-1">
+              <div className="flex flex-col items-center gap-1">
+                <img src={h.silkSrc} alt="" className="h-14 w-full bg-black object-contain object-top" />
+                <div className="min-w-0 w-full px-0.5">
                   <div className="truncate text-[9px] font-bold text-slate-300 sm:text-[10px]">{h.name}</div>
                   <div className="font-mono text-sm font-black leading-tight text-[#00ffbd] sm:text-base">
                     {h.odds.toFixed(1)}×
                   </div>
                   <div className="text-[8px] font-semibold text-slate-500">{chance(h.id)}% win</div>
-                </div>
-                <div className="hidden shrink-0 opacity-95 sm:block">
-                  <HorseIcon horse={h} size={34} running={on} />
                 </div>
               </div>
             </button>

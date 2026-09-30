@@ -93,9 +93,31 @@ export async function getSessionUser(
   }
 }
 
+function requestHost(): string {
+  const request = getRequest();
+  if (!request) return "";
+  const raw = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "";
+  return raw.split(",")[0]?.trim().split(":")[0]?.toLowerCase() ?? "";
+}
+
+function isDeployedHost(host: string): boolean {
+  return host === "tols.fun" || host === "www.tols.fun" || host.endsWith(".vercel.app");
+}
+
+/** Sandbox dev server only. Production (NODE_ENV) and tols.fun never take this seat. */
+function previewPlayerId(): string | null {
+  if (process.env.NODE_ENV === "production") return null;
+  if (process.env.BETTER_AUTH_URL?.trim() || process.env.GROK_AUTH_CLIENT_ID?.trim()) return null;
+  const host = requestHost();
+  if (isDeployedHost(host)) return null;
+  return "preview-player";
+}
+
 export async function requireUserId(bearerToken?: string): Promise<string> {
   const user = await getSessionUser(bearerToken);
   if (user) return user.id;
+  const preview = previewPlayerId();
+  if (preview) return preview;
   if (databaseConfigured) return guestUserId();
   if (!authConfigured) return DEV_USER_ID;
   throw new UnauthorizedError();
