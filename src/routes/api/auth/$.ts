@@ -5,6 +5,7 @@ import {
   handleGoogleDiag,
   handleGoogleLogout,
   handleGoogleMe,
+  handleGoogleGovHandoff,
   handleGoogleStart,
 } from "@/lib/auth/google-handlers.server";
 import {
@@ -22,6 +23,7 @@ async function intercept(request: Request, fallback: (req: Request) => Promise<R
   const path = cleanPath(request);
   if (path === "/api/auth/google") return handleGoogleStart(request);
   if (path === "/api/auth/google/callback") return handleGoogleCallback(request);
+  if (path === "/api/auth/google/gov") return handleGoogleGovHandoff(request);
   if (path === "/api/auth/google/diag") return handleGoogleDiag();
   if (path === "/api/auth/telegram") return handleTelegramStart(request);
   if (path === "/api/auth/telegram/callback") return handleTelegramCallback(request);

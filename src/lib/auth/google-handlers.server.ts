@@ -1,4 +1,6 @@
+import { createHmac } from "node:crypto";
 import { syncUserOnSignIn } from "./user-sync.server";
+import { env } from "@/lib/env.server";
 import {
   exchangeGoogle,
   googleAuthUrl,
@@ -163,4 +165,27 @@ export async function handleGoogleCallback(request: Request): Promise<Response> 
 export async function handleGoogleLogout(request: Request): Promise<Response> {
   const origin = oauthOrigin(request);
   return redirect303(`${origin}/`, [...sessionClearCookies(request), ...oauthClearCookies(request)]);
+}
+
+const GOV_ARRIVE = "https://gov.tols.fun/api/auth/arrive";
+
+export async function handleGoogleGovHandoff(request: Request): Promise<Response> {
+  const origin = oauthOrigin(request);
+  const session = readSessionFromRequest(request);
+  if (!session?.id || !session.email) {
+    return redirect303(`${origin}/api/auth/google?next=${encodeURIComponent("/api/auth/google/gov")}`);
+  }
+  const secret = env("GOV_GOOGLE_HANDOFF");
+  if (!secret) return redirect303(`${origin}/?google=error&reason=handoff`);
+  const body = Buffer.from(
+    JSON.stringify({
+      id: session.id,
+      email: session.email,
+      name: session.name,
+      picture: session.picture,
+      exp: Date.now() + 90_000,
+    }),
+  ).toString("base64url");
+  const sig = createHmac("sha256", secret).update(body).digest("base64url");
+  return redirect303(`${GOV_ARRIVE}?ticket=${encodeURIComponent(`${body}.${sig}`)}`);
 }
