@@ -16,6 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { signOut } from "@/lib/auth/client";
+import { toast } from "sonner";
 import { ACCOUNT_ICONS } from "@/lib/account-icons";
 import { ACCOUNT_NAV } from "@/lib/nav";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
@@ -113,7 +115,10 @@ export function AccountMenu() {
               disabled={signingOut}
               onClick={() => {
                 setSigningOut(true);
-                window.location.assign("/api/auth/logout");
+                void signOut("/").catch((err: unknown) => {
+                  setSigningOut(false);
+                  toast.error(err instanceof Error ? err.message : "Sign-out failed");
+                });
               }}
             >
               <RiLogoutBoxRLine />

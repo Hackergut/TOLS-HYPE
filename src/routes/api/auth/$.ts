@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { auth } from "@/lib/auth/server";
-import { seedDemoAccount, ensureDemoPassword, DEMO_EMAIL } from "@/lib/demo-account.server";
+import { auth, SESSION_TOKEN_COOKIE } from "@/lib/auth/server";
+import { ensureDemoPassword, DEMO_EMAIL } from "@/lib/demo-account.server";
 import { loginBlocked, sessionAllowed } from "@/lib/auth/access.server";
 import { syncUserOnSignIn } from "@/lib/auth/user-sync.server";
 import { pushBridgeEvent } from "@/lib/governance/bridge";
+import { sessionClearCookies, withCookies } from "@/lib/auth/google-session.server";
 import {
   handleGoogleCallback,
   handleGoogleDiag,
@@ -23,7 +24,6 @@ function cleanPath(request: Request): string {
 }
 
 async function intercept(request: Request, fallback: (req: Request) => Promise<Response> | Response) {
-  await seedDemoAccount();
   const path = cleanPath(request);
   if (path === "/api/auth/google") return handleGoogleStart(request);
   if (path === "/api/auth/google/callback") return handleGoogleCallback(request);
@@ -38,9 +38,26 @@ async function intercept(request: Request, fallback: (req: Request) => Promise<R
     path === "/api/auth/google/logout" ||
     path === "/api/auth/telegram/logout"
   ) {
-    return handleGoogleLogout(request);
+    return withCookies(await handleGoogleLogout(request), expireBetterAuthCookies());
   }
   return fallback(request);
+}
+
+const BETTER_AUTH_COOKIES = [
+  SESSION_TOKEN_COOKIE,
+  "__Host-grok-auth.session_data",
+  "__Host-grok-auth.account_data",
+  "__Host-grok-auth.dont_remember",
+];
+
+function expireBetterAuthCookies(): string[] {
+  return BETTER_AUTH_COOKIES.map(
+    (name) => `${name}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+  );
+}
+
+function endSession(request: Request, response: Response): Response {
+  return withCookies(response, [...sessionClearCookies(request), ...expireBetterAuthCookies()]);
 }
 
 async function resolveMe(request: Request): Promise<Response> {
@@ -129,7 +146,9 @@ async function handle(request: Request) {
     if (email === DEMO_EMAIL) await ensureDemoPassword();
   }
   const response = await intercept(request, (req) => auth.handler(req));
-  return publishAuth(request, response, leaving);
+  const ended =
+    path.endsWith("/sign-out") || path.endsWith("/logout") ? endSession(request, response) : response;
+  return publishAuth(request, ended, leaving);
 }
 
 export const Route = createFileRoute("/api/auth/$")({

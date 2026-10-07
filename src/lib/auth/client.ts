@@ -211,6 +211,19 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
   });
 }
 
+export async function releaseSession(): Promise<void> {
+  await runPreSignInSignOut({
+    livePreview: inLivePreview(),
+    hasBearer: Boolean(getBearerToken()),
+    requestSignOut: async () => {
+      const { error } = await authClient.signOut();
+      if (error) throw new Error(error.message ?? "Sign-out failed");
+    },
+    clearToken: () => setBearerToken(null),
+    timeoutMs: 1200,
+  });
+}
+
 /**
  * Sign out of THIS app's local session, clear the preview token, then redirect.
  *

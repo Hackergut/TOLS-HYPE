@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { RiCloseLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
-import { authClient, rememberSessionToken } from "@/lib/auth/client";
+import { authClient, releaseSession, rememberSessionToken } from "@/lib/auth/client";
 import { TolsT3D } from "@/components/brand/tols-t-3d";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,22 +46,17 @@ export function AuthWidgetPanel({
     setPending(true);
     try {
       markAdult();
+      await releaseSession();
       const { data, error: err } = await authClient.signIn.email({ email, password });
       if (err) throw new Error(err.message);
       const token = data && "token" in data ? (data.token as string | null) : null;
       if (token) rememberSessionToken(token);
-      try {
-        await authClient.getSession();
-      } catch {
-        /* cookie session still stands on the deployed site */
-      }
-      try {
-        await claimWelcomeBonus();
-      } catch {
-        /* wallet refresh retries on the lobby */
-      }
+      await Promise.race([
+        claimWelcomeBonus().catch(() => undefined),
+        new Promise((resolve) => window.setTimeout(resolve, 2000)),
+      ]);
       onDone?.();
-      window.location.href = "/";
+      window.location.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed");
     } finally {

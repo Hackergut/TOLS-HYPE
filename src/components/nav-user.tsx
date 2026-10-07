@@ -18,6 +18,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { authEnabled, signOut } from "@/lib/auth/client";
+import { toast } from "sonner";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -66,7 +67,9 @@ export function NavUser() {
             {authEnabled && !gateSession ? (
               <DropdownMenuItem
                 onClick={() => {
-                  void signOut("/").catch(() => undefined);
+                  void signOut("/").catch((err: unknown) => {
+                    toast.error(err instanceof Error ? err.message : "Sign-out failed");
+                  });
                 }}
               >
                 <RiLogoutBoxLine />

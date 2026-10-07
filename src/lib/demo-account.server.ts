@@ -77,10 +77,9 @@ async function writeCredential(userId: string) {
   }
 }
 
-/** Resets the demo password on the credential row Better Auth actually reads. */
-export async function ensureDemoPassword(): Promise<void> {
-  const userId = await ensureUser();
-  await writeCredential(userId);
+/** Creates the demo user once per process. Later sign-ins reuse that row. */
+export function ensureDemoPassword(): Promise<void> {
+  return seedDemoAccount();
 }
 
 async function seed() {
