@@ -63,37 +63,60 @@ export class FairRng {
   }
 }
 
-async function loadOrCreate(userId: string) {
+let nextReady = false;
+
+async function ensureNextColumns() {
+  if (nextReady) return;
   const sql = await getSql();
-  const rows = await sql<{
-    server_seed: string;
-    server_hash: string;
-    client_seed: string;
-    nonce: number;
-  }>`
-    select server_seed, server_hash, client_seed, nonce from fair_seeds where user_id = ${userId}
+  await sql`alter table fair_seeds add column if not exists next_server_seed text`;
+  await sql`alter table fair_seeds add column if not exists next_server_hash text`;
+  nextReady = true;
+}
+
+type SeedRow = {
+  server_seed: string;
+  server_hash: string;
+  client_seed: string;
+  nonce: number;
+  next_server_seed: string | null;
+  next_server_hash: string | null;
+};
+
+async function loadOrCreate(userId: string): Promise<SeedRow> {
+  await ensureNextColumns();
+  const sql = await getSql();
+  const rows = await sql<SeedRow>`
+    select server_seed, server_hash, client_seed, nonce, next_server_seed, next_server_hash
+    from fair_seeds where user_id = ${userId}
   `;
-  if (rows[0]) return rows[0];
-  const serverSeed = randomBytes(32).toString("hex");
-  const clientSeed = randomBytes(8).toString("hex");
-  const serverHash = hashSeed(serverSeed);
-  // Two first-time bets can race this insert — the loser must read, not crash
-  // on the primary-key conflict.
-  await sql`
-    insert into fair_seeds (user_id, server_seed, server_hash, client_seed, nonce)
-    values (${userId}, ${serverSeed}, ${serverHash}, ${clientSeed}, 0)
-    on conflict (user_id) do nothing
-  `;
-  const again = await sql<{
-    server_seed: string;
-    server_hash: string;
-    client_seed: string;
-    nonce: number;
-  }>`
-    select server_seed, server_hash, client_seed, nonce from fair_seeds where user_id = ${userId}
-  `;
-  const row = again[0];
-  if (!row) throw new Error("fair seed init failed");
+  let row = rows[0];
+  if (!row) {
+    const serverSeed = randomBytes(32).toString("hex");
+    const clientSeed = randomBytes(8).toString("hex");
+    const serverHash = hashSeed(serverSeed);
+    const nextSeed = randomBytes(32).toString("hex");
+    const nextHash = hashSeed(nextSeed);
+    await sql`
+      insert into fair_seeds (user_id, server_seed, server_hash, client_seed, nonce, next_server_seed, next_server_hash)
+      values (${userId}, ${serverSeed}, ${serverHash}, ${clientSeed}, 0, ${nextSeed}, ${nextHash})
+      on conflict (user_id) do nothing
+    `;
+    const again = await sql<SeedRow>`
+      select server_seed, server_hash, client_seed, nonce, next_server_seed, next_server_hash
+      from fair_seeds where user_id = ${userId}
+    `;
+    row = again[0];
+    if (!row) throw new Error("fair seed init failed");
+  }
+  if (!row.next_server_seed || !row.next_server_hash) {
+    const nextSeed = randomBytes(32).toString("hex");
+    const nextHash = hashSeed(nextSeed);
+    await sql`
+      update fair_seeds set next_server_seed = ${nextSeed}, next_server_hash = ${nextHash}
+      where user_id = ${userId}
+    `;
+    row = { ...row, next_server_seed: nextSeed, next_server_hash: nextHash };
+  }
   return row;
 }
 
@@ -133,12 +156,13 @@ export async function takeFair(userId: string, count = 8): Promise<FairTake> {
   return { ...rng.proof(), floats: rng.floats(count) };
 }
 
-export async function fairSnapshot(userId: string): Promise<FairProof> {
+export async function fairSnapshot(userId: string) {
   const row = await loadOrCreate(userId);
   return {
     serverHash: row.server_hash,
     clientSeed: row.client_seed,
     nonce: row.nonce,
+    nextServerHash: row.next_server_hash ?? "",
   };
 }
 
@@ -150,20 +174,31 @@ export async function applyClientSeed(userId: string, clientSeed: string) {
   return { clientSeed: seed };
 }
 
-export async function rotateFairSeed(userId: string) {
+export async function rotateFairSeed(userId: string, clientSeed?: string) {
   const prev = await loadOrCreate(userId);
-  const next = randomBytes(32).toString("hex");
-  const nextHash = hashSeed(next);
+  const promoted = prev.next_server_seed ?? randomBytes(32).toString("hex");
+  const promotedHash = hashSeed(promoted);
+  const upcoming = randomBytes(32).toString("hex");
+  const upcomingHash = hashSeed(upcoming);
+  const nextClient = clientSeed
+    ? clientSeed.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || prev.client_seed
+    : prev.client_seed;
   const sql = await getSql();
   await sql`
     update fair_seeds
-    set server_seed = ${next}, server_hash = ${nextHash}, nonce = 0
+    set server_seed = ${promoted},
+        server_hash = ${promotedHash},
+        next_server_seed = ${upcoming},
+        next_server_hash = ${upcomingHash},
+        client_seed = ${nextClient},
+        nonce = 0
     where user_id = ${userId}
   `;
   return {
     revealedSeed: prev.server_seed,
     revealedHash: prev.server_hash,
-    nextHash,
-    clientSeed: prev.client_seed,
+    nextHash: promotedHash,
+    nextServerHash: upcomingHash,
+    clientSeed: nextClient,
   };
 }

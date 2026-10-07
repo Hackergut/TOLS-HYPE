@@ -81,7 +81,7 @@ export function AdvancedSettings({ rtp }: { rtp?: number }) {
         size="sm"
         variant="outline"
         onClick={() => {
-          void rotateServerSeed()
+          void rotateServerSeed({ data: {} })
             .then((r) => {
               setRevealed(r.revealedSeed);
               setHash(r.nextHash);

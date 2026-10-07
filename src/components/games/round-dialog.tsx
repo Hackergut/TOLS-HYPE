@@ -13,7 +13,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RoundClone } from "@/components/games/round-clone";
 import { PlayerShot } from "@/components/players/player-shot";
-import { shareText, shortHash, type BetRound } from "@/lib/bet-history";
+import { copyText, pushChatDraft, saveWinTag, shareText, shortHash, type BetRound } from "@/lib/bet-history";
 import { postChat } from "@/lib/chat-api";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { useRightDock } from "@/components/layout/right-dock";
@@ -56,9 +56,27 @@ function RoundDialog({ round, onClose }: { round: BetRound | null; onClose: () =
   const chance = dice ? diceChance(dice.target ?? 50, Boolean(dice.over)) : null;
 
   function copy(text: string, label: string) {
-    void navigator.clipboard.writeText(text).then(
+    const value = label === "Round" && round ? saveWinTag(round) : text;
+    if (copyText(value)) {
+      toast.success(`${label} copied`);
+      return;
+    }
+    const clip = navigator.clipboard?.writeText(value);
+    if (!clip) {
+      pushChatDraft(value);
+      dock?.setTab("chat");
+      dock?.setMobileOpen(true);
+      toast.message("Clipboard blocked. Tag is in the chat box.");
+      return;
+    }
+    void clip.then(
       () => toast.success(`${label} copied`),
-      () => toast.error("Copy failed"),
+      () => {
+        pushChatDraft(value);
+        dock?.setTab("chat");
+        dock?.setMobileOpen(true);
+        toast.message("Clipboard blocked. Tag is in the chat box.");
+      },
     );
   }
 

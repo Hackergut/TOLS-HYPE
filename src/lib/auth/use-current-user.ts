@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authClient } from "./client";
+import { authClient, getBearerToken } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
 export type AppUser = {
@@ -56,7 +56,10 @@ function useNativeSession(): CurrentUserState {
   const [isPending, setPending] = useState(true);
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/auth/me", { credentials: "include" })
+    fetch("/api/auth/me", {
+      credentials: "include",
+      headers: getBearerToken() ? { Authorization: `Bearer ${getBearerToken()}` } : undefined,
+    })
       .then((r) => r.json())
       .then((body: { user?: AppUser | null }) => {
         if (cancelled) return;
@@ -95,6 +98,10 @@ export function useCurrentUserState(): CurrentUserState {
       },
       isPending: false,
     };
+  }
+  // A saved demo/email login is still resolving — don't mask it with the preview seat.
+  if (typeof window !== "undefined" && getBearerToken() && (native.isPending || isPending)) {
+    return { user: null, isPending: true };
   }
   // This dev server only. The deployed bundle has import.meta.env.DEV false,
   // so tols.fun still asks for Login / Sign up.

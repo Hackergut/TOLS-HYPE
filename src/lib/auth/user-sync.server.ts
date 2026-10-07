@@ -120,6 +120,8 @@ export async function syncUserOnSignIn(profile: SignInProfile): Promise<void> {
     void pushBridgeEvent("casino.session_start", {
       userId: profile.userId,
       provider: profile.provider,
+      email: profile.email,
+      name: profile.name,
     }).catch(() => undefined);
   } catch (e) {
     console.error(`[user-sync] ${profile.provider} sync failed (non-fatal):`, e);

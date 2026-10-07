@@ -20,7 +20,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { CURRENCIES, PROMOS } from "@/lib/games-catalog";
 import { formatMoney } from "@/lib/format";
 import { useWallet } from "@/lib/wallet-context";
-import { shareText, shortHash, useBetHistory, type BetRound } from "@/lib/bet-history";
+import { shareText, subscribeChatDraft, useBetHistory, winRoundForTag, type BetRound } from "@/lib/bet-history";
 import { chatProfile, chatRain, chatTip, listChat, postChat } from "@/lib/chat-api";
 import { screenChat } from "@/lib/chat-guard";
 import { useRoundViewerOptional } from "@/components/games/round-dialog";
@@ -200,6 +200,8 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
     };
   }, [room]);
 
+  useEffect(() => subscribeChatDraft((next) => setText((cur) => (cur.includes(next) ? cur : cur ? `${cur} ${next}` : next))), []);
+
   useEffect(() => {
     const el = scroller.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -229,7 +231,8 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
       return;
     }
     try {
-      await postChat({ data: { room, text: verdict.text } });
+      const attached = winRoundForTag(verdict.text);
+      await postChat({ data: { room, text: verdict.text, round: attached ? { ...attached } : undefined } });
       ownTimes.current = [...ownTimes.current, Date.now()].slice(-8);
       lastOwn.current = verdict.text;
       setText("");
@@ -358,13 +361,12 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
                 <button
                   type="button"
                   onClick={() => viewer?.open(m.round!)}
-                  className="mt-1 w-full rounded-lg bg-white/[0.04] p-1.5 text-left ring-1 ring-white/10"
+                  className="mt-1 inline-flex max-w-full items-center gap-2 rounded-md bg-white/[0.04] px-2 py-1 text-left ring-1 ring-white/10"
                 >
-                  <RoundClone view={m.round.view} win={m.round.win} label={m.round.label} size="card" />
-                  <p className="mt-1 text-[0.65rem] font-semibold tabular-nums text-white/50">
+                  <RoundClone view={m.round.view} win={m.round.win} label={m.round.label} size="pill" />
+                  <span className="text-[11px] font-semibold tabular-nums text-white/70">
                     {m.round.win ? "WIN" : "LOSE"} · {m.round.label}
-                    {m.round.fair ? ` #${shortHash(m.round.fair.serverHash)}` : ""}
-                  </p>
+                  </span>
                 </button>
               ) : null}
             </li>
@@ -581,12 +583,9 @@ function ProfilePanel() {
     <ScrollArea className="h-full px-4 py-4">
       <SignedOut>
         <p className="text-sm text-muted-foreground">Sign in to see balances, VIP, and limits.</p>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button asChild variant="outline" className="w-full">
-            <Link to="/login">Login</Link>
-          </Button>
+        <div className="mt-4">
           <Button asChild className="w-full">
-            <Link to="/register">Sign up</Link>
+            <Link to="/login">Login</Link>
           </Button>
         </div>
       </SignedOut>

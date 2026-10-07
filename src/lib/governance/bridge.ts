@@ -306,5 +306,6 @@ export const KNOWN_INBOUND = [
   "governance.support_reply",
   "governance.support_close",
   "governance.bonus_credit",
+  "governance.access_grant",
   "ping",
 ] as const;

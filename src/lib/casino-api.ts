@@ -1159,7 +1159,6 @@ export const playHilo = createServerFn({ method: "POST" })
     if (!payload.live) {
       assertBet(data.currency, data.amount);
       await guardStake(context.userId, data.currency, data.amount);
-    await guardStake(context.userId, data.currency, data.amount);
       await ensureWallets(context.userId);
       await debit(context.userId, data.currency, data.amount, "bet", round.game_id, "hilo");
       payload.live = true;
@@ -1169,8 +1168,7 @@ export const playHilo = createServerFn({ method: "POST" })
     }
     const fair = await takeFair(context.userId, 2);
     const next = drawHilo(fair.floats[0]!, fair.floats[1]!);
-    const win =
-      data.pick === "higher" ? next.rank >= current.rank : next.rank <= current.rank;
+    const win = data.pick === "higher" ? next.rank >= current.rank : next.rank <= current.rank;
     const p = data.pick === "higher" ? (14 - current.rank) / 13 : current.rank / 13;
     const step = 0.99 / p;
     if (win) {
@@ -1181,9 +1179,6 @@ export const playHilo = createServerFn({ method: "POST" })
       payload.multiplier = 0;
       payload.card = next;
     }
-    // Guard on the live state we read (fresh rounds have no live key) so a
-    // concurrent cash-out flipping live=false cannot be overwritten back to
-    // live=true here — that would resurrect a paid-out round.
     const updated = await sql<{ ok: number }>`
       update game_rounds
       set payload = ${JSON.stringify(payload)}, bet_amount = ${payload.amount ?? data.amount}, currency = ${payload.currency ?? data.currency}

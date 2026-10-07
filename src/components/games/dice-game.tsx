@@ -118,7 +118,7 @@ export function DiceGame({ gameId }: { gameId: string }) {
 
 function DiceTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
-  const { reportRound } = useGameTable();
+  const { reportRound, notePlay } = useGameTable();
   const history = useBetHistory(gameId);
   const meta = CURRENCY_META[currency];
   const [over, setOver] = useState(false);
@@ -165,6 +165,7 @@ function DiceTable({ gameId }: { gameId: string }) {
   }
 
   async function playOnce(bet: number, quiet = false): Promise<{ win: boolean; payout: number }> {
+    notePlay();
     const res = await playInstant({
       data: {
         gameId,

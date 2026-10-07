@@ -175,13 +175,10 @@ function GuestAuthForm({ nextPath: _nextPath }: { nextPath: string }) {
   return (
     <div className="mt-5 rounded-2xl bg-muted/40 p-4 ring-1 ring-border">
       <p className="font-sub text-sm font-medium">Sign in to play</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">Create an account or log in to launch this table.</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Button type="button" variant="outline" className="h-10" onClick={() => auth.open("login")}>
+      <p className="mt-0.5 text-xs text-muted-foreground">This table opens only with a login you were given.</p>
+      <div className="mt-3">
+        <Button type="button" className="h-10 w-full" onClick={() => auth.open("login")}>
           Login
-        </Button>
-        <Button type="button" className="h-10" onClick={() => auth.open("register")}>
-          Sign up
         </Button>
       </div>
     </div>

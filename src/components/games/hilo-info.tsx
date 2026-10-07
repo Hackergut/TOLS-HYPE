@@ -10,7 +10,7 @@ import {
 const OVERVIEW = [
   ["Type", "TOLS Original — next-card call"],
   ["Mechanic", "Higher or Lower. Same rank wins."],
-  ["Streak", "Each hit compounds. Cash out any time."],
+  ["Streak", "The hand keeps going. A new card is dealt only when it ends."],
   ["Edge", "1.00% house · 99% RTP"],
   ["Pace", "A few seconds per call"],
   ["Rank", "Ace = 1 · King = 13"],
@@ -27,7 +27,7 @@ const RISK = [
 const FAQ = [
   {
     q: "How does TOLS Hi-Lo work?",
-    a: "A card is face up. You call Higher or Lower for the next one. A hit multiplies the pot by 0.99 ÷ P(that side). A miss ends the round at 0×. Cash out after any hit.",
+    a: "A card is face up. You call Higher or Lower and the hand continues on each hit. A miss ends it at 0×. Cash out any time. The next hand starts from a new card only after that.",
   },
   {
     q: "Is it fair?",
@@ -39,7 +39,7 @@ const FAQ = [
   },
   {
     q: "What does Skip do?",
-    a: "Skip deals a fresh up-card before a streak starts. It does not spend the stake. Once you are live on a streak, Skip is locked — cash out or call.",
+    a: "Skip deals a fresh starting card before the hand starts. It does not spend the stake. Once the hand is live, Skip is locked until you cash out or miss.",
   },
   {
     q: "Can I play small?",
@@ -58,9 +58,9 @@ export function HiloInfo() {
         <p className="text-[0.65rem] font-semibold tracking-[0.18em] text-lime uppercase">TOLS Originals</p>
         <h2 className="font-bluescreens mt-1 text-xl font-bold">Hi-Lo — how the table works</h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          One face-up card. Call the next. Every correct call compounds the multiplier. Cash out when the number is
-          enough — or miss and the streak is gone. Ace is low, King is high, same rank wins. 18+ play-money or real
-          wallet, same math.
+          One face-up card. Call Higher or Lower. Each hit stays in the same hand and compounds. Cash out
+          when you want, or miss and the hand ends. Only then does a new starting card come out. Ace is low,
+          King is high, same rank wins. 18+ play-money or real wallet, same math.
         </p>
       </div>
 
@@ -87,8 +87,8 @@ export function HiloInfo() {
             <li>Set the stake in the left rail. ½ and 2× sit on the field.</li>
             <li>Read the face-up card in the center. Skip deals another if you do not like it.</li>
             <li>Higher or Lower — each button shows the live multiplier for that side.</li>
-            <li>Hit: the new card stays up and the streak multiplies. Miss: 0×, new deal.</li>
-            <li>Cash out after any hit, or keep calling.</li>
+            <li>Hit: the card flips and the hand continues. Miss: 0×, then a new starting card.</li>
+            <li>Cash out to end the hand. The next one starts from the beginning.</li>
           </ol>
         </section>
 

@@ -31,9 +31,11 @@ type TableCtx = {
   gameId: string;
   rewindNonce: number;
   last: RoundSnap | null;
+  playNonce: number;
   rounds: import("@/lib/bet-history").BetRound[];
   analysis: RoundAnalysis;
   reportRound: (snap: RoundSnap) => void;
+  notePlay: () => void;
   rewind: () => void;
 };
 
@@ -42,6 +44,7 @@ const Ctx = createContext<TableCtx | null>(null);
 export function GameTableProvider({ gameId, children }: { gameId: string; children: ReactNode }) {
   const [rewindNonce, setRewindNonce] = useState(0);
   const [last, setLast] = useState<RoundSnap | null>(null);
+  const [playNonce, setPlayNonce] = useState(0);
   const rounds = useBetHistory(gameId);
   const { currency } = useWallet();
 
@@ -89,6 +92,8 @@ export function GameTableProvider({ gameId, children }: { gameId: string; childr
     [gameId, currency],
   );
 
+  const notePlay = useCallback(() => setPlayNonce((n) => n + 1), []);
+
   const rewind = useCallback(() => {
     setLast((cur) => {
       if (!cur) {
@@ -106,17 +111,46 @@ export function GameTableProvider({ gameId, children }: { gameId: string; childr
   const analysis = useMemo(() => analyzeRounds(rounds), [rounds]);
 
   const value = useMemo(
-    () => ({ gameId, rewindNonce, last, rounds, analysis, reportRound, rewind }),
-    [gameId, rewindNonce, last, rounds, analysis, reportRound, rewind],
+    () => ({ gameId, rewindNonce, last, playNonce, rounds, analysis, reportRound, notePlay, rewind }),
+    [gameId, rewindNonce, last, playNonce, rounds, analysis, reportRound, notePlay, rewind],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+const EMPTY_ANALYSIS: RoundAnalysis = {
+  plays: 0,
+  wins: 0,
+  losses: 0,
+  winRate: 0,
+  last10Rate: 0,
+  streakKind: "-",
+  streak: 0,
+  bestWinStreak: 0,
+  volume: 0,
+  returned: 0,
+  net: 0,
+  bestMult: 0,
+  biggestWin: 0,
+  lastLabel: null,
+  heat: "even",
+  recent: [],
+};
+
+const NO_TABLE: TableCtx = {
+  gameId: "",
+  rewindNonce: 0,
+  last: null,
+  playNonce: 0,
+  rounds: [],
+  analysis: EMPTY_ANALYSIS,
+  reportRound: () => undefined,
+  notePlay: () => undefined,
+  rewind: () => undefined,
+};
+
 export function useGameTable() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useGameTable must be used within GameTableProvider");
-  return ctx;
+  return useContext(Ctx) ?? NO_TABLE;
 }
 
 export function useGameTableOptional() {

@@ -19,7 +19,8 @@ export const setClientSeed = createServerFn({ method: "POST" })
 
 export const rotateServerSeed = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
+  .validator(z.object({ clientSeed: z.string().max(64).optional() }))
+  .handler(async ({ context, data }) => {
     const { rotateFairSeed } = await import("@/lib/fair.server");
-    return rotateFairSeed(context.userId);
+    return rotateFairSeed(context.userId, data.clientSeed);
   });

@@ -42,7 +42,7 @@ export function TowerGame({ gameId }: { gameId: string }) {
 
 function TowerTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
-  const { reportRound } = useGameTable();
+  const { reportRound, notePlay } = useGameTable();
   const [amount, setAmount] = useState(0);
   const [mode, setMode] = useState<TowerMode>("medium");
   const [play, setPlay] = useState<"manual" | "auto">("manual");
@@ -59,6 +59,7 @@ function TowerTable({ gameId }: { gameId: string }) {
   const mult = towerMultiplier(row, setup.cols, setup.bombs);
 
   async function start() {
+    notePlay();
     setBusy(true);
     try {
       const res = await startTower({ data: { gameId, currency, amount, mode, pattern } });

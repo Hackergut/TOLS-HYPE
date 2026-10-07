@@ -1,4 +1,3 @@
-import { TolsT } from "@/components/brand/tols-mark";
 import type { PlayingCard } from "@/lib/rng";
 import { cn } from "cn";
 
@@ -37,11 +36,11 @@ export function FeltCard({
     return (
       <div
         className={cn(
-          "relative flex items-center justify-center overflow-hidden rounded-md border border-white bg-[linear-gradient(124deg,#14f1d9_50%,#0e8f86_50%)] shadow-[0_2px_3px_rgb(0_0_0/0.25)]",
+          "relative flex items-center justify-center overflow-hidden rounded-lg border border-[#c9fff8] bg-[linear-gradient(128deg,#5dfff3_50%,#1ad4c8_50%)] shadow-[0_8px_16px_rgb(0_0_0/0.28)]",
           dim,
         )}
       >
-        <TolsT className={size === "xs" ? "size-5 text-black" : "size-[28%] text-black"} />
+        <img src="/brand/tols-t.png" alt="" className="h-[54%] w-auto object-contain" />
       </div>
     );
   }

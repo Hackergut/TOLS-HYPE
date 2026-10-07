@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useWallet } from "@/lib/wallet-context";
 import { cashOutMines, revealMine, startMines } from "@/lib/casino-api";
@@ -24,7 +24,7 @@ export function MinesGame({ gameId }: { gameId: string }) {
 
 function MinesTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
-  const { reportRound } = useGameTable();
+  const { reportRound, notePlay } = useGameTable();
   const [mode, setMode] = useState<"manual" | "auto">("manual");
   const [roundId, setRoundId] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<number[]>([]);
@@ -34,17 +34,71 @@ function MinesTable({ gameId }: { gameId: string }) {
   const [amount, setAmount] = useState(0);
   const [mineCount, setMineCount] = useState(3);
   const [autoGems, setAutoGems] = useState(3);
+  const [autoN, setAutoN] = useState(0);
+  const [autoOn, setAutoOn] = useState(false);
   const [queue, setQueue] = useState<number[]>([]);
+  const stopRef = useRef(false);
+  const runningRef = useRef(false);
 
   const next = minesMultiplier(revealed.length + 1, mineCount, TILES);
   const live = Boolean(roundId);
 
-  async function start() {
-    const tiles = mode === "auto" ? queue.slice(0, Math.max(1, autoGems)) : [];
-    if (mode === "auto" && tiles.length === 0) {
-      toast.message("Select the tiles for autobet");
+  function tilesForAuto() {
+    const cap = Math.max(1, Math.min(autoGems, TILES - mineCount));
+    if (queue.length) return queue.slice(0, cap);
+    const bag = Array.from({ length: TILES }, (_, i) => i);
+    for (let i = bag.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const swap = bag[i]!;
+      bag[i] = bag[j]!;
+      bag[j] = swap;
+    }
+    return bag.slice(0, cap);
+  }
+
+  async function playAutoRound(tiles: number[]) {
+    notePlay();
+    const res = await startMines({ data: { gameId, currency, amount, mineCount } });
+    setRoundId(res.roundId);
+    setRevealed([]);
+    setMines(null);
+    setMultiplier(1);
+    try {
+      await runAuto(res.roundId, tiles);
+    } catch (err) {
+      setRoundId(null);
+      throw err;
+    }
+  }
+
+  async function startAuto() {
+    if (runningRef.current) {
+      stopRef.current = true;
+      setAutoOn(false);
       return;
     }
+    const tiles = tilesForAuto();
+    stopRef.current = false;
+    runningRef.current = true;
+    setAutoOn(true);
+    const cap = autoN > 0 ? Math.min(autoN, 100) : 100;
+    let ran = 0;
+    try {
+      for (let i = 0; i < cap && !stopRef.current; i += 1) {
+        await playAutoRound(tiles);
+        ran += 1;
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Autobet failed");
+    }
+    if (autoN === 0 && ran >= cap && !stopRef.current) toast.message("Autobet stopped at 100");
+    stopRef.current = false;
+    runningRef.current = false;
+    setAutoOn(false);
+    setBusy(false);
+  }
+
+  async function start() {
     setBusy(true);
     try {
       const res = await startMines({ data: { gameId, currency, amount, mineCount } });
@@ -52,8 +106,8 @@ function MinesTable({ gameId }: { gameId: string }) {
       setRevealed([]);
       setMines(null);
       setMultiplier(1);
-      if (mode === "auto") await runAuto(res.roundId, tiles);
     } catch (err) {
+      setRoundId(null);
       toast.error(err instanceof Error ? err.message : "Bet failed");
     } finally {
       setBusy(false);
@@ -63,6 +117,7 @@ function MinesTable({ gameId }: { gameId: string }) {
   async function runAuto(id: string, tiles: number[]) {
     const picked = new Set<number>();
     for (const index of tiles) {
+      if (stopRef.current && picked.size > 0) break;
       if (picked.has(index)) continue;
       picked.add(index);
       const res = await revealMine({ data: { roundId: id, index } });
@@ -171,38 +226,41 @@ function MinesTable({ gameId }: { gameId: string }) {
                 type="button"
                 role="tab"
                 aria-selected={mode === tab}
-                disabled={live || busy}
+                disabled={live || busy || autoOn}
                 className={cn(
                   "h-9 flex-1 rounded-md text-sm font-medium capitalize",
                   mode === tab ? "bg-[#343843] text-white" : "text-[#bec6d1]",
                 )}
                 onClick={() => setMode(tab)}
               >
-                {tab}
+                {tab === "manual" ? "Manual" : "Auto"}
               </button>
             ))}
           </div>
-          <StakeField amount={amount} setAmount={setAmount} disabled={live || busy} />
-          <div className="grid gap-1">
-            <span className="text-xs font-medium">Mines</span>
-            <div className="grid grid-cols-6 gap-1">
-              {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  disabled={live || busy}
-                  className={cn(
-                    "h-8 rounded-md text-xs font-semibold tabular-nums",
-                    mineCount === n ? "bg-lime text-black" : "bg-[#202329] text-[#bec6d1]",
-                  )}
-                  onClick={() => setMineCount(n)}
-                >
-                  {n}
-                </button>
-              ))}
+          <StakeField amount={amount} setAmount={setAmount} disabled={live || busy || autoOn} />
+          <label className="grid gap-1">
+            <span className="text-xs font-medium leading-[18px]">Mines</span>
+            <div className="relative">
+              <select
+                aria-label="Mines"
+                value={mineCount}
+                disabled={live || busy || autoOn}
+                onChange={(e) => setMineCount(Number(e.target.value))}
+                className="h-12 w-full appearance-none rounded-md bg-[#202329] px-4 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <svg viewBox="0 0 16 16" className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2" aria-hidden>
+                <path d="M3 6.2 8 11l5-4.8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
             </div>
-          </div>
+          </label>
           {mode === "auto" ? (
+            <>
             <label className="grid gap-1 text-xs font-medium">
               Gems to pick
               <input
@@ -210,19 +268,45 @@ function MinesTable({ gameId }: { gameId: string }) {
                 min={1}
                 max={TILES - mineCount}
                 value={autoGems}
-                disabled={live || busy}
+                disabled={autoOn}
                 onChange={(e) => setAutoGems(Math.max(1, Math.min(TILES - mineCount, Number(e.target.value) || 1)))}
-                className="h-12 rounded-md bg-[#202329] px-3 text-sm tabular-nums"
+                className="h-12 rounded-md bg-[#202329] px-4 text-sm tabular-nums disabled:cursor-not-allowed disabled:opacity-50"
               />
             </label>
+            <label className="grid gap-1">
+              <span className="text-xs font-medium">Number of bets</span>
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  disabled={autoOn}
+                  value={autoN}
+                  onChange={(e) => setAutoN(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                  className="h-12 w-full rounded-md bg-[#202329] pr-14 pl-4 text-sm tabular-nums outline-none disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  disabled={autoOn}
+                  onClick={() => setAutoN(0)}
+                  className={cn(
+                    "absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-md bg-[#2a2e38] text-xs",
+                    autoN === 0 && "border border-white",
+                  )}
+                  aria-label="Infinite"
+                >
+                  ∞
+                </button>
+              </div>
+            </label>
+            </>
           ) : null}
           {live && mode === "manual" ? (
             <LimeBet onClick={() => void cash()} disabled={revealed.length === 0}>
               Cash out {formatMultiplier(multiplier)}
             </LimeBet>
           ) : (
-            <LimeBet disabled={busy || live || (mode === "auto" && queue.length === 0)} onClick={() => void start()}>
-              {busy ? "Playing" : mode === "auto" ? "Start Autobet" : "Bet"}
+            <LimeBet disabled={mode === "auto" ? false : busy || live} onClick={() => void (mode === "auto" ? startAuto() : start())}>
+              {mode === "auto" ? (autoOn ? "Stop Autobet" : "Start Autobet") : busy ? "Playing" : "Bet"}
             </LimeBet>
           )}
         </>
@@ -232,7 +316,13 @@ function MinesTable({ gameId }: { gameId: string }) {
           <div className="flex items-center justify-between text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
             <span>{mineCount} mines</span>
             <span className="text-lime tabular-nums">
-              {mode === "auto" && !live ? `${queue.length} selected` : live ? `Next ${formatMultiplier(next)}` : "Pick a tile"}
+              {mode === "auto" && !live
+                ? queue.length
+                  ? `${Math.min(queue.length, autoGems)} selected`
+                  : `Auto picks ${Math.max(1, Math.min(autoGems, TILES - mineCount))}`
+                : live
+                  ? `Next ${formatMultiplier(next)}`
+                  : "Pick a tile"}
             </span>
           </div>
           <div className="grid grid-cols-5 gap-2">
@@ -247,7 +337,7 @@ function MinesTable({ gameId }: { gameId: string }) {
                 <button
                   key={i}
                   type="button"
-                  disabled={mode === "auto" && !live ? busy : !live || busy || picked || over}
+                  disabled={mode === "auto" && !live ? autoOn : !live || busy || picked || over}
                   onClick={() => {
                     if (mode === "auto" && !live) {
                       setQueue((cur) => {

@@ -86,8 +86,24 @@ export async function getSessionUser(
       headers.set("Authorization", `Bearer ${bearerToken}`);
     }
     const session = await auth.api.getSession({ headers });
-    if (!session?.user) return null;
-    return { id: session.user.id, email: session.user.email ?? null };
+    if (session?.user) {
+      const { sessionAllowed } = await import("./access.server");
+      const created = session.session?.createdAt ?? new Date();
+      if (!(await sessionAllowed(session.user.id, created))) return null;
+      return { id: session.user.id, email: session.user.email ?? null };
+    }
+    const url = new URL(request.url);
+    url.pathname = "/api/auth/get-session";
+    url.search = "";
+    const viaHandler = await auth.handler(new Request(url, { method: "GET", headers })).catch(() => null);
+    const data = (await viaHandler?.json().catch(() => null)) as {
+      session?: { createdAt?: string };
+      user?: { id?: string; email?: string | null };
+    } | null;
+    if (!data?.user?.id) return null;
+    const { sessionAllowed } = await import("./access.server");
+    if (!(await sessionAllowed(data.user.id, data.session?.createdAt ?? new Date().toISOString()))) return null;
+    return { id: data.user.id, email: data.user.email ?? null };
   } catch {
     return null;
   }

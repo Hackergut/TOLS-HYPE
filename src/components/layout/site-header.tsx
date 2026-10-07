@@ -54,11 +54,8 @@ export function SiteHeader() {
         ) : (
           <>
             <SignedOut>
-              <Button asChild variant="outline" data-auth="login" className="h-9 rounded-lg px-3 md:h-10 md:px-4">
+              <Button asChild data-auth="login" className="h-9 rounded-lg px-3 md:h-10 md:px-4">
                 <Link to="/login">Login</Link>
-              </Button>
-              <Button asChild data-auth="signup" className="h-9 rounded-lg px-3 md:h-10 md:px-4">
-                <Link to="/register">Sign up</Link>
               </Button>
             </SignedOut>
             <SignedIn>

@@ -104,6 +104,82 @@ export function shareText(r: BetRound) {
     .join(" · ");
 }
 
+const WIN_TAGS = "tols-win-tags";
+
+export function roundShareTag(round: BetRound): string {
+  const id = round.fair ? shortHash(round.fair.serverHash, 8) : round.id.slice(-8).toLowerCase();
+  return `${round.title}: ${id}`;
+}
+
+function readWinTags(): Record<string, BetRound> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(WIN_TAGS);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Stores the round so a pasted tag like "Keno: e6fe9026" can be shared in chat. */
+export function saveWinTag(round: BetRound): string {
+  const tag = roundShareTag(round);
+  const id = tag.split(": ").pop()?.toLowerCase() ?? tag.toLowerCase();
+  const all = readWinTags();
+  all[tag.toLowerCase()] = round;
+  all[id] = round;
+  const keys = Object.keys(all);
+  for (const key of keys.slice(0, Math.max(0, keys.length - 24))) delete all[key];
+  if (typeof window !== "undefined") window.localStorage.setItem(WIN_TAGS, JSON.stringify(all));
+  return tag;
+}
+
+export function winRoundForTag(text: string): BetRound | null {
+  const all = readWinTags();
+  const lower = text.toLowerCase();
+  const keys = Object.keys(all).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (key.length >= 6 && lower.includes(key)) return all[key] ?? null;
+  }
+  return null;
+}
+
+let chatDraft = "";
+const draftListeners = new Set<(text: string) => void>();
+
+export function pushChatDraft(text: string) {
+  chatDraft = text;
+  draftListeners.forEach((fn) => fn(text));
+}
+
+export function subscribeChatDraft(fn: (text: string) => void) {
+  draftListeners.add(fn);
+  if (chatDraft) fn(chatDraft);
+  return () => {
+    draftListeners.delete(fn);
+  };
+}
+
+/** Sync copy that still works inside the preview iframe. */
+export function copyText(value: string): boolean {
+  try {
+    const area = document.createElement("textarea");
+    area.value = value;
+    area.setAttribute("readonly", "");
+    area.style.cssText = "position:fixed;top:0;left:0;width:2px;height:2px;padding:0;border:0;outline:none;box-shadow:none;background:transparent;";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, value.length);
+    const ok = document.execCommand("copy");
+    area.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 type ChatPayload = { user: string; text: string; round?: BetRound };
 const chatListeners = new Set<(msg: ChatPayload) => void>();
 

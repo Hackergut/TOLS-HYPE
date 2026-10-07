@@ -31,7 +31,7 @@ export function KenoGame({ gameId }: { gameId: string }) {
 
 function KenoTable({ gameId }: { gameId: string }) {
   const { currency, applyBalances } = useWallet();
-  const { reportRound } = useGameTable();
+  const { reportRound, notePlay } = useGameTable();
   const [picks, setPicks] = useState<number[]>([]);
   const [drawn, setDrawn] = useState<number[]>([]);
   const [hits, setHits] = useState<number | null>(null);
@@ -82,6 +82,7 @@ function KenoTable({ gameId }: { gameId: string }) {
   }
 
   async function play(stake = amount) {
+    notePlay();
     if (picks.length < 1) {
       toast.message("Select 1–10 numbers");
       return null;

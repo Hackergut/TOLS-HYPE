@@ -62,6 +62,7 @@ export type Sfx =
   | "hit"
   | "spin"
   | "deal"
+  | "flip"
   | "gem"
   | "boom"
   | "cash"
@@ -87,6 +88,11 @@ export function playSfx(kind: Sfx) {
   if (kind === "deal") {
     tone(196, 0.07, "triangle", 0.05);
     tone(247, 0.08, "triangle", 0.04, 0.05);
+  }
+  if (kind === "flip") {
+    burst(0.045, 0.09, 2800);
+    tone(420, 0.05, "triangle", 0.05);
+    tone(880, 0.07, "sine", 0.04, 0.04);
   }
   if (kind === "gem") tone(660, 0.09, "sine", 0.05);
   if (kind === "boom") tone(70, 0.32, "sawtooth", 0.09, 0, 32);

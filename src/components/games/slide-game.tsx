@@ -7,6 +7,7 @@ import { useWallet } from "@/lib/wallet-context";
 import { liveTable, placeLiveBet, type LiveSnap } from "@/lib/live-room";
 import { playSfx } from "@/lib/game-sound";
 import { HistoryPill } from "@/components/games/bet-pills";
+import { useRoundViewerOptional } from "@/components/games/round-dialog";
 import { formatMultiplier } from "@/lib/format";
 
 export function SlideGame({ gameId }: { gameId: string }) {
@@ -28,7 +29,7 @@ function SlideTable({ gameId }: { gameId: string }) {
   const [point, setPoint] = useState<number | null>(null);
   const [shown, setShown] = useState(1);
   const [bets, setBets] = useState<LiveSnap["bets"]>([]);
-  const [history, setHistory] = useState<number[]>([]);
+  const [history, setHistory] = useState<{ n: number; mult: number }[]>([]);
   const [openBets, setOpenBets] = useState(true);
   const [busy, setBusy] = useState(false);
   const modeRef = useRef(mode);
@@ -54,7 +55,11 @@ function SlideTable({ gameId }: { gameId: string }) {
         setPhase(snap.phase);
         setLeft(Math.max(0, Math.round(snap.left / 100) / 10));
         setBets(snap.bets);
-        setHistory(snap.history.map((h) => Number.parseFloat(h.label)).filter((n) => Number.isFinite(n)));
+        setHistory(
+          snap.history
+            .map((h) => ({ n: h.n, mult: Number.parseFloat(h.label) }))
+            .filter((h) => Number.isFinite(h.mult)),
+        );
         if (snap.phase === "betting" || snap.phase === "locked") {
           setPoint(null);
           setShown(1);
@@ -180,7 +185,7 @@ function SlideTable({ gameId }: { gameId: string }) {
           </label>
         </LiveBetDesk>
       }
-      play={<SlideStage display={display} phase={phase} point={point} left={left} history={history} target={target} bets={bets} />}
+      play={<SlideStage gameId={gameId} display={display} phase={phase} point={point} left={left} history={history} target={target} bets={bets} />}
     />
   );
 }
@@ -199,20 +204,23 @@ function Step({ children, onClick }: { children: string; onClick: () => void }) 
 }
 
 function SlideStage({
+  gameId,
   display,
   phase,
   point,
   target,
   history,
 }: {
+  gameId: string;
   display: number;
   phase: LiveSnap["phase"];
   point: number | null;
   left: number;
-  history: number[];
+  history: { n: number; mult: number }[];
   target: number;
   bets: LiveSnap["bets"];
 }) {
+  const viewer = useRoundViewerOptional();
   const mult = Math.max(1, display);
   const betting = phase === "betting" || phase === "locked";
   const stopped = point != null && display >= point - 0.001 && !betting;
@@ -224,20 +232,41 @@ function SlideStage({
   const label = betting ? "Next round" : stopped ? `${(point ?? mult).toFixed(2)}x` : "Sliding";
   return (
     <div className="flex w-full flex-col">
-      <div className="mb-8 flex gap-1.5 overflow-hidden">
-        {history.slice(0, 8).map((n, i) => (
-          <HistoryPill key={`${n}-${i}`} label={formatMultiplier(n)} />
+      <div className="mb-8 flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {history.slice(0, 10).map((h) => (
+          <HistoryPill
+            key={h.n}
+            label={formatMultiplier(h.mult)}
+            title={`Round ${h.n}`}
+            onClick={() =>
+              viewer?.open({
+                id: `slide-${gameId}-${h.n}`,
+                gameId,
+                title: "Slide",
+                kind: "slide",
+                win: true,
+                label: `${h.mult.toFixed(2)}×`,
+                stake: 0,
+                payout: 0,
+                multiplier: h.mult,
+                currency: "USDT",
+                fair: null,
+                view: { kind: "crash", crashAt: h.mult },
+                at: Date.now(),
+              })
+            }
+          />
         ))}
       </div>
       <div className="relative mx-auto h-[400px] w-full">
-        <div className="pointer-events-none absolute inset-x-0 top-[188px] overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]">
+        <div className="pointer-events-none absolute inset-x-0 top-6 bottom-2 overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_6%,black_94%,transparent)]">
           <div
-            className="flex w-max items-center"
+            className="flex h-full w-max items-center"
             style={{ marginLeft: "50%", transform: `translateX(${-(index * STEP + STEP / 2)}px)` }}
           >
             {strip.tiles.map((n, i) => (
-              <div key={`${n}-${i}`} className="grid shrink-0 place-items-center" style={{ width: STEP }}>
-                <GhostHex value={n} />
+              <div key={`${n}-${i}`} className="grid h-full shrink-0 place-items-center" style={{ width: STEP }}>
+                <GhostCard value={n} />
               </div>
             ))}
           </div>
@@ -246,10 +275,14 @@ function SlideStage({
           <div className="mt-8">
             <HotHex value={betting ? 1 : mult} missed={missed} />
           </div>
-          <div className="mt-6 w-px flex-1 bg-white" />
-          <div className="relative h-[52px] w-full rounded-b-[28px] bg-[#2ef6c8]">
-            <span className="absolute top-0 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+          <div className="relative mt-4 w-full flex-1">
+            <span className="absolute top-0 bottom-0 left-1/2 w-[2px] -translate-x-1/2 bg-white" />
+            <span
+              className="absolute left-1/2 size-4 -translate-x-1/2 rounded-full bg-white"
+              style={{ bottom: -8 }}
+            />
           </div>
+          <div className="relative h-[52px] w-full rounded-b-[28px] bg-[#2ef6c8]" />
         </div>
       </div>
       <p className="flex items-center justify-center gap-2 text-sm text-white/90">
@@ -260,7 +293,7 @@ function SlideStage({
   );
 }
 
-const STEP = 118;
+const STEP = 168;
 const LEAD = [1.01, 1.28, 1, 1.35, 1];
 const RUN = [1.12, 1.48, 1.06, 2.4, 1.18, 1.77, 1.03, 4.2, 1.31, 1.09, 1.55, 1.22];
 const TAIL = [1.35, 1, 1.16, 1.44];
@@ -282,13 +315,13 @@ function HotHex({ value, missed }: { value: number; missed: boolean }) {
   );
 }
 
-function GhostHex({ value }: { value: number }) {
+function GhostCard({ value }: { value: number }) {
   return (
-    <svg width="78" height="86" viewBox="0 0 78 86" className="opacity-40" aria-hidden>
-      <polygon points="39,4 72,23 72,63 39,82 6,63 6,23" fill="#1a2228" stroke="#2c3640" strokeWidth="2" />
-      <text x="39" y="48" textAnchor="middle" fill="#8b949e" fontFamily="Oswald, sans-serif" fontSize="13" fontWeight="700">
-        {value.toFixed(2)}x
-      </text>
-    </svg>
+    <div className="flex h-[230px] w-[104px] flex-col items-center rounded-[28px] border border-white/[0.07] bg-white/[0.025]">
+      <svg width="54" height="60" viewBox="0 0 64 70" className="mt-[78px]" aria-hidden>
+        <polygon points="32,4 58,19 58,51 32,66 6,51 6,19" fill="#1c2128" stroke="#3a4450" strokeWidth="1.6" />
+      </svg>
+      <span className="mt-1.5 text-[13px] font-semibold text-[#6e7782] tabular-nums">{value.toFixed(2)}x</span>
+    </div>
   );
 }

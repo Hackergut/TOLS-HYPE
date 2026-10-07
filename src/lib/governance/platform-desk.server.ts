@@ -484,14 +484,16 @@ export async function applyGovCommand(type: string, payload: Record<string, unkn
   if (type === "governance.player_block" && userId) {
     const reason = String(payload.reason ?? "blocked");
     await sql`
-      insert into player_controls (user_id, blocked, block_reason, updated_at, updated_by)
-      values (${userId}, true, ${reason}, now(), 'tower')
+      insert into player_controls (user_id, blocked, block_reason, sessions_revoked_at, updated_at, updated_by)
+      values (${userId}, true, ${reason}, now(), now(), 'tower')
       on conflict (user_id) do update set
         blocked = true,
         block_reason = excluded.block_reason,
+        sessions_revoked_at = now(),
         updated_at = now(),
         updated_by = 'tower'
     `;
+    await sql`delete from "session" where "userId" = ${userId}`.catch(() => undefined);
     await log("Player blocked", reason);
     return { applied: true, action: "block", userId };
   }
@@ -564,15 +566,22 @@ export async function applyGovCommand(type: string, payload: Record<string, unkn
 
   if (type === "governance.session_invalidate" && userId) {
     await sql`
-      insert into player_controls (user_id, session_epoch, updated_at, updated_by)
-      values (${userId}, 1, now(), 'tower')
+      insert into player_controls (user_id, session_epoch, sessions_revoked_at, updated_at, updated_by)
+      values (${userId}, 1, now(), now(), 'tower')
       on conflict (user_id) do update set
         session_epoch = player_controls.session_epoch + 1,
+        sessions_revoked_at = now(),
         updated_at = now(),
         updated_by = 'tower'
     `;
+    await sql`delete from "session" where "userId" = ${userId}`.catch(() => undefined);
     await log("Session invalidated", "");
     return { applied: true, action: "session_invalidate", userId };
+  }
+
+  if (type === "governance.access_grant") {
+    const { grantAccess } = await import("@/lib/auth/access.server");
+    return grantAccess(payload);
   }
 
   if (type === "governance.feature_flag") {
